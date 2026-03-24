@@ -1,0 +1,17 @@
+{
+  "name": "upstash",
+  "owner": {
+    "name": "Upstash",
+    "email": "support@upstash.com"
+  },
+  "metadata": {
+    "description": "Official Upstash plugin marketplace"
+  },
+  "plugins": [
+    {
+      "name": "upstash",
+      "source": "./",
+      "description": "Agent skills and MCP server for all Upstash SDKs — QStash, Vector, Workflow, Ratelimit, Search, Redis, and Box."
+    }
+  ]
+}

@@ -1,21 +1,95 @@
-# Upstash Skills
+# Upstash Agent Skills
 
-This repo contains agent skills for Upstash SDKs. Each skill lives in its own folder under `skills/` and is also bundled into a single combined `skills/upstash/` skill.
+A collection of skills for AI coding agents working with Upstash SDKs. Skills are packaged instructions and resources that extend agent capabilities.
 
-## Repository structure
+This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), and a [Cursor plugin](https://cursor.com/docs/plugins).
 
+## Available Skills
+
+| Skill | Description |
+|-------|-------------|
+| [upstash](skills/upstash/) | Combined skill covering all Upstash SDKs. |
+| [upstash-box-js](skills/upstash-box-js/) | Sandboxed cloud containers with AI agents, shell, filesystem, and git. |
+| [upstash-qstash-js](skills/upstash-qstash-js/) | Serverless messaging and scheduling via HTTP endpoints. |
+| [upstash-ratelimit-js](skills/upstash-ratelimit-js/) | Rate limiting with the Redis Rate Limit TypeScript SDK. |
+| [upstash-redis-js](skills/upstash-redis-js/) | Serverless Redis — caching, sessions, leaderboards, full-text search. |
+| [upstash-search-js](skills/upstash-search-js/) | Full-text search quick starts, core concepts, and TypeScript SDK. |
+| [upstash-vector-js](skills/upstash-vector-js/) | Vector database features, SDK usage, and framework integrations. |
+| [upstash-workflow-js](skills/upstash-workflow-js/) | Durable workflows — define, trigger, and manage multi-step processes. |
+
+## Installation
+
+### Claude Code Plugin
+
+```bash
+# Add the marketplace
+/plugin marketplace add upstash/skills
+
+# Install the plugin
+/plugin install upstash@upstash
 ```
-skills/
-  upstash-qstash-js/     # Individual skill (source of truth)
-  upstash-vector-js/
-  upstash-workflow-js/
-  ...
-  upstash/                # Generated combined skill (do not edit manually)
-scripts/
-  build.mjs              # Generates skills/upstash/ from the individual skills
-  check.mjs              # Verifies the generated output is up to date
-  header.md              # SKILL.md header template for the combined skill
+
+### Cursor Plugin
+
+```bash
+# Add the marketplace
+/plugin marketplace add upstash/skills
+
+# Install the plugin
+/plugin install upstash@upstash
 ```
+
+### Context7 CLI
+
+```bash
+npx ctx7 skills install upstash/skills
+```
+
+### Agent Skills CLI
+
+```bash
+npx skills add upstash/skills
+```
+
+## MCP Server
+
+Both the Claude Code and Cursor plugins bundle the [`@upstash/mcp-server`](https://www.npmjs.com/package/@upstash/mcp-server), which gives your agent tools to manage Upstash resources directly (create databases, publish messages, query vectors, etc.).
+
+The MCP server requires your Upstash credentials. Set these environment variables before launching your editor:
+
+```bash
+export UPSTASH_EMAIL="you@example.com"
+export UPSTASH_API_KEY="your-api-key"
+```
+
+If you prefer not to use the plugin, you can configure the MCP server manually:
+
+<details>
+<summary>Claude Code</summary>
+
+```bash
+claude mcp add upstash -- npx -y @upstash/mcp-server@latest --email YOUR_EMAIL --api-key YOUR_API_KEY
+```
+
+</details>
+
+<details>
+<summary>Cursor</summary>
+
+Add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "upstash": {
+      "command": "npx",
+      "args": ["-y", "@upstash/mcp-server@latest", "--email", "YOUR_EMAIL", "--api-key", "YOUR_API_KEY"]
+    }
+  }
+}
+```
+
+</details>
 
 ## Making changes
 
@@ -35,6 +109,10 @@ scripts/
 ### Changing the combined skill header
 
 The frontmatter and introductory text for `skills/upstash/SKILL.md` comes from `scripts/header.md`. Edit that file, then run `npm run build`.
+
+### Updating the plugin version
+
+When making a release, bump the `version` field in both `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json`.
 
 ## Scripts
 

@@ -1,0 +1,26 @@
+{
+  "name": "upstash",
+  "description": "Agent skills and MCP server for all Upstash SDKs — QStash, Vector, Workflow, Ratelimit, Search, Redis, and Box.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Upstash",
+    "email": "support@upstash.com"
+  },
+  "homepage": "https://upstash.com",
+  "repository": "https://github.com/upstash/skills",
+  "license": "MIT",
+  "keywords": ["upstash", "redis", "qstash", "vector", "workflow", "serverless", "sandbox"],
+  "mcpServers": {
+    "upstash": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/mcp-server@latest",
+        "--email",
+        "${UPSTASH_EMAIL}",
+        "--api-key",
+        "${UPSTASH_API_KEY}"
+      ]
+    }
+  }
+}
