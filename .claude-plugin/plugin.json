@@ -13,14 +13,11 @@
   "mcpServers": {
     "upstash": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/mcp-server@latest",
-        "--email",
-        "${UPSTASH_EMAIL}",
-        "--api-key",
-        "${UPSTASH_API_KEY}"
-      ]
+      "args": ["-y", "@upstash/mcp-server@latest"],
+      "env": {
+        "UPSTASH_EMAIL": "${UPSTASH_EMAIL}",
+        "UPSTASH_API_KEY": "${UPSTASH_API_KEY}"
+      }
     }
   }
 }
