@@ -1,0 +1,8 @@
+{
+  "name": "upstash-skills",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/build.mjs && node scripts/check.mjs"
+  }
+}
