@@ -53,16 +53,7 @@ npx skills add upstash/skills
 
 ## MCP Server
 
-Both the Claude Code and Cursor plugins bundle the [`@upstash/mcp-server`](https://www.npmjs.com/package/@upstash/mcp-server), which gives your agent tools to manage Upstash resources directly (create databases, publish messages, query vectors, etc.).
-
-The MCP server requires your Upstash credentials. Set these environment variables before launching your editor:
-
-```bash
-export UPSTASH_EMAIL="you@example.com"
-export UPSTASH_API_KEY="your-api-key"
-```
-
-If you prefer not to use the plugin, you can configure the MCP server manually:
+For full access to Upstash APIs (create databases, publish messages, query vectors, etc.), you can also set up the [`@upstash/mcp-server`](https://www.npmjs.com/package/@upstash/mcp-server):
 
 <details>
 <summary>Claude Code</summary>

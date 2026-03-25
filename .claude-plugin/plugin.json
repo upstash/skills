@@ -9,15 +9,5 @@
   "homepage": "https://upstash.com",
   "repository": "https://github.com/upstash/skills",
   "license": "MIT",
-  "keywords": ["upstash", "redis", "qstash", "vector", "workflow", "serverless", "sandbox"],
-  "mcpServers": {
-    "upstash": {
-      "command": "npx",
-      "args": ["-y", "@upstash/mcp-server@latest"],
-      "env": {
-        "UPSTASH_EMAIL": "${UPSTASH_EMAIL}",
-        "UPSTASH_API_KEY": "${UPSTASH_API_KEY}"
-      }
-    }
-  }
+  "keywords": ["upstash", "redis", "qstash", "vector", "workflow", "serverless", "sandbox"]
 }
