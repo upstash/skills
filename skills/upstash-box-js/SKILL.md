@@ -1,6 +1,6 @@
 ---
 name: upstash-box-js
-description: Work with the @upstash/box SDK for sandboxed cloud containers with AI agents, shell, filesystem, and git. Use when building with Upstash Box, creating sandboxed environments, running AI agents in containers, or orchestrating parallel boxes.
+description: Work with the @upstash/box TypeScript/JavaScript SDK for sandboxed cloud containers with AI agents, shell, filesystem, and git. Use when building with Upstash Box, creating sandboxed environments, running AI agents in containers, or orchestrating parallel boxes.
 ---
 
 # @upstash/box SDK
