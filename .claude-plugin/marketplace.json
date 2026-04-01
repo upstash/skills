@@ -11,7 +11,15 @@
     {
       "name": "upstash",
       "source": "./",
-      "description": "Agent skills and MCP server for all Upstash SDKs — QStash, Vector, Workflow, Ratelimit, Search, Redis, and Box."
+      "description": "Agent skills for all Upstash SDKs — QStash, Vector, Workflow, Ratelimit, Search, Redis, and Box."
+    },
+    {
+      "name": "upstash-mcp",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/upstash/mcp-server.git"
+      },
+      "description": "MCP server for managing & debugging Upstash Redis, QStash, Workflow and Box"
     }
   ]
 }
