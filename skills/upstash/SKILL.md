@@ -34,3 +34,7 @@ Skills for Upstash Vector features, TypeScript/JavaScript SDK usage, and integra
 ## [upstash-workflow-js](upstash-workflow-js/overview.md)
 
 Skills for the Upstash Workflow TypeScript/JavaScript SDK to define, trigger, and manage workflows. Use this Skill whenever a user wants to create workflow endpoints, run steps, or interact with the Upstash Workflow client.
+
+## [upstash-cli](upstash-cli/SKILL.md)
+
+Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, and teams. Use when listing or managing databases, backups, vector/search indexes, QStash instances, team members, stats, or any non-interactive Upstash automation with JSON output and terminal commands.
