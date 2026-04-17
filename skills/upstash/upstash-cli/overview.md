@@ -8,14 +8,20 @@ npm i -g @upstash/cli
 
 ## Authentication
 
-Precedence: per-command flags > env vars > `.env` file in cwd.
+Recommended: run `upstash login` once per machine. Prompts for email and a Developer API key (create one at https://console.upstash.com/account/api), verifies them, and saves to `~/.config/upstash/config.json`.
+
+```bash
+upstash login
+```
+
+Alternatives — env vars (also auto-loaded from a `.env` in cwd), or `--email` / `--api-key` inline, or `--env-path <path>` to point at a specific `.env`:
 
 ```bash
 export UPSTASH_EMAIL=you@example.com
 export UPSTASH_API_KEY=your_api_key
 ```
 
-Or pass `--email` / `--api-key` inline, or `--env-path <path>` to load a specific `.env`. Prefer a **read-only** API key for agents when possible — mutations fail at the API, the same way they would in the console.
+Precedence: flags > env vars > `.env` > saved config. Prefer a **read-only** API key for agents when possible — mutations fail at the API, the same way they would in the console.
 
 ## Resource ID flags
 
