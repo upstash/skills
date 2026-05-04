@@ -48,6 +48,7 @@ For fundamental QStash operations, see:
 - [Schedules](fundamentals/schedules.md)
 - [Queues and Flow Control](fundamentals/queues-and-flow-control.md)
 - [URL Groups](fundamentals/url-groups.md)
+- [Local Development](fundamentals/local-development.md) — automatic dev server via `devMode: true`
 
 For verifying incoming messages:
 
