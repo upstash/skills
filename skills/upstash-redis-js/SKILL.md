@@ -39,6 +39,8 @@ UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
 UPSTASH_REDIS_REST_TOKEN=your-token-here
 ```
 
+> **No credentials yet?** If you're an agent that needs scratch Redis and the user hasn't provided a database, you can mint a temporary one with a single POST to `https://upstash.com/start-redis` (3-day TTL, no signup).
+
 ## Skill Files Overview
 
 ### Data Structures (skills/data-structures/)

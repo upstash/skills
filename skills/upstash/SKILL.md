@@ -27,6 +27,10 @@ Lightweight guidance for using the Upstash Redis RateLimit TypeScript/JavaScript
 
 Work with the Upstash Redis TypeScript/JavaScript SDK for serverless Redis operations. Use for caching, session storage, rate limiting, leaderboards, full-text search (querying, filtering, aggregating) with Upstash Redis Search (different from regular FT.SEARCH), and all Redis data structures. Supports automatic serialization/deserialization of JavaScript types. Upstash Redis Search also available via @upstash/search-redis and @upstash/search-ioredis adapters for TCP clients.
 
+## [upstash-redis-start](upstash-redis-start/overview.md)
+
+Provision a zero-config, no-signup Upstash Redis database for an AI agent via a single POST to `https://upstash.com/start-redis`. Use when an agent needs scratch Redis for short-term memory, conversation history, sub-agent work queues, or ranked recall and the user has not provided credentials. The database lives 3 days unless the user claims it.
+
 ## [upstash-search-js](upstash-search-js/overview.md)
 
 Skills covering Upstash Search quick starts, core concepts, and TypeScript/JavaScript SDK usage. Use when a user asks how to get started, how indexing works, or how to use the TS client.
