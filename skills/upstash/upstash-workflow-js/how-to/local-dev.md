@@ -6,7 +6,7 @@ This documentation explains how to run Upstash Workflow locally using the QStash
 
 Upstash Workflow uses Upstash QStash under the hood. During development you can:
 
-- Use the **automatic dev server** by setting `QSTASH_DEV=true` — the SDK downloads the QStash CLI binary, spawns the server, and verifies signatures with its dev keys. No tokens or signing keys required.
+- Use the **automatic dev server** by setting `QSTASH_DEV=true`. The SDK downloads the QStash CLI binary, spawns the server, and verifies signatures with its dev keys. No tokens or signing keys required.
 - Run a **local QStash development server** manually via the CLI and wire credentials yourself.
 - Optionally expose your local server using **ngrok** if you want to test with the production QStash.
 
@@ -14,7 +14,7 @@ Upstash Workflow uses Upstash QStash under the hood. During development you can:
 
 ## Automatic dev server (recommended)
 
-Set `QSTASH_DEV=true` in your environment and that's it — workflow's `serve()` endpoint and the `Client` both auto-detect it:
+Set `QSTASH_DEV=true` in your environment and that's it. Workflow's `serve()` endpoint and the `Client` both auto-detect it:
 
 ```
 QSTASH_DEV=true
