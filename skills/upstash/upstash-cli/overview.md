@@ -52,7 +52,9 @@ upstash redis update-regions --db-id <id> --read-regions <r1> <r2>
 upstash redis move-to-team --db-id <id> --team-id <id>
 ```
 
-Regions — AWS: `us-east-1`, `us-east-2`, `us-west-1`, `us-west-2`, `ca-central-1`, `eu-central-1`, `eu-west-1`, `eu-west-2`, `sa-east-1`, `ap-south-1`, `ap-northeast-1`, `ap-southeast-1`, `ap-southeast-2`, `af-south-1`. GCP: `us-central1`, `us-east4`, `europe-west1`, `asia-northeast1`.
+> **Safe delete workflow:** run `upstash redis delete --db-id <id> --dry-run` first, verify the JSON output names the correct database, then re-run without `--dry-run`.
+
+Regions — see [REFERENCE.md](REFERENCE.md#redis-regions) for the full list of AWS and GCP regions.
 
 ### Redis backups
 
@@ -63,6 +65,8 @@ upstash redis backup delete --db-id <id> --backup-id <id> [--dry-run]
 upstash redis backup restore --db-id <id> --backup-id <id>
 upstash redis backup {enable,disable}-daily --db-id <id>
 ```
+
+> **Safe backup delete:** same `--dry-run` workflow as database delete. For `backup restore`, list backups first to confirm the correct `--backup-id`.
 
 ### Redis exec (REST, not the Developer API key)
 
@@ -84,6 +88,8 @@ upstash team add-member --team-id <id> --member-email <email> --role <admin|dev|
 upstash team remove-member --team-id <id> --member-email <email> [--dry-run]
 ```
 
+> **Safe team ops:** run `team delete` and `remove-member` with `--dry-run` first, verify the target, then re-run.
+
 ## Vector
 
 ```bash
@@ -99,7 +105,9 @@ upstash vector stats                             # aggregate across all indexes
 upstash vector index-stats --index-id <id> [--period <1h|3h|12h|1d|3d|7d|30d>]
 ```
 
-Regions: `eu-west-1`, `us-east-1`, `us-central1`. Similarity: `COSINE`, `EUCLIDEAN`, `DOT_PRODUCT`. Index types: `DENSE`, `SPARSE`, `HYBRID`. Dense models: `BGE_SMALL_EN_V1_5`, `BGE_BASE_EN_V1_5`, `BGE_LARGE_EN_V1_5`, `BGE_M3`. Sparse models: `BM25`, `BGE_M3`. For `HYBRID` with managed embeddings, set `--dimension-count 0`.
+> **Safe vector delete:** run with `--dry-run` first, verify the index name in the JSON output, then re-run.
+
+Regions, similarity functions, index types, and embedding models — see [REFERENCE.md](REFERENCE.md#vector-options).
 
 ## Search
 
@@ -114,6 +122,8 @@ upstash search transfer --index-id <id> --target-account <id>
 upstash search stats
 upstash search index-stats --index-id <id> [--period <1h|3h|12h|1d|3d|7d|30d>]
 ```
+
+> **Safe search delete:** run with `--dry-run` first, verify the index name, then re-run.
 
 Regions: `eu-west-1`, `us-central1`.
 
