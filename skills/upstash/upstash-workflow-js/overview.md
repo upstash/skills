@@ -45,7 +45,7 @@ These files contain the full documentation. Use them for details, patterns, and 
   - **features/wait-for-event** – Notify and wait-for-event patterns.
   - **features/webhooks** – Webhook creation and consumption.
 - how to:
-  - **how-to/local-dev** – Local QStash dev server and tunneling.
+  - **how-to/local-dev** – Local QStash dev server (auto via `QSTASH_DEV=true`) and tunneling.
   - **how-to/realtime** – Realtime and human‑in‑the‑loop workflows.
   - **how-to/migrations** – Migrating workflows safely.
   - **how-to/middleware** – Adding middleware to workflows.
