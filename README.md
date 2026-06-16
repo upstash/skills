@@ -2,7 +2,7 @@
 
 A collection of skills for AI coding agents working with Upstash SDKs. Skills are packaged instructions and resources that extend agent capabilities.
 
-This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), and a [Cursor plugin](https://cursor.com/docs/plugins).
+This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), a [Cursor plugin](https://cursor.com/docs/plugins), and an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build).
 
 ## Available Skills
 
@@ -37,6 +37,16 @@ This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Co
 
 # Install the plugin
 /plugin install upstash@upstash
+```
+
+### OpenAI Codex Plugin
+
+```bash
+# Add the marketplace
+codex plugin marketplace add upstash/skills
+
+# Install the plugin
+codex plugin install upstash --source upstash
 ```
 
 ### Context7 CLI
@@ -103,7 +113,7 @@ The frontmatter and introductory text for `skills/upstash/SKILL.md` comes from `
 
 ### Updating the plugin version
 
-When making a release, bump the `version` field in both `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json`.
+When making a release, bump the `version` field in `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, and `.codex-plugin/plugin.json`.
 
 ## Scripts
 
