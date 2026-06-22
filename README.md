@@ -2,7 +2,7 @@
 
 A collection of skills for AI coding agents working with Upstash SDKs. Skills are packaged instructions and resources that extend agent capabilities.
 
-This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), a [Cursor plugin](https://cursor.com/docs/plugins), and an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build).
+This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), and an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build).
 
 ## Available Skills
 
@@ -20,16 +20,6 @@ This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Co
 ## Installation
 
 ### Claude Code Plugin
-
-```bash
-# Add the marketplace
-/plugin marketplace add upstash/skills
-
-# Install the plugin
-/plugin install upstash@upstash
-```
-
-### Cursor Plugin
 
 ```bash
 # Add the marketplace
