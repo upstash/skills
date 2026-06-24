@@ -63,6 +63,9 @@ await redis.sadd("set3", "c", "d", "e");
 const common = await redis.sinter("set1", "set2"); // ["b", "c"]
 const commonAll = await redis.sinter("set1", "set2", "set3"); // ["c"]
 
+// Count the intersection without returning members
+const commonCount = await redis.sintercard(["set1", "set2"]); // 2
+
 // Store intersection result in new set
 await redis.sinterstore("result", "set1", "set2");
 

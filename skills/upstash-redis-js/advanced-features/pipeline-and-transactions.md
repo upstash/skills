@@ -12,8 +12,7 @@
 ## Limitations
 
 - Pipeline commands execute independently (no atomicity)
-- Transactions block other clients from modifying watched keys
-- WATCH only works for keys, not values
+- No WATCH / optimistic locking over the REST client — use a Lua script (`redis.eval`) for atomic check-and-set
 
 ## Examples
 

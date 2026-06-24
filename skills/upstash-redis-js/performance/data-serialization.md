@@ -16,6 +16,7 @@ Automatic serialization preserves JavaScript types across Redis operations. Numb
 - undefined, functions, symbols cannot be serialized
 - Date objects serialize as ISO strings
 - Class instances lose their prototype
+- Map and Set serialize to `{}` (their contents are lost) — convert to a plain object/array first
 - Binary data requires special handling
 
 ## Examples

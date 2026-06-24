@@ -60,7 +60,7 @@ Redis data types with auto-serialization examples:
 Complex operations and optimizations:
 
 - **auto-pipeline.md** - Automatic request batching, performance optimization
-- **pipeline-and-transactions.md** - Manual pipelines, MULTI/EXEC, WATCH for atomic operations
+- **pipeline-and-transactions.md** - Manual pipelines, MULTI/EXEC for atomic operations
 - **scripting.md** - Lua scripts, EVAL, EVALSHA for server-side logic
 
 ### Patterns (patterns/)
