@@ -43,7 +43,7 @@ UPSTASH_REDIS_REST_TOKEN=your-token-here
 
 ## Skill Files Overview
 
-### Data Structures (skills/data-structures/)
+### Data Structures (data-structures/)
 
 Redis data types with auto-serialization examples:
 
@@ -55,7 +55,7 @@ Redis data types with auto-serialization examples:
 - **json.md** - JSON.SET, JSON.GET, JSONPath queries for nested objects
 - **streams.md** - XADD, XREAD, XGROUP, consumer groups
 
-### Advanced Features (skills/advanced-features/)
+### Advanced Features (advanced-features/)
 
 Complex operations and optimizations:
 
@@ -63,7 +63,7 @@ Complex operations and optimizations:
 - **pipeline-and-transactions.md** - Manual pipelines, MULTI/EXEC, WATCH for atomic operations
 - **scripting.md** - Lua scripts, EVAL, EVALSHA for server-side logic
 
-### Patterns (skills/patterns/)
+### Patterns (patterns/)
 
 Common use cases and architectural patterns:
 
@@ -73,7 +73,7 @@ Common use cases and architectural patterns:
 - **distributed-locks.md** - Lock implementations, deadlock prevention
 - **leaderboard.md** - Sorted set leaderboards, real-time rankings
 
-### Performance (skills/performance/)
+### Performance (performance/)
 
 Optimization techniques and best practices:
 
@@ -84,7 +84,7 @@ Optimization techniques and best practices:
 - **error-handling.md** - Error types, retry strategies, timeout handling, debugging tips
 - **redis-replicas.md** - Global database setup, read replicas, read-your-writes consistency
 
-### Search (skills/search/)
+### Search (search/)
 
 Full-text search, filtering, and aggregation extension for Redis:
 
@@ -95,7 +95,7 @@ Full-text search, filtering, and aggregation extension for Redis:
 - **commands/aliases.md** - Index aliases for zero-downtime reindexing
 - **adapters.md** - Using search with node-redis and ioredis via @upstash/search-redis and @upstash/search-ioredis
 
-### Migrations (skills/migrations/)
+### Migrations (migrations/)
 
 Migration guides from other libraries:
 
