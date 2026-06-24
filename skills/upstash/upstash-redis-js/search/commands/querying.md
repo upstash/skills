@@ -104,9 +104,9 @@ const cheapest = await index.query({
 const results = await index.query({
   filter: { name: { $eq: "laptop" } },
   select: { name: true },
-  scoreFunc: { field: "name", modifier: "LOG1P" },
+  scoreFunc: { field: "name", modifier: "log1p" },
 });
-// Available modifiers: LOG, LOG1P, LOG2P, LN, LN1P, LN2P, SQRT, SQUARE, RECIPROCAL, NONE
+// Available modifiers: log, log1p, log2p, ln, ln1p, ln2p, square, sqrt, reciprocal, none
 ```
 
 ### Highlighting
@@ -136,10 +136,10 @@ const highlighted = await index.query({
 { name: { $in: ["laptop", "tablet"] } }
 
 // Fuzzy matching (typo tolerance)
-{ name: { $fuzzy: { term: "lapto", distance: 1 } } }
+{ name: { $fuzzy: { value: "lapto", distance: 1 } } }
 
 // Phrase matching (adjacent words with tolerance)
-{ name: { $phrase: { text: "gaming laptop", slop: 1 } } }
+{ name: { $phrase: { value: "gaming laptop", slop: 1 } } }
 
 // Regex pattern
 { name: { $regex: "lap.*" } }
@@ -252,6 +252,43 @@ Combine filters using boolean operators:
   ]
 }
 ```
+
+### Common mistake: `$should` next to `$must` does NOT filter
+
+Adding `$must` silently turns sibling `$should` clauses into **score boosters only** —
+documents are *not* required to match them. Membership is decided entirely by `$must`,
+so the query "always finds something" even for nonsense terms (matches come back, just
+with a low score). This is the most common search bug.
+
+```typescript
+// ❌ WRONG: the term only boosts; every in-stock doc still matches via $must,
+// so a nonsensical searchTerm still returns results (with low scores).
+{
+  $must: { inStock: { $eq: true } },
+  $should: [
+    { name: { $smart: searchTerm }, $boost: 10 },
+    { description: { $smart: searchTerm }, $boost: 5 },
+  ],
+}
+
+// ✅ RIGHT: require a match in at least one field by nesting the OR ($should
+// alone acts as OR) inside $must. $boost still ranks name above description.
+{
+  $must: [
+    { inStock: { $eq: true } },
+    {
+      $should: [
+        { name: { $smart: searchTerm }, $boost: 10 },
+        { description: { $smart: searchTerm }, $boost: 5 },
+      ],
+    },
+  ],
+}
+```
+
+> There is no minimum-score / cutoff option on `query()`. Don't filter by the returned
+> `score` (scores are relative and shift with `$boost`, so a fixed threshold isn't
+> reliable) — instead make the term required as above so non-matches are excluded.
 
 ### Boosting
 
