@@ -24,7 +24,7 @@ import { Box, Agent, ClaudeCode, BoxApiKey } from "@upstash/box"
 const box = await Box.create({
   runtime: "node", // "node" | "python" | "golang" | "ruby" | "rust"
   agent: {
-    provider: Agent.ClaudeCode, // Agent.Codex | Agent.OpenCode
+    harness: Agent.ClaudeCode, // Agent.Codex | Agent.OpenCode
     model: ClaudeCode.Sonnet_4_5,
     // apiKey options:
     //   omit          → server decides which key to use
@@ -205,22 +205,22 @@ await ebox.delete()
 const ebox2 = await EphemeralBox.fromSnapshot(snap.id, { ttl: 7200 })
 ```
 
-## Preview URLs
+## Public URLs
 
 Expose box ports as public URLs with optional auth.
 
 ```ts
-const preview = await box.getPreviewUrl(3000)
-// preview: { url: "https://{id}-3000.preview.box.upstash.com", port }
+const publicURL = await box.getPublicURL(3000)
+// publicURL: { url: "https://{id}-3000.preview.box.upstash.com", port }
 
-const authed = await box.getPreviewUrl(3000, { bearerToken: true })
+const authed = await box.getPublicURL(3000, { bearerToken: true })
 // authed: { url, port, token }
 
-const basic = await box.getPreviewUrl(3000, { basicAuth: true })
+const basic = await box.getPublicURL(3000, { basicAuth: true })
 // basic: { url, port, username, password }
 
-const { previews } = await box.listPreviews()
-await box.deletePreview(3000)
+const { publicURLs } = await box.listPublicURLs()
+await box.deletePublicURL(3000)
 ```
 
 ## MCP Servers
@@ -229,7 +229,7 @@ Attach MCP servers to the box agent.
 
 ```ts
 const box = await Box.create({
-  agent: { provider: Agent.ClaudeCode, model: ClaudeCode.Sonnet_4_5 },
+  agent: { harness: Agent.ClaudeCode, model: ClaudeCode.Sonnet_4_5 },
   mcpServers: [
     { name: "fs", package: "@modelcontextprotocol/server-filesystem" },
     { name: "custom", url: "https://mcp.example.com/sse", headers: { Authorization: "..." } },
@@ -241,7 +241,7 @@ const box = await Box.create({
 
 - Default working directory is `/workspace/home`, not `/home` or `/`
 - `box.cd()` is client-side tracking — it validates the path exists but doesn't change the box's shell cwd. All SDK methods use it automatically.
-- `EphemeralBox` does NOT support `agent`, `git`, `fork`, or `preview` — use full `Box` for those
+- `EphemeralBox` does NOT support `agent`, `git`, `fork`, or public URLs — use full `Box` for those
 - `run.exitCode` is `null` for agent runs, only available for exec commands
 - `box.delete()` is irreversible — snapshot first if you need the state
 - Git operations require `git.token` in `BoxConfig` for private repos and PRs

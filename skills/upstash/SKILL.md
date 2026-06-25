@@ -11,6 +11,10 @@ This skill combines documentation for all Upstash SDKs. Pick the relevant sub-sk
 
 Work with the @upstash/box TypeScript/JavaScript SDK for sandboxed cloud containers with AI agents, shell, filesystem, and git. Use when building with Upstash Box, creating sandboxed environments, running AI agents in containers, or orchestrating parallel boxes.
 
+## [upstash-box-py](upstash-box-py/overview.md)
+
+Work with the upstash-box Python SDK for sandboxed cloud containers with AI agents, shell, filesystem, and git. Use when building with Upstash Box in Python, creating sandboxed environments, running AI agents in containers, or orchestrating parallel boxes.
+
 ## [upstash-cli](upstash-cli/overview.md)
 
 Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, and teams. Use when listing or managing databases, backups, vector/search indexes, QStash instances, team members, stats, or any non-interactive Upstash automation with JSON output and terminal commands.
