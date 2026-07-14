@@ -20,7 +20,7 @@ await ns.upsert({ id: "id-0", vector: [0.1, 0.2] });
 await ns.query({ vector: [0.1, 0.2], topK: 5 });
 ```
 
-## Operatoins
+## Operations
 
 ```ts
 await index.deleteNamespace("ns");
