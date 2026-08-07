@@ -9,11 +9,11 @@ This skill combines documentation for all Upstash SDKs. Pick the relevant sub-sk
 
 ## [upstash-box-js](upstash-box-js/overview.md)
 
-Work with the @upstash/box TypeScript/JavaScript SDK for sandboxed cloud containers with AI agents, shell, filesystem, and git. Use when building with Upstash Box, creating sandboxed environments, running AI agents in containers, or orchestrating parallel boxes.
+Work with the @upstash/box TypeScript/JavaScript SDK for sandboxed cloud containers with AI agents, shell, filesystem, git, cron schedules, and a headless browser. Use when building with Upstash Box, creating sandboxed environments, running AI agents in containers, browser automation from a box, or orchestrating parallel boxes.
 
 ## [upstash-box-py](upstash-box-py/overview.md)
 
-Work with the upstash-box Python SDK for sandboxed cloud containers with AI agents, shell, filesystem, and git. Use when building with Upstash Box in Python, creating sandboxed environments, running AI agents in containers, or orchestrating parallel boxes.
+Work with the upstash-box Python SDK for sandboxed cloud containers with AI agents, shell, filesystem, git, cron schedules, and a headless browser. Use when building with Upstash Box in Python, creating sandboxed environments, running AI agents in containers, browser automation from a box, or orchestrating parallel boxes.
 
 ## [upstash-cli](upstash-cli/overview.md)
 
