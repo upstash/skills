@@ -372,11 +372,18 @@ const liveUrl = await tab.liveViewUrl()      // view-only screencast page/iframe
 const cdpUrl = await box.browser.cdpUrl()    // Playwright / Puppeteer / Stagehand
 await tab.close()
 
-// Session recordings (HLS video + chapter markers)
-const handle = await box.browser.recordings.start({ maxDurationSeconds: 600 })
-const recording = await handle.stop()  // { id, status, durationMs, markers, playlistUrl, ... }
+// Session recordings (HLS playback URL + MP4 download, chapter markers)
+const handle = await box.browser.recordings.start({ maxDurationSeconds: 600 }) // default & max 600
+const recording = await handle.stop()
+// recording: { id, boxId, status, startedAt, endedAt, durationMs, sizeBytes, mp4SizeBytes,
+//              segmentCount, markers, stoppedReason, expiresAt, playlistUrl }
 const all = await box.browser.recordings.list()
 const one = await box.browser.recordings.get(recording.id)
+
+// Download the video to a local file — returns the path written.
+// Defaults to ./box-recording-<id>.mp4 (.ts for recordings captured before MP4 support).
+const file = await box.browser.recordings.download(recording.id)
+await box.browser.recordings.download(recording.id, { path: "./out/demo.mp4" })
 ```
 
 ## EphemeralBox

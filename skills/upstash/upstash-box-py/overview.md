@@ -378,11 +378,18 @@ live_url = tab.live_view_url()  # view-only screencast page/iframe
 cdp_url = box.browser.cdp_url()  # Playwright / Puppeteer / Stagehand
 tab.close()
 
-# Session recordings (HLS video + chapter markers)
-handle = box.browser.recordings.start(max_duration_seconds=600)
-recording = handle.stop()  # BrowserRecording(id, status, duration_ms, markers, playlist_url, ...)
+# Session recordings (HLS playback URL + MP4 download, chapter markers)
+handle = box.browser.recordings.start(max_duration_seconds=600)  # default & max 600
+recording = handle.stop()
+# BrowserRecording(id, box_id, status, started_at, ended_at, duration_ms, size_bytes,
+#                  mp4_size_bytes, segment_count, markers, stopped_reason, expires_at, playlist_url)
 all_recordings = box.browser.recordings.list()
 one_recording = box.browser.recordings.get(recording.id)
+
+# Download the video to a local file — returns the path written.
+# Defaults to ./box-recording-<id>.mp4 (.ts for recordings captured before MP4 support).
+file = box.browser.recordings.download(recording.id)
+box.browser.recordings.download(recording.id, path="./out/demo.mp4")
 ```
 
 ## EphemeralBox
