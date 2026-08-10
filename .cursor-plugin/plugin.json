@@ -1,5 +1,6 @@
 {
   "name": "upstash",
+  "displayName": "Upstash",
   "description": "Agent skills for all Upstash SDKs — QStash, Vector, Workflow, Ratelimit, Search, Redis, and Box.",
   "version": "1.0.0",
   "author": {
@@ -9,5 +10,6 @@
   "homepage": "https://upstash.com",
   "repository": "https://github.com/upstash/skills",
   "license": "MIT",
-  "keywords": ["upstash", "redis", "qstash", "vector", "workflow", "serverless", "sandbox"]
+  "keywords": ["upstash", "redis", "qstash", "vector", "workflow", "serverless", "sandbox"],
+  "skills": "./skills/"
 }

@@ -2,7 +2,7 @@
 
 A collection of skills for AI coding agents working with Upstash SDKs. Skills are packaged instructions and resources that extend agent capabilities.
 
-This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), and an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build).
+This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), a [Cursor plugin](https://cursor.com/docs/plugins), and an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build).
 
 ## Available Skills
 
@@ -28,6 +28,27 @@ This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Co
 # Install the plugin
 /plugin install upstash@upstash
 ```
+
+### Cursor Plugin
+
+Cursor has no plugin CLI or slash command, and no public self-serve marketplace add:
+listing on the [Cursor Marketplace](https://cursor.com/marketplace) is submission-based.
+A repository is submitted to Cursor for review at
+[cursor.com/marketplace/publish](https://cursor.com/marketplace/publish), or by contacting
+<marketplace-publishing@cursor.com>. Once this repo is reviewed and listed, it can be
+installed from **Customize** in the Cursor sidebar.
+
+Until then, Teams and Enterprise plans can import this repo as a team marketplace:
+
+1. Go to **Dashboard → Plugins**.
+2. Under **Team Marketplaces**, choose **Add Marketplace → Import from Repo**.
+3. Import `https://github.com/upstash/skills`, then add the `upstash` plugin.
+
+Cursor reads [`.cursor-plugin/marketplace.json`](.cursor-plugin/marketplace.json) and
+[`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json); skills are discovered from `skills/`.
+The manifest layout follows [cursor/plugin-template](https://github.com/cursor/plugin-template),
+and [cursor/plugins](https://github.com/cursor/plugins) holds Cursor's own published plugins as
+reference. The template's `scripts/validate-template.mjs` validates this repo's manifests.
 
 ### OpenAI Codex Plugin
 
