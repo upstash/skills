@@ -11,7 +11,7 @@ Use this when:
 - The agent needs Redis right now and the user has not given you credentials.
 - You want short-term memory across tool calls, conversation history, a sub-agent work queue, or recent-first ranked recall.
 
-Do **not** use this for: production workloads, anything tied to a user account, or anything storing PII / secrets / production credentials. The database is temporary and unauthenticated until claimed.
+This is built for quick experiments, prototypes, and demos rather than production workloads or anything tied to a real user account — the database is temporary and unauthenticated until claimed, so keep PII, secrets, and production credentials out of it.
 
 ## Create or re-fetch a database
 
