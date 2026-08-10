@@ -31,24 +31,9 @@ This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Co
 
 ### Cursor Plugin
 
-Cursor has no plugin CLI or slash command, and no public self-serve marketplace add:
-listing on the [Cursor Marketplace](https://cursor.com/marketplace) is submission-based.
-A repository is submitted to Cursor for review at
-[cursor.com/marketplace/publish](https://cursor.com/marketplace/publish), or by contacting
-<marketplace-publishing@cursor.com>. Once this repo is reviewed and listed, it can be
-installed from **Customize** in the Cursor sidebar.
-
-Until then, Teams and Enterprise plans can import this repo as a team marketplace:
-
-1. Go to **Dashboard → Plugins**.
-2. Under **Team Marketplaces**, choose **Add Marketplace → Import from Repo**.
-3. Import `https://github.com/upstash/skills`, then add the `upstash` plugin.
-
-Cursor reads [`.cursor-plugin/marketplace.json`](.cursor-plugin/marketplace.json) and
-[`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json); skills are discovered from `skills/`.
-The manifest layout follows [cursor/plugin-template](https://github.com/cursor/plugin-template),
-and [cursor/plugins](https://github.com/cursor/plugins) holds Cursor's own published plugins as
-reference. The template's `scripts/validate-template.mjs` validates this repo's manifests.
+We are waiting for this plugin to be accepted to the official
+[Cursor Marketplace](https://cursor.com/marketplace). Once listed, it can be installed
+from **Customize** in the Cursor sidebar.
 
 ### OpenAI Codex Plugin
 
@@ -57,7 +42,7 @@ reference. The template's `scripts/validate-template.mjs` validates this repo's 
 codex plugin marketplace add upstash/skills
 
 # Install the plugin
-codex plugin install upstash --source upstash
+codex plugin add upstash@upstash
 ```
 
 ### Context7 CLI
