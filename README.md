@@ -2,7 +2,7 @@
 
 A collection of skills for AI coding agents working with Upstash SDKs. Skills are packaged instructions and resources that extend agent capabilities.
 
-This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), a [Cursor plugin](https://cursor.com/docs/plugins), and an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build).
+This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), a [Cursor plugin](https://cursor.com/docs/plugins), an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build), and a [DeepSeek Harness bundle](https://github.com/deepseek-ai/deepseek-harness).
 
 ## Available Skills
 
@@ -57,6 +57,28 @@ npx ctx7 skills install upstash/skills
 npx skills add upstash/skills
 ```
 
+### DeepSeek Harness
+
+Installs the skills **and** the [Upstash MCP server](#mcp-server) in one step. Requires
+`pnpm` on your `PATH`.
+
+```bash
+# Install into a profile (`web` is the one `dsh web` boots)
+dsh plugin --profile web add github:upstash/skills
+
+# Start the harness
+dsh web
+```
+
+Then store your Upstash credentials from inside a session:
+
+```
+/upstash-login YOUR_EMAIL YOUR_API_KEY
+```
+
+Credentials are stored in `~/.dsh/.credentials.yaml` and the MCP server connects as
+soon as both are set. The skills work without them.
+
 ## MCP Server
 
 For full access to Upstash APIs (create databases, publish messages, query vectors, etc.), you can also set up the [`@upstash/mcp-server`](https://www.npmjs.com/package/@upstash/mcp-server):
@@ -86,6 +108,12 @@ Add to `.cursor/mcp.json`:
 }
 ```
 
+</details>
+
+<details>
+<summary>DeepSeek Harness</summary>
+
+Already included in the bundle — see [DeepSeek Harness](#deepseek-harness) above.
 </details>
 
 ## Making changes
