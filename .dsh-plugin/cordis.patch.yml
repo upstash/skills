@@ -1,0 +1,9 @@
+# DeepSeek Harness bundle layer. Applied when a profile lists this package in
+# its `dsh.profile.bundles`; see `dsh.bundle` in the repository package.json.
+#
+# One row: the plugin mounts the skill provider and the Upstash MCP server
+# itself, because the MCP credentials come from the managed credential
+# document rather than from the environment.
+- insert:
+    - id: upstash
+      name: "upstash-skills/.dsh-plugin/index.mjs"
