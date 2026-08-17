@@ -10,9 +10,12 @@ This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Co
 |-------|-------------|
 | [upstash](skills/upstash/) | Combined skill covering all Upstash SDKs. |
 | [upstash-box-js](skills/upstash-box-js/) | Sandboxed cloud containers with AI agents, shell, filesystem, and git. |
+| [upstash-box-py](skills/upstash-box-py/) | The same sandboxed cloud containers, from the Python SDK. |
+| [upstash-cli](skills/upstash-cli/) | Drive the Upstash Developer API from the terminal with the `upstash` CLI. |
 | [upstash-qstash-js](skills/upstash-qstash-js/) | Serverless messaging and scheduling via HTTP endpoints. |
 | [upstash-ratelimit-js](skills/upstash-ratelimit-js/) | Rate limiting with the Redis Rate Limit TypeScript SDK. |
 | [upstash-redis-js](skills/upstash-redis-js/) | Serverless Redis — caching, sessions, leaderboards, full-text search. |
+| [upstash-redis-start](skills/upstash-redis-start/) | Provision a zero-config, no-signup scratch Redis database for an agent. |
 | [upstash-search-js](skills/upstash-search-js/) | Full-text search quick starts, core concepts, and TypeScript SDK. |
 | [upstash-vector-js](skills/upstash-vector-js/) | Vector database features, SDK usage, and framework integrations. |
 | [upstash-workflow-js](skills/upstash-workflow-js/) | Durable workflows — define, trigger, and manage multi-step processes. |
@@ -137,7 +140,7 @@ The frontmatter and introductory text for `skills/upstash/SKILL.md` comes from `
 
 ### Updating the plugin version
 
-When making a release, bump the `version` field in `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, and `.codex-plugin/plugin.json`.
+When making a release, bump the `version` field in every manifest that carries one: `plugin.json` (the portable [Agent Plugins](https://agent-plugins.org) manifest), `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, and `.codex-plugin/plugin.json`.
 
 ## Scripts
 
