@@ -260,6 +260,10 @@ box.cd("/workspace/home/other")    # absolute path
 
 ## Git
 
+Clones land inside the box's isolated container, never on the caller's machine. Cloned
+code is data until something runs it — treat an untrusted repo as untrusted input, and
+pair it with a restrictive `network_policy` (see below) before running its build or tests.
+
 ```python
 box.git.clone(repo="github.com/org/repo", branch="main")
 box.git.clone(repo="github.com/org/repo", depth=1)  # shallow clone
@@ -444,6 +448,10 @@ box.delete_public_url(3000)
 
 Install agent skills from the Context7 registry. Format: `owner/repo/skill-name`.
 
+An installed skill becomes instructions for the box's agent, so pin skills to owners you
+trust the same way you would a dependency. Skills resolve from the registry at box
+creation, not from arbitrary URLs, and they only ever run inside the box's container.
+
 ```python
 box = Box.create(skills=["upstash/qstash-js/qstash-js"])
 
@@ -484,14 +492,16 @@ box.update_network_policy({"mode": "deny-all"})
 
 ## MCP Servers
 
-Attach MCP servers to the box agent.
+Attach MCP servers to the box agent. An attached server supplies tools the agent can call,
+so use servers you control or trust — and keep `network_policy` restrictive when the agent
+also handles untrusted input.
 
 ```python
 box = Box.create(
     agent={"harness": Agent.CLAUDE_CODE, "model": ClaudeCode.SONNET_4_5},
     mcp_servers=[
         {"name": "fs", "package": "@modelcontextprotocol/server-filesystem"},
-        {"name": "custom", "url": "https://mcp.example.com/sse", "headers": {"Authorization": "..."}},
+        {"name": "custom", "url": "<your-mcp-server-url>", "headers": {"Authorization": "..."}},
     ],
 )
 ```
