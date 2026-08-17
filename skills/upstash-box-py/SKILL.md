@@ -160,8 +160,9 @@ box.agent.run(
 ### Agent options (per harness)
 
 `options` is forwarded to the harness — the accepted keys depend on which one
-the box runs. Keys are snake_case in Python; the SDK converts them to each
-harness's backend casing.
+the box runs. Keys are snake_case in Python; the SDK converts **top-level** keys
+to each harness's backend casing (Claude Code / OpenCode → camelCase, Codex →
+snake_case). Keys inside nested dicts are sent verbatim.
 
 ```python
 # Agent.CLAUDE_CODE → ClaudeCodeAgentOptions
@@ -169,7 +170,8 @@ harness's backend casing.
     "max_turns": 20,
     "max_budget_usd": 1.0,
     "effort": "high",  # "low" | "medium" | "high" | "max"
-    "thinking": {"type": "adaptive"},  # or {"type": "enabled", "budget_tokens": 8000} / {"type": "disabled"}
+    # nested dicts are forwarded verbatim — keep `budgetTokens` camelCase here
+    "thinking": {"type": "adaptive"},  # or {"type": "enabled", "budgetTokens": 8000} / {"type": "disabled"}
     "disallowed_tools": ["Bash"],
     "agents": {"reviewer": {...}},  # custom subagent definitions
     "prompt_suggestions": False,
@@ -190,7 +192,7 @@ harness's backend casing.
     "reasoning_effort": "high",  # "low" | "medium" | "high"
     "text_verbosity": "low",  # "low" | "medium" | "high"
     "reasoning_summary": "auto",  # "auto" | "concise" | "detailed" | "none"
-    "thinking": {"type": "enabled", "budget_tokens": 8000},  # Anthropic-backed models
+    "thinking": {"type": "enabled", "budgetTokens": 8000},  # Anthropic-backed models
 }
 
 # Agent.CURSOR → free-form dict
