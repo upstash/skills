@@ -2,6 +2,9 @@
 
 Sandboxed cloud containers with built-in AI agents, shell, filesystem, git, cron schedules, and an optional headless browser.
 
+The Python SDK (`upstash-box`) mirrors this API with snake_case names — see the
+`upstash-box-py` skill for the Python spelling of everything below.
+
 ## Install & Setup
 
 ```bash
@@ -51,7 +54,8 @@ const box = await Box.create({
 })
 
 // Reconnect, list, delete, pause/resume
-const same = await Box.get(box.id)
+// Box.get / Box.getByName take { apiKey, baseUrl, gitToken, timeout, debug }
+const same = await Box.get(box.id, { gitToken: process.env.GITHUB_TOKEN })
 const byName = await Box.getByName("my-box")
 const all = await Box.list()
 const beta = await Box.list({ label: "beta" }) // filter by label
@@ -124,11 +128,14 @@ for await (const chunk of stream) {
   if (chunk.type === "reasoning") process.stdout.write(chunk.text)
   if (chunk.type === "tool-call") console.log(chunk.toolName, chunk.input)
   if (chunk.type === "tool-result") console.log(chunk.output)
-  if (chunk.type === "finish") console.log(chunk.usage, chunk.sessionId)
+  if (chunk.type === "finish") console.log(chunk.output, chunk.usage, chunk.sessionId)
   // also: { type: "start", runId } | { type: "stats", cpuNs, memoryPeakBytes } | { type: "unknown" }
 }
 stream.status // "completed" after iteration finishes
 stream.result // final output
+
+// stream() takes the same prompt/files/options/timeout/onToolUse/onToolResult as run().
+// It has no responseSchema, maxRetries, or webhook — use run() for those.
 
 // Fire-and-forget with webhook
 await box.agent.run({
@@ -136,6 +143,47 @@ await box.agent.run({
   webhook: { url: "https://example.com/hook", headers: { Authorization: "Bearer ..." } },
 })
 ```
+
+### Agent options (per harness)
+
+`options` is forwarded to the harness — the accepted keys depend on which one
+the box runs. Typing the box (`Box.create<Agent.ClaudeCode>({...})`) narrows
+`options` to that harness's shape.
+
+```ts
+// Agent.ClaudeCode → ClaudeCodeAgentOptions
+{
+  maxTurns: 20,
+  maxBudgetUsd: 1.0,
+  effort: "high",                 // "low" | "medium" | "high" | "max"
+  thinking: { type: "adaptive" }, // | { type: "enabled", budgetTokens: 8000 } | { type: "disabled" }
+  disallowedTools: ["Bash"],
+  agents: { reviewer: { /* custom subagent definition */ } },
+  promptSuggestions: false,
+  fallbackModel: "anthropic/claude-sonnet-4-5",
+  systemPrompt: "You are a release engineer.",
+}
+
+// Agent.Codex → CodexAgentOptions
+{
+  modelReasoningEffort: "high",   // "none" | "minimal" | "low" | "medium" | "high" | "xhigh"
+  modelReasoningSummary: "concise", // "auto" | "concise" | "detailed" | "none"
+  personality: "pragmatic",       // "friendly" | "pragmatic" | "none"
+  webSearch: "live",              // or true / false
+}
+
+// Agent.OpenCode → OpenCodeAgentOptions
+{
+  reasoningEffort: "high",        // "low" | "medium" | "high"
+  textVerbosity: "low",           // "low" | "medium" | "high"
+  reasoningSummary: "auto",       // "auto" | "concise" | "detailed" | "none"
+  thinking: { type: "enabled", budgetTokens: 8000 }, // Anthropic-backed models
+}
+
+// Agent.Cursor → free-form Record<string, unknown>
+```
+
+Codex keys are converted to the backend's snake_case for you — always write them camelCase.
 
 ### Harness & model
 
@@ -156,6 +204,11 @@ VercelModel.GPT_5_5      // "vercel/openai/gpt-5.5"
 // Read / change the box's harness + model at runtime
 const { harness, model } = box.modelConfig
 await box.configureModel("anthropic/claude-opus-4-8")
+
+// Which harness a bare model string implies (prefix-based)
+import { inferDefaultProvider } from "@upstash/box"
+inferDefaultProvider("openai/gpt-5.6")   // Agent.Codex
+inferDefaultProvider("cursor/default")   // Agent.Cursor
 ```
 
 ### Custom harness
@@ -169,16 +222,29 @@ const box = await Box.create({
   agent: {
     harness: Agent.Custom,
     model: "my-agent",                                  // label forwarded to the process
-    customHarness: { command: "node", args: ["/workspace/home/agent.js"] },
+    // command: name on PATH, or an absolute path under /workspace/home or /home/boxuser
+    customHarness: { command: "node", args: ["/workspace/home/agent.js"], protocol: "box-sse-v1" },
   },
 })
 await box.configureCustomHarness({ command: "node", args: ["/workspace/home/agent2.js"] })
 
-// Inside the box, agent.js emits box-sse-v1 events:
-await runCustomHarness(async ({ prompt, model, sessionId, stream }, emit) => {
+// Inside the box, agent.js emits box-sse-v1 events. The backend appends
+// `-p <prompt> --model <model> --stream` (+ `--session <id>` when resuming).
+await runCustomHarness(async ({ prompt, model, sessionId, stream, args }, emit) => {
   emit.text("working...")
-  emit.tool({ name: "Bash", input: { command: "ls" } })
-  return { output: "done", inputTokens: 10, outputTokens: 5 }
+  emit.reasoning("thinking out loud")            // -> `thinking` event
+  emit.tool({ toolCallId: "1", name: "Bash", input: { command: "ls" } })
+  emit.toolResult({ toolCallId: "1", output: "file.txt" })
+  emit.emit("custom-event", { any: "payload" })  // raw escape hatch
+  // emit.error(new Error("boom")) to fail the run
+  return {
+    output: "done",
+    inputTokens: 10,
+    outputTokens: 5,
+    cachedInputTokens: 0,
+    totalCostUsd: 0.01,
+    sessionId,
+  } // returning a plain string is shorthand for { output }
 })
 ```
 
@@ -200,7 +266,7 @@ await run.cancel()          // cancel a running run
 const logs = await run.logs() // [{ timestamp, level, message }]
 
 // Box-level history
-const entries = await box.logs({ limit: 100 }) // [{ timestamp, level, source, message }]
+const entries = await box.logs({ limit: 100, offset: 0 }) // [{ timestamp, level, source, message }]
 const runs = await box.listRuns()              // backend run records, newest first
 ```
 
@@ -298,9 +364,12 @@ const execSchedule = await box.schedule.exec({
 const agentSchedule = await box.schedule.agent({
   cron: "0 9 * * *",
   prompt: "Run the test suite and fix any failures",
+  folder: "/workspace/home/repo",       // optional cwd override
   model: "anthropic/claude-sonnet-5",   // optional override
   options: { maxBudgetUsd: 1.0, effort: "high" },
   timeout: 300_000,
+  webhookUrl: "https://example.com/hook",
+  webhookHeaders: { Authorization: "Bearer ..." },
 })
 
 const schedules = await box.schedule.list()
@@ -308,6 +377,7 @@ const one = await box.schedule.get(agentSchedule.id)
 
 // Partial update — omitted fields keep their value, "" / [] / {} clear a field,
 // `options: null` clears agent options. The schedule's type cannot change.
+// Updatable: cron, command, prompt, folder, model, options, timeout, webhookUrl, webhookHeaders
 await box.schedule.update(agentSchedule.id, { cron: "0 18 * * *", webhookUrl: "" })
 
 await box.schedule.pause(agentSchedule.id)
@@ -322,7 +392,17 @@ await box.schedule.delete(agentSchedule.id)
 const snap = await box.snapshot({ name: "after-setup" })
 // snap: { id, name, box_id, size_bytes, status, created_at }
 
-const restored = await Box.fromSnapshot(snap.id, { size: "medium", keepAlive: true })
+// fromSnapshot takes a BoxConfig: name, labels, size, keepAlive, initCommand, runtime,
+// agent, git, env, attachHeaders, networkPolicy. It does NOT send `browser`, `skills`,
+// or `mcpServers` (the Python SDK does) — add skills with box.skills.add() afterwards,
+// and use Box.create({ browser: true }) when you need Chromium.
+const restored = await Box.fromSnapshot(snap.id, {
+  size: "medium",
+  keepAlive: true,
+  // git identity is forwarded, not just the token
+  git: { token: process.env.GITHUB_TOKEN, userName: "Bot", userEmail: "bot@example.com" },
+  env: { DATABASE_URL: "..." },
+})
 const snaps = await box.listSnapshots()
 await box.deleteSnapshot(snap.id)
 ```
@@ -345,6 +425,7 @@ const box = await Box.create({
 const tab = await box.browser.tab.create("https://example.com", { waitUntil: "load", timeout: 30_000 })
 const tabs = await box.browser.listTabs()
 const again = box.browser.getTab(tab.id) // no network call
+tab.id; tab.url; tab.title                // handle metadata, no network call
 
 // Page operations
 const content = await tab.goto("https://news.ycombinator.com") // { title, url, text, links }
@@ -352,30 +433,49 @@ const current = await tab.content()
 const png = await tab.screenshot()                                  // Uint8Array
 const b64 = await tab.screenshot({ type: "base64", fullPage: true })
 
-// AI operations (metered)
+// AI operations (metered) — extract/observe/act take an optional { model } override,
+// defaulting to the box's model (or anthropic/claude-sonnet-4-5 when it has none)
 const data = await tab.extract(
   "Top story title and points",
   z.object({ title: z.string(), points: z.number() }),
+  { model: "anthropic/claude-sonnet-4-5" },
 )
-const { elements } = await tab.observe("What can I click?")
-const acted = await tab.act("Click the first headline") // { success, message, actions, inputTokens, ... }
+const { elements } = await tab.observe("What can I click?", { model: "openai/gpt-5.6" })
+const acted = await tab.act("Click the first headline")
+// acted: { success, message, actionDescription, actions, cacheStatus?, inputTokens, outputTokens }
 const result = await tab.run("Find the top comment and summarize it", {
   maxSteps: 10,                       // default 15, max 30
   schema: z.object({ summary: z.string() }),
   model: "anthropic/claude-sonnet-4-5",
 })
-result.data; result.result; result.completed; result.steps
+result.data; result.result; result.completed; result.steps; result.stepCount
+result.inputTokens; result.outputTokens
 
 // Live view + raw CDP
 const liveUrl = await tab.liveViewUrl()      // view-only screencast page/iframe
-const cdpUrl = await box.browser.cdpUrl()    // Playwright / Puppeteer / Stagehand
+const cdpUrl = await box.browser.cdpUrl()    // wss://…?token=… — no extra auth wiring
 await tab.close()
 
-// Session recordings (HLS playback URL + MP4 download, chapter markers)
+// Drive the same browser from Playwright / Puppeteer / Stagehand
+import { chromium } from "playwright-core"
+const remote = await chromium.connectOverCDP(cdpUrl)
+const context = remote.contexts()[0] ?? (await remote.newContext())
+const page = context.pages()[0] ?? (await context.newPage())
+await page.goto("https://example.com")
+// Stagehand: new Stagehand({ env: "LOCAL", localBrowserLaunchOptions: { cdpUrl } })
+
+// Session recordings (HLS playback URL + MP4 download, chapter markers).
+// One active recording per box; captures all tabs and follows the foreground.
+// Auto-stops after maxDurationSeconds or ~3 minutes of no on-screen activity.
 const handle = await box.browser.recordings.start({ maxDurationSeconds: 600 }) // default & max 600
 const recording = await handle.stop()
+// or stop whatever is recording on the box, without a handle:
+// const recording = await box.browser.recordings.stop()
 // recording: { id, boxId, status, startedAt, endedAt, durationMs, sizeBytes, mp4SizeBytes,
-//              segmentCount, markers, stoppedReason, expiresAt, playlistUrl }
+//              segmentCount, markers, stoppedReason, maxDurationSeconds, expiresAt, playlistUrl }
+// markers: { type: "tab_switch" | "run", atMs, endMs?, label?, tabId? }
+// expiresAt is epoch ms (videos retained 14 days); playlistUrl is API-served — fetch it
+// with an `X-Box-Api-Key: <apiKey>` header (hls.js / Safari / ffplay).
 const all = await box.browser.recordings.list()
 const one = await box.browser.recordings.get(recording.id)
 
@@ -393,12 +493,17 @@ Lightweight, short-lived boxes (max 3 days). Supports `exec`, `files`, `schedule
 import { EphemeralBox } from "@upstash/box"
 
 const ebox = await EphemeralBox.create({
+  name: "scratch-box",
   runtime: "python",
   size: "small",
   ttl: 3600,  // seconds, max 259200 (3 days), default 259200
   env: { API_KEY: "..." },
   labels: ["scratch"], // settable at create time; filter via Box.list({ label })
+  networkPolicy: { mode: "deny-all" },
+  attachHeaders: { "api.stripe.com": { Authorization: "Bearer sk_live_..." } },
 })
+
+ebox.networkPolicy
 
 ebox.expiresAt // unix timestamp when auto-deleted
 await ebox.exec.command("python -c 'print(1+1)'")
@@ -407,10 +512,17 @@ await ebox.files.write({ path: "/workspace/home/data.json", content: "{}" })
 await ebox.schedule.exec({ cron: "* * * * *", command: ["bash", "-c", "date"] })
 await ebox.cd("subdir")
 const snap = await ebox.snapshot({ name: "checkpoint" })
+await ebox.listSnapshots()
+await ebox.deleteSnapshot(snap.id)
+const { status } = await ebox.getStatus()
 await ebox.delete()
 
 // Restore from snapshot
 const ebox2 = await EphemeralBox.fromSnapshot(snap.id, { ttl: 7200 })
+
+// Statics: EphemeralBox.delete({ boxIds }) and EphemeralBox.deleteSnapshots() are the
+// Box ones. EphemeralBox.getByName() is Box.get — it returns a full `Box`, not an
+// `EphemeralBox` (quirk mirrored in the Python SDK).
 ```
 
 ## Public URLs
@@ -461,7 +573,13 @@ const prodBoxes = await Box.list({ label: "prod" })
 ```ts
 const box = await Box.create({
   // mode: "allow-all" (default) | "deny-all" | "custom"
-  networkPolicy: { mode: "custom", allowedDomains: ["api.example.com"], deniedCidrs: ["10.0.0.0/8"] },
+  // custom takes any of allowedDomains / allowedCidrs / deniedCidrs
+  networkPolicy: {
+    mode: "custom",
+    allowedDomains: ["api.example.com"],
+    allowedCidrs: ["203.0.113.0/24"],
+    deniedCidrs: ["10.0.0.0/8"],
+  },
 
   // Inject secret headers into matching outbound HTTPS requests (write-only, never read back)
   attachHeaders: {
@@ -522,6 +640,7 @@ ssh <box-id>@us-east-1.box.upstash.com
 - `getInitCommand` / `setInitCommand` / `deleteInitCommand` throw unless the box was created with `keepAlive: true`
 - `box.delete()` is irreversible — snapshot first if you need the state
 - Git operations require `git.token` in `BoxConfig` for private repos and PRs
-- `Box.fromSnapshot()` creates a new box — it does not modify the original
+- `Box.fromSnapshot()` creates a new box — it does not modify the original, and it does not forward `browser`, `skills`, or `mcpServers` from the config you pass
+- `EphemeralBox` has no `updateNetworkPolicy` — set `networkPolicy` at create time
 - `responseSchema` and browser `schema` need `zod` installed (peer dependency, v3 or v4)
 - All `timeout` values are milliseconds
