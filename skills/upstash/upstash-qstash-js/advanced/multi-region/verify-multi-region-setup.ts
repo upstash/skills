@@ -11,13 +11,13 @@
  * - Whether all required environment variables are present
  *
  * Usage:
- *   npx tsx skills/advanced/scripts/verify-multi-region-setup.ts
+ *   npx tsx advanced/multi-region/verify-multi-region-setup.ts
  *   # or with node
- *   node skills/advanced/scripts/verify-multi-region-setup.js
+ *   node advanced/multi-region/verify-multi-region-setup.js
  *
  * To load from .env file, install dotenv first:
  *   npm install dotenv
- *   npx tsx -r dotenv/config skills/advanced/scripts/verify-multi-region-setup.ts
+ *   npx tsx -r dotenv/config advanced/multi-region/verify-multi-region-setup.ts
  */
 
 // // Try to load dotenv if available
@@ -373,8 +373,8 @@ function printSummary(result: VerificationResult): void {
       console.log("  QSTASH_URL=https://qstash.upstash.io");
     }
   }
-  console.log("  Multi-Region: skills/advanced/multi-region.md");
-  console.log("  Verification: skills/verification/receiver.md");
+  console.log("  Multi-Region: advanced/multi-region/summary.md");
+  console.log("  Verification: verification/receiver.md");
   console.log("");
 }
 

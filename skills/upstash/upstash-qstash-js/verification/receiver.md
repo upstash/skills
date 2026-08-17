@@ -35,7 +35,7 @@ const receiver = new Receiver({
 
 If you're using multi-region QStash (with `QSTASH_REGION` environment variable set), signature verification requires additional configuration. The SDK automatically detects the region from the `upstash-region` header and uses region-specific signing keys.
 
-> **Important:** Multi-region signature verification requires careful setup. See [Multi-Region Setup](../advanced/multi-region.md) for complete details on environment variables, region detection, and verification strategies.
+> **Important:** Multi-region signature verification requires careful setup. See [Multi-Region Setup](../advanced/multi-region/summary.md) for complete details on environment variables, region detection, and verification strategies.
 
 ## Verifying Incoming Requests
 
@@ -86,7 +86,7 @@ QStash sends these headers with every request:
 
 - `Upstash-Signature`: JWT signature to verify
 
-> **Note:** In multi-region mode, QStash also sends an `Upstash-Region` header. See [Multi-Region Setup](../advanced/multi-region.md) for details.
+> **Note:** In multi-region mode, QStash also sends an `Upstash-Region` header. See [Multi-Region Setup](../advanced/multi-region/summary.md) for details.
 
 ## Handling Verification Failures
 

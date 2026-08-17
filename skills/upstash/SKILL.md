@@ -1,6 +1,6 @@
 ---
 name: upstash
-description: Work with any Upstash TypeScript/JavaScript SDK including Redis, Box, QStash, Workflow, Vector, Search and Ratelimit. Use when the user is working with any Upstash product or SDK.
+description: Work with any Upstash SDK or tool including Redis, Box (TypeScript/JavaScript and Python), QStash, Workflow, Vector, Search, Ratelimit and the Upstash CLI. Use when the user is working with any Upstash product or SDK.
 ---
 
 # Upstash Skills

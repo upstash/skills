@@ -289,7 +289,7 @@ await receiver.verify({
 Use the verification script to confirm your env variable setup:
 
 ```bash
-npx tsx skills/advanced/multi-region/verify-multi-region-setup.ts
+npx tsx advanced/multi-region/verify-multi-region-setup.ts
 ```
 
 ## Troubleshooting
@@ -365,11 +365,11 @@ Use the provided script to verify your environment setup:
 
 ```bash
 # Option 1: Using bun (automatically loads .env)
-bun run skills/advanced/multi-region/verify-multi-region-setup.ts
+bun run advanced/multi-region/verify-multi-region-setup.ts
 
 # Option 2: Using tsx with dotenv
 npm install dotenv
-npx tsx -r dotenv/config skills/advanced/multi-region/verify-multi-region-setup.ts
+npx tsx -r dotenv/config advanced/multi-region/verify-multi-region-setup.ts
 ```
 
 The script checks:
@@ -379,10 +379,10 @@ The script checks:
 - Whether all required environment variables are present
 - If there are any configuration issues
 
-See [multi-region/verify-multi-region-setup.ts](multi-region/verify-multi-region-setup.ts) for implementation details.
+See [verify-multi-region-setup.ts](verify-multi-region-setup.ts) for implementation details.
 
 ## Related Documentation
 
-- [Receiver Verification](../verification/receiver.md) - Basic signature verification
-- [Client Setup](../fundamentals/client-setup.md) - Client initialization
-- [Platform-Specific Verification](../verification/platform-specific/) - Framework-specific guides
+- [Receiver Verification](../../verification/receiver.md) - Basic signature verification
+- [Publishing Messages](../../fundamentals/publishing-messages.md) - Client initialization and publishing
+- [Platform-Specific Verification](../../verification/platform-specific/nextjs.md) - Framework-specific guides
