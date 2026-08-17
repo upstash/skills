@@ -166,6 +166,6 @@ if (!process.env.QSTASH_CURRENT_SIGNING_KEY) {
 ## Related Resources
 
 - [General Receiver Documentation](../receiver.md)
-- [Multi-Region Setup](../../advanced/multi-region.md)
+- [Multi-Region Setup](../../advanced/multi-region/summary.md)
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Vercel Deployment](https://vercel.com/docs)
