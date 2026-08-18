@@ -136,7 +136,7 @@ Add to `.cursor/mcp.json`:
 
 This repo ships a Zed MCP extension in [`zed-extension/`](zed-extension/). Once it is accepted
 into the [Zed extension registry](https://github.com/zed-industries/extensions), install
-**Upstash MCP Server** from **Settings → AI → MCP Servers → Add Server → Install from
+**Upstash Redis MCP Server** from **Settings → AI → MCP Servers → Add Server → Install from
 Extensions**, and Zed will prompt for `upstash_email` and `upstash_api_key`. Until then, install
 it as a dev extension (`zed: install dev extension`, then pick the `zed-extension/` directory).
 

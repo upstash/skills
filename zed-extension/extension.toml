@@ -1,10 +1,10 @@
 id = "mcp-server-upstash"
-name = "Upstash MCP Server"
-description = "Model Context Protocol server for Upstash — manage and debug Redis, QStash, Workflow, and Box resources."
+name = "Upstash Redis MCP Server"
+description = "Create and manage Upstash Redis databases and run Redis commands against them, with usage statistics, backups, and logs. Also covers QStash, Workflow, and Box."
 version = "0.1.0"
 schema_version = 1
 authors = ["Upstash <support@upstash.com>"]
 repository = "https://github.com/upstash/skills"
 
 [context_servers.mcp-server-upstash]
-name = "Upstash MCP Server"
+name = "Upstash Redis MCP Server"
