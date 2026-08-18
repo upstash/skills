@@ -198,6 +198,9 @@ cargo build --release --target wasm32-wasip2
 ```
 
 Test a local build with `zed: install dev extension` and point Zed at `zed-extension/`.
+Open Zed on a folder while testing — context servers are project-scoped, so with no project
+open (or one whose worktree fails to open) the server never starts and the panel sits on
+"Connecting Server..." until Zed's 60s timeout.
 
 To publish or update it, open a PR against
 [`zed-industries/extensions`](https://github.com/zed-industries/extensions) that adds this repo
