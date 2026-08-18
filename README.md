@@ -48,6 +48,23 @@ codex plugin marketplace add upstash/skills
 codex plugin add upstash@upstash
 ```
 
+### Zed
+
+Zed loads [Agent Skills](https://zed.dev/docs/ai/skills) from `.agents/skills/` in a project
+and `~/.agents/skills/` globally, which is exactly where the Agent Skills CLI writes them:
+
+```bash
+# Available in every project
+npx skills add upstash/skills --agent zed --global
+
+# Or just this project
+npx skills add upstash/skills --agent zed
+```
+
+The skills then show up in Zed's Agent Panel, and the agent can load them on its own or via
+`/upstash`. Zed's extension marketplace carries languages, themes, debuggers, snippets, and MCP
+servers — it has no channel for skills — so there is no Zed extension to install.
+
 ### Context7 CLI
 
 ```bash
@@ -103,6 +120,25 @@ Add to `.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
+    "upstash": {
+      "command": "npx",
+      "args": ["-y", "@upstash/mcp-server@latest", "--email", "YOUR_EMAIL", "--api-key", "YOUR_API_KEY"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>Zed</summary>
+
+Add to your Zed settings (`zed: open settings file`), or use **Settings → AI → MCP Servers →
+Add Server → Add Local Server**:
+
+```json
+{
+  "context_servers": {
     "upstash": {
       "command": "npx",
       "args": ["-y", "@upstash/mcp-server@latest", "--email", "YOUR_EMAIL", "--api-key", "YOUR_API_KEY"]
