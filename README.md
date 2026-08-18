@@ -48,6 +48,24 @@ codex plugin marketplace add upstash/skills
 codex plugin add upstash@upstash
 ```
 
+### Zed
+
+Zed loads [Agent Skills](https://zed.dev/docs/ai/skills) from `.agents/skills/` in a project
+and `~/.agents/skills/` globally, which is exactly where the Agent Skills CLI writes them:
+
+```bash
+# Available in every project
+npx skills add upstash/skills --agent zed --global
+
+# Or just this project
+npx skills add upstash/skills --agent zed
+```
+
+The skills then show up in Zed's Agent Panel, and the agent can load them on its own or via
+`/upstash`. Zed's extension marketplace carries languages, themes, debuggers, snippets, and MCP
+servers, but has no channel for skills, so the CLI is the only way to install them. The Zed
+extension in `zed-extension/` covers the [MCP server](#mcp-server) instead.
+
 ### Context7 CLI
 
 ```bash
@@ -114,6 +132,31 @@ Add to `.cursor/mcp.json`:
 </details>
 
 <details>
+<summary>Zed</summary>
+
+This repo ships a Zed MCP extension in [`zed-extension/`](zed-extension/). Once it is accepted
+into the [Zed extension registry](https://github.com/zed-industries/extensions), install
+**Upstash MCP Server** from **Settings → AI → MCP Servers → Add Server → Install from
+Extensions**, and Zed will prompt for `upstash_email` and `upstash_api_key`. Until then, install
+it as a dev extension (`zed: install dev extension`, then pick the `zed-extension/` directory).
+
+To skip the extension entirely, add the server to your Zed settings by hand
+(`zed: open settings file`):
+
+```json
+{
+  "context_servers": {
+    "upstash": {
+      "command": "npx",
+      "args": ["-y", "@upstash/mcp-server@latest", "--email", "YOUR_EMAIL", "--api-key", "YOUR_API_KEY"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
 <summary>DeepSeek Harness</summary>
 
 Already included in the bundle — see [DeepSeek Harness](#deepseek-harness) above.
@@ -141,6 +184,40 @@ The frontmatter and introductory text for `skills/upstash/SKILL.md` comes from `
 ### Updating the plugin version
 
 When making a release, bump the `version` field in every manifest that carries one: `plugin.json` (the portable [Agent Plugins](https://agent-plugins.org) manifest), `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, and `.codex-plugin/plugin.json`.
+
+### The Zed extension
+
+`zed-extension/` is a Zed MCP server extension that runs [`@upstash/mcp-server`](#mcp-server).
+It is a Rust crate compiled to WebAssembly, and it is only about the MCP server — Zed extensions
+cannot carry skills.
+
+```bash
+cd zed-extension
+rustup target add wasm32-wasip2   # once
+cargo build --release --target wasm32-wasip2
+```
+
+Test a local build with `zed: install dev extension` and point Zed at `zed-extension/`.
+
+To publish or update it, open a PR against
+[`zed-industries/extensions`](https://github.com/zed-industries/extensions) that adds this repo
+as a submodule under `extensions/mcp-server-upstash` and an entry in `extensions.toml`:
+
+```toml
+[mcp-server-upstash]
+submodule = "extensions/mcp-server-upstash"
+path = "zed-extension"
+version = "0.1.0"
+```
+
+The `version` there has to match `version` in `zed-extension/extension.toml`, so bump both
+together. `zed-extension/LICENSE` is a symlink to the repo's MIT license — Zed requires a
+license at the extension path, not just at the repo root, and rejects the PR in CI without one.
+
+> Zed [plans to deprecate MCP server extensions](https://zed.dev/docs/extensions/mcp-extensions)
+> in favor of the official MCP registry. If that lands, publishing `@upstash/mcp-server` to
+> [registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io/) replaces this
+> extension.
 
 ## Scripts
 

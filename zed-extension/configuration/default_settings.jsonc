@@ -1,0 +1,8 @@
+{
+  /// The email address of your Upstash account
+  "upstash_email": "YOUR_EMAIL",
+  /// An API key from Upstash Console → Account → API Keys
+  "upstash_api_key": "YOUR_API_KEY"
+  /// Optional: a Box API key, for the Upstash Box tools
+  // "upstash_box_api_key": "YOUR_BOX_API_KEY"
+}
