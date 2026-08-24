@@ -207,11 +207,12 @@ Unlike the JS generic `AgentOptions<TProvider>`, Python does not narrow
 `CursorModel`, `OpenRouterModel`, `VercelModel` — or any provider-prefixed string.
 
 ```python
-from upstash_box import ClaudeCode, OpenAICodex, CursorModel, OpenRouterModel, VercelModel
+from upstash_box import ClaudeCode, OpenAICodex, OpenCodeModel, CursorModel, OpenRouterModel, VercelModel
 
 ClaudeCode.OPUS_5  # "anthropic/claude-opus-5"
 ClaudeCode.SONNET_5  # "anthropic/claude-sonnet-5"
 OpenAICodex.GPT_5_6  # "openai/gpt-5.6"
+OpenCodeModel.CLAUDE_OPUS_5  # "opencode/claude-opus-5"
 CursorModel.COMPOSER_2_5  # "cursor/composer-2.5"
 OpenRouterModel.CLAUDE_OPUS_5  # "openrouter/anthropic/claude-opus-5"
 VercelModel.GPT_5_5  # "vercel/openai/gpt-5.5"
@@ -436,7 +437,8 @@ box.delete_snapshot(snap.id)
 
 Create the box with `browser=True` to drive a headless Chromium. Tab management
 lives on `box.browser`; every page operation lives on the tab handle.
-`extract` / `observe` / `act` / `run` are AI-powered and metered.
+`extract` / `observe` / `act(instruction)` are AI-powered and metered;
+`act(action)` replays an already-resolved action with no LLM call and no tokens.
 
 ```python
 from pydantic import BaseModel
@@ -463,22 +465,20 @@ class Story(BaseModel):
     points: int
 
 data = tab.extract("Top story title and points", Story, model="anthropic/claude-sonnet-4-5")
+
+# observe → actionable elements, each carrying a replayable method + arguments
 elements = tab.observe("What can I click?", model="openai/gpt-5.6").elements
+# elements: [BrowserObserveElement(description, selector, url, method, arguments)]
+
 acted = tab.act("Click the first headline")
 # BrowserActResult(success, message, action_description, actions, cache_status,
 #                  input_tokens, output_tokens)
 
-class Summary(BaseModel):
-    summary: str
-
-result = tab.run(
-    "Find the top comment and summarize it",
-    schema=Summary,
-    max_steps=10,  # default 15, max 30
-    model="anthropic/claude-sonnet-4-5",
-)
-result.data, result.result, result.completed, result.steps
-result.step_count, result.input_tokens, result.output_tokens
+# Replay a pre-resolved action — no LLM call, no tokens, no model provider key.
+# Pass a BrowserObserveElement or BrowserActAction instead of a string; `model` is
+# ignored in this form, and an action without a `selector` raises BoxError.
+tab.act(elements[0])
+tab.act(acted.actions[0])
 
 # Live view + raw CDP
 live_url = tab.live_view_url()  # view-only screencast page/iframe
@@ -504,7 +504,7 @@ recording = handle.stop()
 # BrowserRecording(id, box_id, status, started_at, ended_at, duration_ms, size_bytes,
 #                  mp4_size_bytes, segment_count, markers, stopped_reason,
 #                  max_duration_seconds, expires_at, playlist_url)
-# markers: BrowserRecordingMarker(type="tab_switch"|"run", at_ms, end_ms, label, tab_id)
+# markers: BrowserRecordingMarker(type="tab_switch", at_ms, end_ms, label, tab_id)
 # expires_at is epoch ms (videos retained 14 days); playlist_url is API-served — fetch it
 # with an `X-Box-Api-Key: <api_key>` header (hls.js / Safari / ffplay).
 all_recordings = box.browser.recordings.list()
@@ -515,6 +515,39 @@ one_recording = box.browser.recordings.get(recording.id)
 file = box.browser.recordings.download(recording.id)
 box.browser.recordings.download(recording.id, path="./out/demo.mp4")
 ```
+
+### Multi-step browser goals
+
+`tab.run()` — the autonomous multi-step browser agent — was **removed**, along with
+the `BrowserRunResult` / `BrowserRunStep` types (Stagehand v4 dropped the underlying
+agent primitive). The browser now exposes `observe`, `act`, and `extract` only.
+Three replacements:
+
+**1. Drive your own loop** — resolve steps once with `observe`, then replay them
+with `act(action)` so the model stays out of the hot path; `extract` is the stop check.
+
+```python
+class Product(BaseModel):
+    title: str
+    price: str
+
+elements = tab.observe("the product links in the listing").elements
+actions = [e for e in elements if e.selector]
+
+for action in actions[:5]:
+    tab.goto(START)   # deterministic reset, no browser-AI tokens
+    tab.act(action)   # replay the resolved click: no LLM, no tokens
+    item = tab.extract("title and price", Product)
+```
+
+**2. Hand the goal to the in-box agent** — `browser=True` auto-wires the
+chrome-devtools MCP (Chromium already warmed on 127.0.0.1:9222) into the box's
+coding agent, so `box.agent.run(prompt=...)` drives the browser itself and iterates
+until done. No `tab.create()` needed first. This bills coding-agent model tokens
+rather than browser-AI metering, and needs an agent harness + key.
+
+**3. Connect over CDP** with Playwright via `box.browser.cdp_url()` when the flow is
+fully deterministic.
 
 ## EphemeralBox
 
@@ -695,6 +728,8 @@ asyncio.run(main())
 - `run.result` is stdout on success and stderr on failure — a command that exits 0 writing only to stderr yields `""`; read `run.stderr` for it.
 - `files.download(folder=...)` takes a path *inside the box*; output lands in `./<basename>` locally.
 - `box.browser` requires a box created with `browser=True`.
+- There is **no** `tab.run()` — the autonomous browser agent was removed. Loop `observe` + `act(action)` + `extract` yourself, hand the goal to the in-box agent, or drive Playwright over `cdp_url()`.
+- `tab.act(action)` (replaying an `observe()` result) costs no tokens and needs no model provider key; only `act(instruction)` with a string is metered.
 - `get_init_command` / `set_init_command` / `delete_init_command` raise unless the box was created with `keep_alive=True`.
 - The JS static `Box.delete({boxIds})` is `Box.delete_boxes(box_ids=...)` here, to avoid clashing with the instance `delete()`.
 - `box.delete()` is irreversible — snapshot first if you need the state.
