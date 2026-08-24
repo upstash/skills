@@ -192,11 +192,12 @@ enums: `ClaudeCode`, `OpenAICodex`, `OpenCodeModel`, `CursorModel`,
 `OpenRouterModel`, `VercelModel` — or any plain provider-prefixed string.
 
 ```ts
-import { ClaudeCode, OpenAICodex, CursorModel, OpenRouterModel, VercelModel } from "@upstash/box"
+import { ClaudeCode, OpenAICodex, OpenCodeModel, CursorModel, OpenRouterModel, VercelModel } from "@upstash/box"
 
 ClaudeCode.Opus_5        // "anthropic/claude-opus-5"
 ClaudeCode.Sonnet_5      // "anthropic/claude-sonnet-5"
 OpenAICodex.GPT_5_6      // "openai/gpt-5.6"
+OpenCodeModel.Claude_Opus_5   // "opencode/claude-opus-5"
 CursorModel.Composer_2_5 // "cursor/composer-2.5"
 OpenRouterModel.Claude_Opus_5 // "openrouter/anthropic/claude-opus-5"
 VercelModel.GPT_5_5      // "vercel/openai/gpt-5.5"
@@ -411,7 +412,8 @@ await box.deleteSnapshot(snap.id)
 
 Create the box with `browser: true` to drive a headless Chromium. Tab management
 lives on `box.browser`; every page operation lives on the `Tab` handle.
-`extract` / `observe` / `act` / `run` are AI-powered and metered.
+`extract` / `observe` / `act(instruction)` are AI-powered and metered;
+`act(action)` replays an already-resolved action with no LLM call and no tokens.
 
 ```ts
 import { z } from "zod"
@@ -440,16 +442,18 @@ const data = await tab.extract(
   z.object({ title: z.string(), points: z.number() }),
   { model: "anthropic/claude-sonnet-4-5" },
 )
+// observe → actionable elements, each carrying a replayable method + arguments
 const { elements } = await tab.observe("What can I click?", { model: "openai/gpt-5.6" })
+// elements: [{ description, selector?, url?, method?, arguments? }]
+
 const acted = await tab.act("Click the first headline")
 // acted: { success, message, actionDescription, actions, cacheStatus?, inputTokens, outputTokens }
-const result = await tab.run("Find the top comment and summarize it", {
-  maxSteps: 10,                       // default 15, max 30
-  schema: z.object({ summary: z.string() }),
-  model: "anthropic/claude-sonnet-4-5",
-})
-result.data; result.result; result.completed; result.steps; result.stepCount
-result.inputTokens; result.outputTokens
+
+// Replay a pre-resolved action — no LLM call, no tokens, no model provider key.
+// Takes a BrowserAction (= BrowserObserveElement | BrowserActAction); `model` is
+// ignored in this form, and an action without a `selector` throws.
+await tab.act(elements[0])
+await tab.act(acted.actions[0])
 
 // Live view + raw CDP
 const liveUrl = await tab.liveViewUrl()      // view-only screencast page/iframe
@@ -473,7 +477,7 @@ const recording = await handle.stop()
 // const recording = await box.browser.recordings.stop()
 // recording: { id, boxId, status, startedAt, endedAt, durationMs, sizeBytes, mp4SizeBytes,
 //              segmentCount, markers, stoppedReason, maxDurationSeconds, expiresAt, playlistUrl }
-// markers: { type: "tab_switch" | "run", atMs, endMs?, label?, tabId? }
+// markers: { type: "tab_switch", atMs, endMs?, label?, tabId? }
 // expiresAt is epoch ms (videos retained 14 days); playlistUrl is API-served — fetch it
 // with an `X-Box-Api-Key: <apiKey>` header (hls.js / Safari / ffplay).
 const all = await box.browser.recordings.list()
@@ -484,6 +488,36 @@ const one = await box.browser.recordings.get(recording.id)
 const file = await box.browser.recordings.download(recording.id)
 await box.browser.recordings.download(recording.id, { path: "./out/demo.mp4" })
 ```
+
+### Multi-step browser goals
+
+`tab.run()` — the autonomous multi-step browser agent — was **removed in 0.7.0**,
+along with the `BrowserRunOptions` / `BrowserRunResult` / `BrowserRunStep` types
+(Stagehand v4 dropped the underlying agent primitive). The DOM-aware browser now
+exposes `observe`, `act`, and `extract` only. Three replacements:
+
+**1. Drive your own loop** — resolve steps once with `observe`, then replay them
+with `act(action)` so the model stays out of the hot path; `extract` is the stop check.
+
+```ts
+const { elements } = await tab.observe("the product links in the listing")
+const actions = elements.filter((e) => e.selector)
+
+for (const action of actions.slice(0, 5)) {
+  await tab.goto(START) // deterministic reset, no browser-AI tokens
+  await tab.act(action) // replay the resolved click: no LLM, no tokens
+  const item = await tab.extract("title and price", z.object({ title: z.string() }))
+}
+```
+
+**2. Hand the goal to the in-box agent** — `browser: true` auto-wires the
+chrome-devtools MCP (Chromium already warmed on 127.0.0.1:9222) into the box's
+coding agent, so `box.agent.run({ prompt })` drives the browser itself and iterates
+until done. No `tab.create()` needed first. This bills coding-agent model tokens
+rather than browser-AI metering, and needs an agent harness + key.
+
+**3. Connect over CDP** with Playwright / Puppeteer via `box.browser.cdpUrl()` when
+the flow is fully deterministic.
 
 ## EphemeralBox
 
@@ -637,6 +671,8 @@ ssh <box-id>@us-east-1.box.upstash.com
 - `run.result` is stdout on success and stderr on failure — a command that exits 0 writing only to stderr yields `""`; read `run.stderr` for it
 - `files.download({ folder })` takes a path *inside the box*; output lands in `./<basename>` locally
 - `box.browser` requires a box created with `browser: true`
+- There is **no** `tab.run()` — the autonomous browser agent was removed in 0.7.0. Loop `observe` + `act(action)` + `extract` yourself, hand the goal to the in-box agent, or drive Playwright over `cdpUrl()`
+- `tab.act(action)` (replaying an `observe()` result) costs no tokens and needs no model provider key; only `act(instruction)` with a string is metered
 - `getInitCommand` / `setInitCommand` / `deleteInitCommand` throw unless the box was created with `keepAlive: true`
 - `box.delete()` is irreversible — snapshot first if you need the state
 - Git operations require `git.token` in `BoxConfig` for private repos and PRs
