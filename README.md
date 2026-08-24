@@ -2,7 +2,7 @@
 
 A collection of skills for AI coding agents working with Upstash SDKs. Skills are packaged instructions and resources that extend agent capabilities.
 
-This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), a [Cursor plugin](https://cursor.com/docs/plugins), an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build), and a [DeepSeek Harness bundle](https://github.com/deepseek-ai/deepseek-harness).
+This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), a [Cursor plugin](https://cursor.com/docs/plugins), an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build), and a [DeepSeek Harness bundle](https://github.com/deepseek-ai/deepseek-harness). It also installs into [OpenCode](#opencode), [Zed](#zed), and any other Agent Skills-compatible client with `npx skills add`.
 
 ## Available Skills
 
@@ -47,6 +47,24 @@ codex plugin marketplace add upstash/skills
 # Install the plugin
 codex plugin add upstash@upstash
 ```
+
+### OpenCode
+
+OpenCode loads [Agent Skills](https://opencode.ai/docs/skills) from `.agents/skills/` in a project
+and `~/.config/opencode/skills/` globally, which is where the Agent Skills CLI writes them for
+OpenCode:
+
+```bash
+# Available in every project
+npx skills add upstash/skills --agent opencode --global
+
+# Or just this project
+npx skills add upstash/skills --agent opencode
+```
+
+OpenCode exposes the installed skills to the agent through its native `skill` tool, so the
+agent loads only the sub-skill relevant to the task at hand. For live access to your account
+(create databases, inspect QStash logs, and so on), add the [MCP server](#mcp-server) as well.
 
 ### Zed
 
@@ -124,6 +142,27 @@ Add to `.cursor/mcp.json`:
     "upstash": {
       "command": "npx",
       "args": ["-y", "@upstash/mcp-server@latest", "--email", "YOUR_EMAIL", "--api-key", "YOUR_API_KEY"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>OpenCode</summary>
+
+Add to `opencode.json` in your project, or to `~/.config/opencode/opencode.json` to make it
+available everywhere. See the [OpenCode MCP docs](https://opencode.ai/docs/mcp-servers) for more info.
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "upstash": {
+      "type": "local",
+      "command": ["npx", "-y", "@upstash/mcp-server@latest", "--email", "YOUR_EMAIL", "--api-key", "YOUR_API_KEY"],
+      "enabled": true
     }
   }
 }
