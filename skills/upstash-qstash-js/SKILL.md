@@ -1,6 +1,10 @@
 ---
 name: upstash-qstash-js
 description: Work with the QStash TypeScript/JavaScript SDK for serverless messaging, scheduling. Use when publishing messages to HTTP endpoints, creating schedules, managing queues, verifying incoming messages and other QStash features in serverless environments.
+license: MIT
+metadata:
+  author: upstash
+  version: "1.0.0"
 ---
 
 # QStash JavaScript SDK

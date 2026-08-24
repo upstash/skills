@@ -1,6 +1,10 @@
 ---
 name: upstash-vector-js
 description: Skills for Upstash Vector features, TypeScript/JavaScript SDK usage, and integrations. Use when users ask how to work with Vector, its TS SDK, features, or supported frameworks.
+license: MIT
+metadata:
+  author: upstash
+  version: "1.0.0"
 ---
 
 # Vector Documentation Skill

@@ -1,6 +1,10 @@
 ---
 name: upstash-redis-js
 description: Work with the Upstash Redis TypeScript/JavaScript SDK for serverless Redis operations. Use for caching, session storage, rate limiting, leaderboards, full-text search (querying, filtering, aggregating) with Upstash Redis Search (different from regular FT.SEARCH), and all Redis data structures. Supports automatic serialization/deserialization of JavaScript types. Upstash Redis Search also available via @upstash/search-redis and @upstash/search-ioredis adapters for TCP clients.
+license: MIT
+metadata:
+  author: upstash
+  version: "1.0.0"
 ---
 
 # Upstash Redis SDK - Complete Skills Guide

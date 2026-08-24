@@ -1,6 +1,10 @@
 ---
 name: upstash-search-js
 description: Skills covering Upstash Search quick starts, core concepts, and TypeScript/JavaScript SDK usage. Use when a user asks how to get started, how indexing works, or how to use the TS client.
+license: MIT
+metadata:
+  author: upstash
+  version: "1.0.0"
 ---
 
 # Upstash Search Documentation

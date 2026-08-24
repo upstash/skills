@@ -1,6 +1,10 @@
 ---
 name: upstash-redis-start
 description: Provision a zero-config, no-signup Upstash Redis database for an AI agent via a single POST to `https://upstash.com/start-redis`. Use when an agent needs scratch Redis for short-term memory, conversation history, sub-agent work queues, or ranked recall and the user has not provided credentials. The database lives 3 days unless the user claims it.
+license: MIT
+metadata:
+  author: upstash
+  version: "1.0.0"
 ---
 
 # Upstash Redis for Agents (`start-redis`)

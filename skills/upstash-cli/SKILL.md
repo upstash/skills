@@ -1,6 +1,10 @@
 ---
 name: upstash-cli
 description: Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, and teams. Use when listing or managing databases, backups, vector/search indexes, QStash instances, team members, stats, or any non-interactive Upstash automation with JSON output and terminal commands.
+license: MIT
+metadata:
+  author: upstash
+  version: "1.0.0"
 ---
 
 The Upstash CLI (`upstash`) manages Upstash services via the Upstash Developer API. All commands are non-interactive and emit JSON on stdout. Errors go to stderr as `{ "error": "..." }` with exit code `1`.

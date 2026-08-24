@@ -173,7 +173,20 @@ Already included in the bundle — see [DeepSeek Harness](#deepseek-harness) abo
 ### Adding a new skill
 
 1. Create a new folder under `skills/` (e.g. `skills/upstash-redis-js/`).
-2. Add a `SKILL.md` with the standard frontmatter (`name` and `description`) and any supporting files.
+2. Add a `SKILL.md` with the standard [Agent Skills](https://agentskills.io/specification) frontmatter
+   and any supporting files. `name` and `description` are required; every skill here also carries
+   `license: MIT` and a `metadata` block with `author` and `version`:
+
+   ```yaml
+   ---
+   name: upstash-example
+   description: What the skill does, and when an agent should reach for it.
+   license: MIT
+   metadata:
+     author: upstash
+     version: "1.0.0"
+   ---
+   ```
 3. Run `npm run build` — the new skill will be picked up automatically.
 4. Commit everything.
 

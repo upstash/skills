@@ -1,6 +1,10 @@
 ---
 name: upstash-workflow-js
 description: Skills for the Upstash Workflow TypeScript/JavaScript SDK to define, trigger, and manage workflows. Use this Skill whenever a user wants to create workflow endpoints, run steps, or interact with the Upstash Workflow client.
+license: MIT
+metadata:
+  author: upstash
+  version: "1.0.0"
 ---
 
 # Upstash Workflow SDK
