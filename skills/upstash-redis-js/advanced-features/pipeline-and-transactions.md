@@ -8,7 +8,7 @@
 
 - **Pipelines**: Reducing round trips for independent operations
 - **Transactions**: Running a group of commands with no other client interleaving
-- **Lua scripts (`redis.eval`)**: True all-or-nothing semantics
+- **Lua scripts (`redis.eval`)**: Atomic multi-step logic in one round trip — all-or-nothing writes, read-then-write
 
 ## Limitations
 
@@ -43,9 +43,11 @@ const txResults = await tx.exec();
 // If decrby fails, the incrby and lpush still apply
 ```
 
-### All-or-Nothing with a Lua Script
+### Lua Scripts (`redis.eval`)
 
-A Lua script runs as one unit, so you can validate every precondition before the first write.
+The whole script runs in a single round trip, atomically — so you can read a value, branch on it, loop, and use variables mid-script.
+
+**All-or-nothing:** validate every precondition before the first write.
 
 ```typescript
 const script = `
@@ -67,4 +69,21 @@ const remaining = await redis.eval<number>(
   ["5", JSON.stringify({ userId: 123, itemId: 1, qty: 5 })]
 );
 // -1 means nothing was written
+```
+
+**Read-then-conditionally-write:** one atomic call. Separate GET/SET round trips race, and MULTI/EXEC can't branch on a value read mid-transaction.
+
+```typescript
+await redis.eval(
+  `
+  local a = redis.call("GET", KEYS[1])
+  if a and tonumber(a) > 10 then
+    redis.call("SET", KEYS[1], "0")
+    return "reset"
+  end
+  return "kept"
+`,
+  ["counter"],
+  []
+);
 ```
