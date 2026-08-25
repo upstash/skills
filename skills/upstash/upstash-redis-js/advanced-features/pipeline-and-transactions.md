@@ -45,9 +45,7 @@ const txResults = await tx.exec();
 
 ### Lua Scripts (`redis.eval`)
 
-The whole script runs in a single round trip, atomically — so you can read a value, branch on it, loop, and use variables mid-script.
-
-**All-or-nothing:** validate every precondition before the first write.
+The whole script runs as one unit in a single round trip, so you can validate every precondition before the first write — and beyond all-or-nothing writes, branch, loop and use variables across multiple Redis calls.
 
 ```typescript
 const script = `
@@ -69,21 +67,4 @@ const remaining = await redis.eval<number>(
   ["5", JSON.stringify({ userId: 123, itemId: 1, qty: 5 })]
 );
 // -1 means nothing was written
-```
-
-**Read-then-conditionally-write:** one atomic call. Separate GET/SET round trips race, and MULTI/EXEC can't branch on a value read mid-transaction.
-
-```typescript
-await redis.eval(
-  `
-  local a = redis.call("GET", KEYS[1])
-  if a and tonumber(a) > 10 then
-    redis.call("SET", KEYS[1], "0")
-    return "reset"
-  end
-  return "kept"
-`,
-  ["counter"],
-  []
-);
 ```
