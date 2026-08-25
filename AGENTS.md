@@ -10,6 +10,6 @@ To change a sub-skill:
 2. Run `npm run build` to regenerate `skills/upstash/`.
 3. Commit both the source and the regenerated output.
 
-CI runs `npm run check`, which fails if the generated output is stale.
+CI runs `npm run check`, which fails if the generated output is stale. `check.mjs` asserts that `git status --porcelain` is empty after rebuilding, so it only passes on a fully clean tree — commit your source edits *and* the regenerated output before running it, otherwise it reports them as "out of date".
 
 The build's pre-check also refuses to run while `skills/upstash/` has unstaged changes — if you edited it by mistake, `git restore skills/upstash/` first.
