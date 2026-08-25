@@ -6,7 +6,7 @@ Distributed locks prevent concurrent access to shared resources across multiple 
 
 ## Good For
 
-- Preventing duplicate job execution
+- Preventing overlapping (concurrent) job execution
 - Ensuring only one process modifies a resource
 - Rate limiting at system level
 - Coordinating distributed operations
@@ -15,6 +15,7 @@ Distributed locks prevent concurrent access to shared resources across multiple 
 
 - Lock holder must complete before TTL expires
 - No automatic lock release on crash (relies on TTL)
+- A lock is not deduplication: once released, a retry re-acquires it and runs the work again. For at-least-once delivery, pair it with a durable "processed" marker.
 - Use @upstash/lock for production (implements Redlock)
 
 ## Examples
@@ -109,19 +110,24 @@ async function acquireLockWithRetry(
   return false;
 }
 
-// Prevent duplicate webhook processing
+// Webhooks: lock for concurrent deliveries, processed marker for retries
+const RETRY_WINDOW = 60 * 60 * 24; // outlive the provider's retry window
+
 async function processWebhook(webhookId: string, data: any) {
-  const lockKey = `webhook:${webhookId}`;
+  const lockKey = `lock:webhook:${webhookId}`;
+  const processedKey = `webhook:processed:${webhookId}`;
+
+  if (await redis.exists(processedKey)) return { status: "duplicate" };
 
   const acquired = await acquireLock(lockKey, 60);
-
-  if (!acquired) {
-    console.log("Webhook already processed");
-    return { status: "duplicate" };
-  }
+  if (!acquired) return { status: "in-progress" };
 
   try {
+    // re-check: an earlier delivery may have finished while we waited
+    if (await redis.exists(processedKey)) return { status: "duplicate" };
+
     await handleWebhook(data);
+    await redis.set(processedKey, Date.now(), { ex: RETRY_WINDOW });
     return { status: "processed" };
   } finally {
     await releaseLock(lockKey);
