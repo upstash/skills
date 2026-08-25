@@ -15,7 +15,7 @@ Distributed locks prevent concurrent access to shared resources across multiple 
 
 - Lock holder must complete before TTL expires
 - No automatic lock release on crash (relies on TTL)
-- A lock is **not** deduplication: once it is released, the next caller acquires it and runs the work again. For at-least-once delivery (webhooks, queues), pair the lock with a durable "processed" marker — see below.
+- A lock is not deduplication: once released, a retry re-acquires it and runs the work again. For at-least-once delivery, pair it with a durable "processed" marker.
 - Use @upstash/lock for production (implements Redlock)
 
 ## Examples
@@ -110,53 +110,27 @@ async function acquireLockWithRetry(
   return false;
 }
 
-// Serialize overlapping webhook deliveries AND make processing idempotent
-//
-// The lock only keeps two *concurrent* deliveries of the same webhook from
-// running at the same time. It does nothing about a retry that arrives after the
-// first attempt finished and released the lock — that retry re-acquires the lock
-// and runs the handler again. For at-least-once delivery you also need a durable
-// "processed" marker, kept at least as long as the provider's retry window.
-const RETRY_WINDOW = 60 * 60 * 24; // 24h — cover the provider's retry window
+// Webhooks: lock for concurrent deliveries, processed marker for retries
+const RETRY_WINDOW = 60 * 60 * 24; // outlive the provider's retry window
 
 async function processWebhook(webhookId: string, data: any) {
   const lockKey = `lock:webhook:${webhookId}`;
   const processedKey = `webhook:processed:${webhookId}`;
 
-  // Fast path: already handled by an earlier delivery
-  if (await redis.exists(processedKey)) {
-    return { status: "duplicate" };
-  }
+  if (await redis.exists(processedKey)) return { status: "duplicate" };
 
-  // Serialize concurrent deliveries of the same webhook
   const acquired = await acquireLock(lockKey, 60);
-
-  if (!acquired) {
-    console.log("Webhook is already being processed right now");
-    return { status: "in-progress" };
-  }
+  if (!acquired) return { status: "in-progress" };
 
   try {
-    // Re-check inside the lock: a delivery we were queued behind may have
-    // finished while we waited
-    if (await redis.exists(processedKey)) {
-      return { status: "duplicate" };
-    }
+    // re-check: an earlier delivery may have finished while we waited
+    if (await redis.exists(processedKey)) return { status: "duplicate" };
 
     await handleWebhook(data);
-
-    // Mark as processed only after the work succeeded
     await redis.set(processedKey, Date.now(), { ex: RETRY_WINDOW });
-
     return { status: "processed" };
   } finally {
     await releaseLock(lockKey);
   }
 }
 ```
-
-> **Note:** The marker is set *after* successful processing, so a crashed attempt
-> is retried rather than silently skipped. That makes delivery at-least-once with
-> a de-duplication window — if `handleWebhook` itself is not idempotent, make the
-> marker and the side effect atomic (e.g. write both in one Lua script, or use a
-> transactional store for the side effect).

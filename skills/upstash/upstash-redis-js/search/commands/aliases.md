@@ -51,7 +51,7 @@ await redis.search.alias.delete({ alias: "products" });
 ### Zero-Downtime Reindexing
 
 ```typescript
-// 1. Resolve what the alias currently points at, BEFORE swapping
+// 1. Resolve the alias's current target before swapping
 const aliases = await redis.search.alias.list();
 const oldIndexName = aliases["products"]; // "products-v1"
 
@@ -74,11 +74,9 @@ await newIndex.waitIndexing();
 // (addAlias updates the alias if it already exists)
 await redis.search.alias.add({ indexName: "products-v2", alias: "products" });
 
-// 5. Drop the old index by its explicit name
+// 5. Drop the old index by name
 const oldIndex = redis.search.index({ name: oldIndexName });
 await oldIndex.drop();
 ```
 
-> **Note:** Capture the old index name *before* the swap. After step 4 the alias
-> resolves to `products-v2`, so `redis.search.index({ name: "products" })` at that
-> point would target the newly active index and drop it instead of the old one.
+After step 4 the alias resolves to `products-v2`, so dropping by the alias name would drop the new index — resolve it before the swap.
