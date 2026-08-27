@@ -34,6 +34,10 @@ box exec -C repo -- npm test
 box exec --json -- node -e 'console.log(1)'   # {stdout, stderr, exit_code}
 ```
 
+One argument is a shell expression, sent as written, so pipes and redirection work.
+Several arguments are argv and are quoted individually, so an argument containing
+spaces stays one argument.
+
 The remote command's exit code is passed through, so `box exec -- npm test && ...`
 chains normally. Exit code **125** means the CLI itself failed (bad box, bad flags),
 never a status the remote command returned.
