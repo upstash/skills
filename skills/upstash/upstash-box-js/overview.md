@@ -323,10 +323,15 @@ Clones land inside the box's isolated container, never on the caller's machine. 
 code is data until something runs it — treat an untrusted repo as untrusted input, and
 pair it with a restrictive `networkPolicy` (see below) before running its build or tests.
 
+Every git call except `clone` runs in the box's current directory, so `cd` into the
+clone first. At the workspace root there is no repository, and `status` comes back
+empty, which reads as a clean tree.
+
 ```ts
 await box.git.clone({ repo: "github.com/org/repo", branch: "main" })
 await box.git.clone({ repo: "github.com/org/repo", depth: 1 }) // shallow clone
-await box.cd("repo") // cd into cloned repo
+await box.git.clone({ repo: "github.com/org/repo", folder: "my-app" }) // destination
+await box.cd("repo") // the clone lands in a directory named after the repo
 
 const status = await box.git.status()
 const diff = await box.git.diff()
@@ -345,8 +350,8 @@ const pr = await box.git.createPR({ title: "Fix bug", body: "...", base: "main" 
 const cfg = await box.git.updateConfig({ userName: "Bot", userEmail: "bot@example.com" })
 // cfg: { git_user_name, git_user_email }
 
-// Arbitrary git commands
-const { output } = await box.git.exec({ args: ["log", "--oneline", "-5"] })
+// Arbitrary git commands. Check exit_code: 128 means the cwd is not a repository.
+const { output, exit_code } = await box.git.exec({ args: ["log", "--oneline", "-5"] })
 ```
 
 ## Schedules
