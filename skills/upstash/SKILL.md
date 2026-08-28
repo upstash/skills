@@ -9,7 +9,7 @@ This skill combines documentation for all Upstash SDKs. Pick the relevant sub-sk
 
 ## [upstash-box-cli](upstash-box-cli/overview.md)
 
-Drive an Upstash Box (a remote sandboxed workspace) from the terminal with the `box` CLI. Use when asked to run commands, edit files, clone repos, run builds or tests, expose a preview URL, or do any work inside a box rather than on this machine.
+Drive an Upstash Box (a remote sandboxed workspace) from the terminal with the `box` CLI. Use when asked to run commands, edit files, clone repos, run builds or tests, publish a public URL, or do any work inside a box rather than on this machine.
 
 ## [upstash-box-js](upstash-box-js/overview.md)
 

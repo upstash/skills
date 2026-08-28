@@ -1,6 +1,6 @@
 ---
 name: upstash-box-cli
-description: Drive an Upstash Box (a remote sandboxed workspace) from the terminal with the `box` CLI. Use when asked to run commands, edit files, clone repos, run builds or tests, expose a preview URL, or do any work inside a box rather than on this machine.
+description: Drive an Upstash Box (a remote sandboxed workspace) from the terminal with the `box` CLI. Use when asked to run commands, edit files, clone repos, run builds or tests, publish a public URL, or do any work inside a box rather than on this machine.
 ---
 
 `box` operates on a **remote container**, not this machine. Your own file and shell
