@@ -1,0 +1,31 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Start here",
+      "description": "The combined skill for every Upstash product, plus no-signup scratch Redis and the CLI.",
+      "skills": ["upstash", "upstash-redis-start", "upstash-cli"]
+    },
+    {
+      "title": "Caching, sessions, and rate limiting",
+      "description": "Serverless Redis for caching, session storage, leaderboards, and rate limiting from edge and serverless functions.",
+      "skills": ["upstash-redis-js", "upstash-ratelimit-js"]
+    },
+    {
+      "title": "Queues, background jobs, and workflows",
+      "description": "HTTP message queues, cron schedules, and durable multi-step workflows without a long-running worker.",
+      "skills": ["upstash-qstash-js", "upstash-workflow-js"]
+    },
+    {
+      "title": "Vector and search",
+      "description": "Vector database for embeddings and RAG, and full-text plus semantic search with reranking.",
+      "skills": ["upstash-vector-js", "upstash-search-js"]
+    },
+    {
+      "title": "Sandboxed containers for agents",
+      "description": "Upstash Box: cloud sandboxes with shell, filesystem, git, cron, snapshots, and a headless browser.",
+      "skills": ["upstash-box-js", "upstash-box-py"]
+    }
+  ]
+}

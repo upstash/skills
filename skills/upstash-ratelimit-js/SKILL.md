@@ -1,6 +1,10 @@
 ---
 name: upstash-ratelimit-js
-description: Lightweight guidance for using the Upstash Redis RateLimit TypeScript/JavaScript SDK, including setup steps, basic usage, and pointers to advanced algorithm, features, pricing, and traffic‑protection docs.
+description: Rate limiting for serverless and edge apps with the @upstash/ratelimit TypeScript/JavaScript SDK backed by Upstash Redis. Use when adding a rate limiter or throttling to an API route, Next.js middleware, Vercel Edge, Cloudflare Workers, or any HTTP endpoint; returning 429 Too Many Requests; choosing between fixed window, sliding window, and token bucket algorithms; limiting per user, IP, API key, or tenant with prefixes and custom keys; protecting login, signup, form, or AI endpoints from abuse, bots, and brute force; using deny lists, ephemeral caching, analytics, timeouts, and multi-region rate limits; or estimating the Redis command cost of rate limiting. Also use when the user says rate limit, rate-limiting, throttle, quota, request limits, or traffic protection.
+license: MIT
+metadata:
+  author: Upstash
+  homepage: https://upstash.com
 ---
 
 # Rate Limit TS SDK

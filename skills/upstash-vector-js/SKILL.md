@@ -1,6 +1,10 @@
 ---
 name: upstash-vector-js
-description: Skills for Upstash Vector features, TypeScript/JavaScript SDK usage, and integrations. Use when users ask how to work with Vector, its TS SDK, features, or supported frameworks.
+description: Work with the @upstash/vector TypeScript/JavaScript SDK, a serverless vector database for embeddings, similarity search, semantic search, and RAG (retrieval-augmented generation). Use when upserting, querying, fetching, ranging, or deleting vectors, upserting raw text against an index with a built-in embedding model, choosing dense, sparse, or hybrid indexes, filtering by metadata, organizing data with namespaces, running resumable queries, or connecting Upstash Vector to an AI or LLM application. Also use when the user asks for a vector store, vector search, nearest-neighbor or kNN search, embeddings storage, semantic cache, recommendations or similarity features, or a hosted vector index that needs no infrastructure.
+license: MIT
+metadata:
+  author: Upstash
+  homepage: https://upstash.com
 ---
 
 # Vector Documentation Skill

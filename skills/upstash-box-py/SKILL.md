@@ -1,6 +1,10 @@
 ---
 name: upstash-box-py
-description: Work with the upstash-box Python SDK for sandboxed cloud containers with AI agents, shell, filesystem, git, cron schedules, and a headless browser. Use when building with Upstash Box in Python, creating sandboxed environments, running AI agents in containers, browser automation from a box, or orchestrating parallel boxes.
+description: Work with the upstash-box Python SDK for sandboxed cloud containers with AI agents, shell, filesystem, git, cron schedules, snapshots, and a headless browser. Use when building with Upstash Box in Python, creating a sandbox or isolated environment to run untrusted or agent-generated code, running AI coding agents in containers, giving an agent a cloud dev environment with a shell and repository, browser automation from a box, scheduling recurring jobs inside a box, saving and restoring snapshots, or orchestrating parallel boxes.
+license: MIT
+metadata:
+  author: Upstash
+  homepage: https://upstash.com
 ---
 
 # upstash-box Python SDK

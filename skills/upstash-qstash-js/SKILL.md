@@ -1,6 +1,10 @@
 ---
 name: upstash-qstash-js
-description: Work with the QStash TypeScript/JavaScript SDK for serverless messaging, scheduling. Use when publishing messages to HTTP endpoints, creating schedules, managing queues, verifying incoming messages and other QStash features in serverless environments.
+description: Work with the @upstash/qstash TypeScript/JavaScript SDK, an HTTP-based message queue, task scheduler, and background job system for serverless and edge runtimes (Next.js, Vercel, Cloudflare Workers, Deno, Node.js). Use when publishing messages to HTTP endpoints or URL groups, running background jobs without a long-running worker process, scheduling with cron expressions, delaying messages, building FIFO queues with parallelism and flow control, configuring retries and callbacks, handling a dead letter queue (DLQ), deduplicating messages, fanning out to multiple endpoints, verifying QStash webhook signatures (Next.js App Router, Pages Router, and Edge Runtime), running a local QStash dev server, or migrating regions. Also use when the user asks for a serverless cron job, async task queue, job scheduler, delayed delivery, webhook delivery with retries, or event-driven messaging between services.
+license: MIT
+metadata:
+  author: Upstash
+  homepage: https://upstash.com
 ---
 
 # QStash JavaScript SDK

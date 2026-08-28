@@ -1,8 +1,10 @@
 # Upstash Agent Skills
 
+[![skills.sh](https://skills.sh/b/upstash/skills)](https://skills.sh/upstash/skills)
+
 A collection of skills for AI coding agents working with Upstash SDKs. Skills are packaged instructions and resources that extend agent capabilities.
 
-This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), a [Cursor plugin](https://cursor.com/docs/plugins), an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build), and a [DeepSeek Harness bundle](https://github.com/deepseek-ai/deepseek-harness). It also installs into [OpenCode](#opencode), [Zed](#zed), and any other Agent Skills-compatible client with `npx skills add`.
+This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), a [Cursor plugin](https://cursor.com/docs/plugins), an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build), and a [DeepSeek Harness bundle](https://github.com/deepseek-ai/deepseek-harness). It also installs into [OpenCode](#opencode), [Zed](#zed), [Gemini CLI](#gemini-cli), and any other Agent Skills-compatible client with `npx skills add`.
 
 ## Available Skills
 
@@ -83,6 +85,14 @@ The skills then show up in Zed's Agent Panel, and the agent can load them on its
 `/upstash`. Zed's extension marketplace carries languages, themes, debuggers, snippets, and MCP
 servers, but has no channel for skills, so the CLI is the only way to install them. The Zed
 extension in `zed-extension/` covers the [MCP server](#mcp-server) instead.
+
+### Gemini CLI
+
+Gemini CLI loads this repo as an [extension](https://geminicli.com/docs/extensions/) — the manifest is `gemini-extension.json` at the repo root, and every skill under `skills/` is picked up automatically:
+
+```bash
+gemini extensions install https://github.com/upstash/skills
+```
 
 ### Context7 CLI
 

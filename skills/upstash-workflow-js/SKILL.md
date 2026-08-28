@@ -1,6 +1,10 @@
 ---
 name: upstash-workflow-js
-description: Skills for the Upstash Workflow TypeScript/JavaScript SDK to define, trigger, and manage workflows. Use this Skill whenever a user wants to create workflow endpoints, run steps, or interact with the Upstash Workflow client.
+description: Work with the @upstash/workflow TypeScript/JavaScript SDK for durable, long-running workflows in serverless functions, multi-step processes that survive timeouts, retries, and restarts (built on QStash). Use when defining a workflow endpoint with serve(), running steps with context.run, sleeping for minutes to days without holding a function open, calling external APIs with context.call, waiting for an external event or webhook, invoking other workflows, configuring retries, failure callbacks, and a DLQ, controlling concurrency, rate, and parallelism, triggering, cancelling, or inspecting runs with the Workflow client, building AI agents and orchestrators, human-in-the-loop approvals, realtime updates, local development with the QStash dev server, adding middleware, or migrating workflows safely. Also use when the user asks for durable execution, step functions, saga or orchestration patterns, background jobs with checkpoints, or long-running tasks on Vercel, Next.js, Cloudflare Workers, or other serverless platforms.
+license: MIT
+metadata:
+  author: Upstash
+  homepage: https://upstash.com
 ---
 
 # Upstash Workflow SDK
