@@ -22,6 +22,6 @@ The build's pre-check also refuses to run while `skills/upstash/` has unstaged c
 
 skills.sh matches multi-word searches against each skill's `description` (single-word searches match the name). Keep descriptions long and intent-rich: what the SDK is, a "Use when…" list of concrete tasks, and the words users actually type (rate limiting, message queue, background jobs, vector database, session storage…). Never rename a skill to improve ranking — change the description instead. `description` must stay on one line and must not contain `: ` (the build script parses it with a regex, and YAML would otherwise need quoting).
 
-## Gemini CLI gallery
+## Gemini CLI extension
 
-`gemini-extension.json` at the root makes the repo a Gemini CLI extension. The gallery at geminicli.com/extensions crawls repos that carry the `gemini-cli-extension` GitHub topic and have a release tag, so when you change the skills in a way users should see, bump `version` in `gemini-extension.json` and push a matching `vX.Y.Z` tag.
+`gemini-extension.json` at the root makes the repo installable with `gemini extensions install https://github.com/upstash/skills` (it clones the default branch; no tag needed). Listing in the gallery at geminicli.com/extensions is crawler-only: the repo must carry the `gemini-cli-extension` GitHub topic and have a tag, and there is no publish command or submission form. We have not tagged this repo for that yet, so bump `version` in `gemini-extension.json` only when the skills change in a way users should see.
