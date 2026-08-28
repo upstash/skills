@@ -46,7 +46,7 @@ A background server dies with the command that started it. Detach it:
 
 ```bash
 box exec -- '( npm run dev > dev.log 2>&1 & )'
-box expose 3000                               # prints the public URL
+box public-url 3000                               # prints the public URL
 ```
 
 ## Files
