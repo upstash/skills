@@ -1,6 +1,6 @@
 # Upstash Agent Skills
 
-[![skills.sh](https://skills.sh/b/upstash/skills)](https://skills.sh/upstash/skills)
+[![skills.sh](https://img.shields.io/badge/skills.sh-upstash%2Fskills-0f172a)](https://skills.sh/upstash/skills)
 
 A collection of skills for AI coding agents working with Upstash SDKs. Skills are packaged instructions and resources that extend agent capabilities.
 
