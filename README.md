@@ -1,7 +1,5 @@
 # Upstash Agent Skills
 
-[![skills.sh](https://skills.sh/b/upstash/skills)](https://skills.sh/upstash/skills)
-
 A collection of skills for AI coding agents working with Upstash SDKs. Skills are packaged instructions and resources that extend agent capabilities.
 
 This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), a [Cursor plugin](https://cursor.com/docs/plugins), an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build), and a [DeepSeek Harness bundle](https://github.com/deepseek-ai/deepseek-harness). It also installs into [OpenCode](#opencode), [Zed](#zed), [Gemini CLI](#gemini-cli), and any other Agent Skills-compatible client with `npx skills add`.
