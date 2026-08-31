@@ -17,3 +17,11 @@ To change a sub-skill:
 CI runs `npm run check`, which fails if the generated output is stale. `check.mjs` asserts that `git status --porcelain` is empty after rebuilding, so it only passes on a fully clean tree — commit your source edits *and* the regenerated output before running it, otherwise it reports them as "out of date".
 
 The build's pre-check also refuses to run while `skills/upstash/` has unstaged changes — if you edited it by mistake, `git restore skills/upstash/` first.
+
+## Skill descriptions are the search index
+
+skills.sh matches multi-word searches against each skill's `description` (single-word searches match the name). Keep descriptions long and intent-rich: what the SDK is, a "Use when…" list of concrete tasks, and the words users actually type (rate limiting, message queue, background jobs, vector database, session storage…). Never rename a skill to improve ranking — change the description instead. `description` must stay on one line and must not contain `: ` (the build script parses it with a regex, and YAML would otherwise need quoting).
+
+## Gemini CLI extension
+
+`gemini-extension.json` at the root makes the repo installable with `gemini extensions install https://github.com/upstash/skills` (it clones the default branch; no tag needed). Listing in the gallery at geminicli.com/extensions is crawler-only: the repo must carry the `gemini-cli-extension` GitHub topic and have a tag, and there is no publish command or submission form. We have not tagged this repo for that yet, so bump `version` in `gemini-extension.json` only when the skills change in a way users should see.

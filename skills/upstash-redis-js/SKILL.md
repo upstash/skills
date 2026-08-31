@@ -1,6 +1,10 @@
 ---
 name: upstash-redis-js
-description: Work with the Upstash Redis TypeScript/JavaScript SDK for serverless Redis operations. Use for caching, session storage, rate limiting, leaderboards, full-text search (querying, filtering, aggregating) with Upstash Redis Search (different from regular FT.SEARCH), and all Redis data structures. Supports automatic serialization/deserialization of JavaScript types. Upstash Redis Search also available via @upstash/search-redis and @upstash/search-ioredis adapters for TCP clients.
+description: Work with the @upstash/redis TypeScript/JavaScript SDK, a serverless HTTP-based Redis client for Next.js, Vercel, Cloudflare Workers, edge runtimes, and Node.js. Use when adding a cache (cache-aside, write-through, TTL and expiration strategies), session storage and user sessions, a key-value store, leaderboards and rankings with sorted sets, counters, distributed locks, queues with lists, streams and consumer groups, JSON documents, pipelines and MULTI/EXEC transactions, Lua scripting, read replicas, or full-text search, typo-tolerant search, facets, and aggregations with Upstash Redis Search (different from regular FT.SEARCH; also available for TCP clients via @upstash/search-redis and @upstash/search-ioredis). Also use when migrating from ioredis or node-redis, when a Redis connection is needed from a serverless function without connection pooling, when integrating @upstash/ratelimit, or when the user says Redis cache, KV store, session store, serverless Redis, or Upstash Redis. Supports automatic serialization/deserialization of JavaScript types.
+license: MIT
+metadata:
+  author: Upstash
+  homepage: https://upstash.com
 ---
 
 # Upstash Redis SDK - Complete Skills Guide

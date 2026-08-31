@@ -1,6 +1,10 @@
 ---
 name: upstash-search-js
-description: Skills covering Upstash Search quick starts, core concepts, and TypeScript/JavaScript SDK usage. Use when a user asks how to get started, how indexing works, or how to use the TS client.
+description: Work with the @upstash/search TypeScript/JavaScript SDK, a serverless full-text and semantic search database with built-in reranking. Use when adding search to an app or site, creating a search index, upserting documents with searchable content and filterable metadata, running keyword, semantic, or hybrid search queries, reranking results, filtering with SQL-like or structured filter syntax, paginating with range, fetching or deleting documents, resetting an index, or checking index info. Also use when the user asks for site search, product, document, or knowledge-base search, or a managed search service that needs no cluster to run.
+license: MIT
+metadata:
+  author: Upstash
+  homepage: https://upstash.com
 ---
 
 # Upstash Search Documentation
