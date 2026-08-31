@@ -311,6 +311,45 @@ for chunk in stream:
     ...
 ```
 
+### Interactive sessions
+
+`exec.command` returns once the command has finished; `exec.session` returns a
+handle to a *running* process — stdin, live output, resize, signals. Runs over a
+WebSocket (`websockets>=13`, imported lazily). Also available on `EphemeralBox`.
+
+```python
+out = bytearray()
+
+session = box.exec.session(
+    argv=["sort"],        # exact program, no shell — takes precedence over cmd
+    # cmd="npm run dev",              # run through `bash -lc` instead
+    # tty=True, rows=24, cols=80,     # allocate a PTY; stderr merges into stdout
+    # cwd="/workspace/home", env=["KEY=VALUE"],  # env overlays the box environment
+    on_stdout=out.extend,  # on_stdout / on_stderr receive bytes as they arrive
+)
+
+session.pid, session.exec_id
+session.write("banana\napple\n")
+session.end_stdin()          # EOF, so a command reading to EOF (sort, cat) exits
+exit_code = session.wait()   # sync handle only: wait(timeout=seconds) raises TimeoutError
+
+session.resize(50, 120)      # TTY sessions
+session.kill("INT")          # TERM (default) | KILL | INT | HUP | TSTP | QUIT | USR1 | USR2
+session.terminate(2000)      # SIGTERM now, SIGKILL after grace_ms — first call wins
+session.close()              # hang up; also kills the process
+
+# Context manager closes (and so kills) the session on exit
+with box.exec.session(cmd="npm run dev", tty=True) as dev:
+    dev.write("rs\n")
+
+# Async: await the call and every handle method; `async with` for the handle
+# session = await abox.exec.session(argv=["sort"])   # AsyncExecSessionHandle
+# await session.write("x\n"); await session.end_stdin(); await session.wait()
+```
+
+The handle owns the process: closing it, or losing the connection, kills the
+command, and sessions cannot be reattached.
+
 ## Filesystem
 
 ```python
@@ -321,6 +360,21 @@ entries = box.files.list("/workspace/home")  # [FileEntry(name, path, size, is_d
 # Binary files — use encoding="base64" for read and write
 box.files.write(path="/workspace/home/image.png", content=base64_string, encoding="base64")
 b64 = box.files.read("/workspace/home/image.png", encoding="base64")
+
+# Ranged read — bounded byte range instead of the whole file; the server rejects
+# a length above 8 MiB (an explicit length=0 reads zero bytes)
+head = box.files.read("/workspace/home/big.log", offset=0, length=4096)
+
+# Metadata & mutation
+st = box.files.stat("/workspace/home/app.py")
+# st: FileStat(type="file" | "directory" | "symlink" | "other", size, mod_time, inode, version)
+# version is an opaque freshness token — compare it for equality (optimistic
+# concurrency), never parse it. stat is an lstat by default:
+box.files.stat("/workspace/home/link", follow=True)  # dereference a final symlink
+
+box.files.mkdir("/workspace/home/a/b", parents=True)               # mkdir -p
+box.files.rename("/workspace/home/a", "/workspace/home/b")         # from_path, to_path
+box.files.remove("/workspace/home/b", recursive=True)              # recursive required for directories
 
 # Upload local files
 box.files.upload([{"path": "./local/file.txt", "destination": "/workspace/home/file.txt"}])
@@ -349,6 +403,9 @@ pair it with a restrictive `network_policy` (see below) before running its build
 ```python
 box.git.clone(repo="github.com/org/repo", branch="main")
 box.git.clone(repo="github.com/org/repo", depth=1)  # shallow clone
+# folder names the destination directory (defaults to the repo name). Unlike
+# every other git op, it does not have to exist yet — cd() cannot express it.
+box.git.clone(repo="github.com/org/repo", folder="my-app")
 box.cd("repo")  # cd into cloned repo
 
 status = box.git.status()
@@ -368,7 +425,9 @@ pr = box.git.create_pr(title="Fix bug", body="...", base="main")
 cfg = box.git.update_config(user_name="Bot", user_email="bot@example.com")
 # cfg: GitConfigResult(git_user_name, git_user_email)
 
-# Arbitrary git commands — returns the output string
+# Arbitrary git commands — returns the output string only. Unlike the JS
+# `git.exec()`, which returns { output, exit_code }, Python drops the exit code,
+# so a failed git command is indistinguishable from a successful one.
 output = box.git.exec(args=["log", "--oneline", "-5"])
 ```
 
@@ -727,6 +786,9 @@ asyncio.run(main())
 - `run.exit_code` is `None` for agent runs, only available for exec commands.
 - `run.result` is stdout on success and stderr on failure — a command that exits 0 writing only to stderr yields `""`; read `run.stderr` for it.
 - `files.download(folder=...)` takes a path *inside the box*; output lands in `./<basename>` locally.
+- `files.remove()` needs `recursive=True` to delete a directory; `files.stat()` is an lstat unless you pass `follow=True`.
+- `exec.session()` handles own the process — closing the handle or losing the connection kills the command, and sessions cannot be reattached. Sync handle methods are plain calls; `AsyncExecSessionHandle` methods must be awaited (`async with` for the handle).
+- `git.exec()` returns a bare string here and drops git's exit code (the JS SDK returns `{ output, exit_code }`); check the output or run the command through `exec.command("git ...")` when you need the status.
 - `box.browser` requires a box created with `browser=True`.
 - There is **no** `tab.run()` — the autonomous browser agent was removed. Loop `observe` + `act(action)` + `extract` yourself, hand the goal to the in-box agent, or drive Playwright over `cdp_url()`.
 - `tab.act(action)` (replaying an `observe()` result) costs no tokens and needs no model provider key; only `act(instruction)` with a string is metered.

@@ -288,6 +288,37 @@ for await (const chunk of stream) {
 }
 ```
 
+### Interactive sessions
+
+`exec.command` returns once the command has finished; `exec.session` returns a
+handle to a *running* process — stdin, live output, resize, signals. Node-only:
+auth travels in a request header, which browsers cannot set on a WebSocket
+handshake. Also available on `EphemeralBox`.
+
+```ts
+const session = await box.exec.session({
+  argv: ["sort"],       // exact program, no shell — takes precedence over `cmd`
+  // cmd: "npm run dev",             // run through `bash -lc` instead
+  // tty: true, rows: 24, cols: 80,  // allocate a PTY; stderr merges into stdout
+  // cwd: "/workspace/home", env: ["KEY=VALUE"],  // env overlays the box environment
+  onStdout: (bytes) => process.stdout.write(Buffer.from(bytes)),
+  onStderr: (bytes) => process.stderr.write(Buffer.from(bytes)),
+})
+
+session.pid; session.execId
+session.write("banana\napple\n")
+session.endStdin()           // EOF, so a command reading to EOF (sort, cat) exits
+const exitCode = await session.wait()
+
+session.resize(50, 120)      // TTY sessions
+session.kill("INT")          // TERM (default) | KILL | INT | HUP | TSTP | QUIT | USR1 | USR2
+session.terminate(2000)      // SIGTERM now, SIGKILL after graceMs — first call wins
+session.close()              // hang up; also kills the process
+```
+
+The handle owns the process: `close()`, a dropped connection, or your program
+exiting all terminate the command, and sessions cannot be reattached.
+
 ## Filesystem
 
 ```ts
@@ -298,6 +329,21 @@ const entries = await box.files.list("/workspace/home") // [{ name, path, size, 
 // Binary files — use encoding: "base64" for read and write
 await box.files.write({ path: "/workspace/home/image.png", content: base64String, encoding: "base64" })
 const b64 = await box.files.read("/workspace/home/image.png", { encoding: "base64" })
+
+// Ranged read — bounded byte range instead of the whole file; the server
+// rejects a length above 8 MiB
+const head = await box.files.read("/workspace/home/big.log", { offset: 0, length: 4096 })
+
+// Metadata & mutation
+const st = await box.files.stat("/workspace/home/app.js")
+// st: { type: "file" | "directory" | "symlink" | "other", size, mod_time, inode, version }
+// version is an opaque freshness token — compare it for equality (optimistic
+// concurrency), never parse it. stat is lstat by default:
+await box.files.stat("/workspace/home/link", { follow: true }) // dereference a final symlink
+
+await box.files.mkdir("/workspace/home/a/b", { parents: true })   // mkdir -p
+await box.files.rename("/workspace/home/a", "/workspace/home/b")  // move/rename
+await box.files.remove("/workspace/home/b", { recursive: true })  // recursive required for directories
 
 // Upload local files
 await box.files.upload([{ path: "./local/file.txt", destination: "/workspace/home/file.txt" }])
@@ -326,6 +372,9 @@ pair it with a restrictive `networkPolicy` (see below) before running its build 
 ```ts
 await box.git.clone({ repo: "github.com/org/repo", branch: "main" })
 await box.git.clone({ repo: "github.com/org/repo", depth: 1 }) // shallow clone
+// `folder` names the destination directory (defaults to the repo name). Unlike
+// every other git op, it does not have to exist yet — cd() cannot express it.
+await box.git.clone({ repo: "github.com/org/repo", folder: "my-app" })
 await box.cd("repo") // cd into cloned repo
 
 const status = await box.git.status()
@@ -345,8 +394,9 @@ const pr = await box.git.createPR({ title: "Fix bug", body: "...", base: "main" 
 const cfg = await box.git.updateConfig({ userName: "Bot", userEmail: "bot@example.com" })
 // cfg: { git_user_name, git_user_email }
 
-// Arbitrary git commands
-const { output } = await box.git.exec({ args: ["log", "--oneline", "-5"] })
+// Arbitrary git commands — check exit_code, it is git's own status
+// (128 = not a repository); output alone cannot tell success from failure
+const { output, exit_code } = await box.git.exec({ args: ["log", "--oneline", "-5"] })
 ```
 
 ## Schedules
@@ -670,6 +720,9 @@ ssh <box-id>@us-east-1.box.upstash.com
 - `run.exitCode` is `null` for agent runs, only available for exec commands
 - `run.result` is stdout on success and stderr on failure — a command that exits 0 writing only to stderr yields `""`; read `run.stderr` for it
 - `files.download({ folder })` takes a path *inside the box*; output lands in `./<basename>` locally
+- `files.remove()` needs `recursive: true` to delete a directory; `files.stat()` is an lstat unless you pass `follow: true`
+- `exec.session()` is Node-only (auth is a request header, which browsers cannot set on a WebSocket handshake). The handle owns the process — closing it or dropping the connection kills the command, and sessions cannot be reattached
+- `git.exec()` returns `{ output, exit_code }` — check `exit_code`, since a failed git command (e.g. 128, "not a repository") still resolves
 - `box.browser` requires a box created with `browser: true`
 - There is **no** `tab.run()` — the autonomous browser agent was removed in 0.7.0. Loop `observe` + `act(action)` + `extract` yourself, hand the goal to the in-box agent, or drive Playwright over `cdpUrl()`
 - `tab.act(action)` (replaying an `observe()` result) costs no tokens and needs no model provider key; only `act(instruction)` with a string is metered
