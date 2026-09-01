@@ -1,6 +1,6 @@
 # Upstash Agent Skills
 
-A collection of skills for AI coding agents working with Upstash SDKs. Skills are packaged instructions and resources that extend agent capabilities.
+A collection of skills for AI coding agents working with Upstash SDKs and CLIs. Skills are packaged instructions and resources that extend agent capabilities.
 
 This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Code plugin](https://code.claude.com/docs/en/plugins), a [Cursor plugin](https://cursor.com/docs/plugins), an [OpenAI Codex plugin](https://developers.openai.com/codex/plugins/build), and a [DeepSeek Harness bundle](https://github.com/deepseek-ai/deepseek-harness). It also installs into [OpenCode](#opencode), [Zed](#zed), [Gemini CLI](#gemini-cli), and any other Agent Skills-compatible client with `npx skills add`.
 
@@ -8,7 +8,8 @@ This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Co
 
 | Skill | Description |
 |-------|-------------|
-| [upstash](skills/upstash/) | Combined skill covering all Upstash SDKs. |
+| [upstash](skills/upstash/) | Combined skill covering all Upstash SDKs and CLIs. |
+| [upstash-box-cli](skills/upstash-box-cli/) | Drive a sandboxed cloud container from the terminal with the `box` CLI. |
 | [upstash-box-js](skills/upstash-box-js/) | Sandboxed cloud containers with AI agents, shell, filesystem, and git. |
 | [upstash-box-py](skills/upstash-box-py/) | The same sandboxed cloud containers, from the Python SDK. |
 | [upstash-cli](skills/upstash-cli/) | Drive the Upstash Developer API from the terminal with the `upstash` CLI. |

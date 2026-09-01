@@ -11,6 +11,10 @@ metadata:
 
 This skill combines documentation for all Upstash SDKs. Pick the relevant sub-skill below.
 
+## [upstash-box-cli](upstash-box-cli/overview.md)
+
+Drive an Upstash Box (a remote sandboxed workspace) from the terminal with the `box` CLI. Use when asked to run commands, edit files, clone repos, run builds or tests, publish a public URL, or do any work inside a box rather than on this machine.
+
 ## [upstash-box-js](upstash-box-js/overview.md)
 
 Work with the @upstash/box TypeScript/JavaScript SDK for sandboxed cloud containers with AI agents, shell, filesystem, git, cron schedules, snapshots, and a headless browser. Use when building with Upstash Box, creating a sandbox or isolated environment to run untrusted or agent-generated code, running AI coding agents in containers, giving an agent a cloud dev environment with a shell and repository, browser automation from a box, scheduling recurring jobs inside a box, saving and restoring snapshots, or orchestrating parallel boxes.

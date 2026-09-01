@@ -350,10 +350,15 @@ Clones land inside the box's isolated container, never on the caller's machine. 
 code is data until something runs it — treat an untrusted repo as untrusted input, and
 pair it with a restrictive `network_policy` (see below) before running its build or tests.
 
+Every git call except `clone` runs in the box's current directory, so `cd` into the
+clone first. At the workspace root there is no repository, and `status` comes back
+empty, which reads as a clean tree.
+
 ```python
 box.git.clone(repo="github.com/org/repo", branch="main")
 box.git.clone(repo="github.com/org/repo", depth=1)  # shallow clone
-box.cd("repo")  # cd into cloned repo
+box.git.clone(repo="github.com/org/repo", folder="my-app")  # destination
+box.cd("repo")  # the clone lands in a directory named after the repo
 
 status = box.git.status()
 diff = box.git.diff()
