@@ -6,6 +6,22 @@ description: Drive an Upstash Box (a remote sandboxed workspace) from the termin
 `box` operates on a **remote container**, not this machine. Your own file and shell
 tools act locally; anything that must happen inside the box goes through `box`.
 
+## Install
+
+```bash
+npm i -g @upstash/box-cli
+```
+
+## Authentication
+
+Every command needs an API key, or it fails with "API token required". Set it once,
+or pass `--token` on any single command. Create one at
+https://console.upstash.com/box.
+
+```bash
+export UPSTASH_BOX_API_KEY=box_...
+```
+
 ## Selecting a box
 
 Resolution order is `--box <id>`, then `$BOX_ID`, then the nearest `.box` file
