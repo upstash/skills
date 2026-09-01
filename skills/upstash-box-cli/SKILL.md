@@ -54,6 +54,45 @@ box exec -- '( npm run dev > dev.log 2>&1 & )'
 box public-url 3000                               # prints the public URL
 ```
 
+## Building something and handing back a link
+
+"Make me a snake game, use Upstash Box" is a request to build it in a box, run it
+there, and reply with a URL the user can open. Do the whole thing; do not stop at
+writing the file.
+
+```bash
+box create --no-repl --runtime node          # writes .box, so later commands need no --box
+
+box files write index.html - <<'HTML'
+<!doctype html><meta charset="utf-8"><title>Snake</title>
+<canvas id="c" width="400" height="400"></canvas>
+<script>/* the game */</script>
+HTML
+
+box files write server.js - <<'JS'
+const http = require("http"), fs = require("fs");
+http.createServer((_, res) => {
+  res.writeHead(200, { "Content-Type": "text/html" });
+  res.end(fs.readFileSync("index.html"));
+}).listen(3000);
+JS
+
+box exec -- '( node server.js > server.log 2>&1 & )'          # detached, or it dies
+box exec -- 'sleep 1; curl -sf localhost:3000 >/dev/null && echo up'
+box public-url 3000                                           # the link to reply with
+```
+
+Node's own `http` module rather than a package: no install, no network fetch, and it
+works on a bare `node` runtime.
+
+Check the port answers before publishing it. A public URL for a port nothing is
+listening on returns 502, which reads as a broken game rather than as a race with a
+server that had not finished starting.
+
+Reply with the URL itself, not just "it is running". Say that the box keeps costing
+money until `box delete --yes`, and that the URL is public to anyone who has it —
+`box public-url 3000 --basic-auth` puts credentials in front of it.
+
 ## Files
 
 Paths are relative to `/workspace/home`.
@@ -115,7 +154,9 @@ commands above; `box run` is for delegating a whole task to the box's own agent.
 ## Output
 
 Data goes to stdout, diagnostics to stderr, so piping is safe. `--json` prints the
-result as JSON with no wrapper and works on any command:
+result as JSON with no wrapper, on every command that returns data. The ones that
+open a REPL or print a shell script (`connect`, `from-snapshot`, `init-demo`,
+`completion`) reject it rather than answering an automation caller with a prompt:
 
 ```bash
 box files list --json | jq -r '.[].name'
