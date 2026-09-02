@@ -11,6 +11,10 @@ metadata:
 
 This skill combines documentation for all Upstash SDKs. Pick the relevant sub-skill below.
 
+## [upstash-blob-js](upstash-blob-js/overview.md)
+
+Work with the @upstash/blob TypeScript/JavaScript SDK for S3-compatible object storage with direct browser uploads, presigned URLs, multipart, and signed reads. Use when storing files or blobs, uploading avatars, images, videos, attachments or user documents, letting a browser upload straight to storage without proxying bytes through a server, generating public or time-limited signed URLs, serving private files, streaming large files with pause and resume, setting cache headers on stored objects, or reaching an S3-compatible bucket from the AWS SDK.
+
 ## [upstash-box-cli](upstash-box-cli/overview.md)
 
 Drive an Upstash Box (a remote sandboxed workspace) from the terminal with the `box` CLI. Use when asked to run commands, edit files, clone repos, run builds or tests, publish a public URL, or do any work inside a box rather than on this machine.
@@ -25,7 +29,7 @@ Work with the upstash-box Python SDK for sandboxed cloud containers with AI agen
 
 ## [upstash-cli](upstash-cli/overview.md)
 
-Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, and teams, with non-interactive commands and JSON output for scripts, CI, and agents. Use when creating, listing, renaming, or deleting Redis databases, changing plans, regions, TLS, eviction, auto-upgrade, or budgets, managing backups, running Redis commands with `upstash redis exec`, creating or inspecting Vector and Search indexes, managing QStash instances and tokens, managing team members, reading usage stats, or automating any Upstash account operation from the terminal. Also use when the user asks how to provision or manage Upstash resources without the console.
+Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, Blob, and teams, with non-interactive commands and JSON output for scripts, CI, and agents. Use when creating, listing, renaming, or deleting Redis databases, changing plans, regions, TLS, eviction, auto-upgrade, or budgets, managing backups, running Redis commands with `upstash redis exec`, creating or inspecting Vector and Search indexes, managing QStash instances and tokens, creating Blob buckets or minting temporary S3 credentials for one, managing team members, reading usage stats, or automating any Upstash account operation from the terminal. Also use when the user asks how to provision or manage Upstash resources without the console.
 
 ## [upstash-qstash-js](upstash-qstash-js/overview.md)
 

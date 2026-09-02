@@ -9,6 +9,7 @@ This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Co
 | Skill | Description |
 |-------|-------------|
 | [upstash](skills/upstash/) | Combined skill covering all Upstash SDKs and CLIs. |
+| [upstash-blob-js](skills/upstash-blob-js/) | S3-compatible object storage with direct browser uploads and signed URLs. |
 | [upstash-box-cli](skills/upstash-box-cli/) | Drive a sandboxed cloud container from the terminal with the `box` CLI. |
 | [upstash-box-js](skills/upstash-box-js/) | Sandboxed cloud containers with AI agents, shell, filesystem, and git. |
 | [upstash-box-py](skills/upstash-box-py/) | The same sandboxed cloud containers, from the Python SDK. |
