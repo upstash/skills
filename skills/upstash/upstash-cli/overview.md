@@ -162,4 +162,4 @@ Object operations are not CLI commands — the bucket is S3-compatible, so use t
 
 - Pipe any output to `jq` for field extraction, e.g. `upstash redis list | jq '.[].database_id'`.
 - Use `--dry-run` first on any `delete` or `remove-member`.
-- Use `--hide-credentials` on `redis get` when the password isn't needed.
+- Use `--hide-credentials` on `redis get` and `blob get` when the secret isn't needed.

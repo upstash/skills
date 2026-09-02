@@ -176,7 +176,7 @@ import { BlobError } from "@upstash/blob"
 if (BlobError.is(e) && e.code === "not_found") return null
 ```
 
-Use `BlobError.is()`, never `instanceof` — an ESM and a CJS copy are different classes. Codes: `not_found`, `already_exists`, `conflict`, `content_type_not_allowed`, `invalid_input`, `too_large`, `empty_body`, `length_required`, `signature_mismatch`, `unauthorized`, `forbidden`, `rate_limited`, `not_ready`, `partial_delete`, `move_left_a_copy`, `request_failed`.
+Use `BlobError.is()`, never `instanceof` — an ESM and a CJS copy are different classes. Codes: `not_found`, `already_exists`, `conflict`, `content_type_not_allowed`, `invalid_input`, `too_large`, `empty_body`, `length_required`, `signature_mismatch`, `unauthorized`, `forbidden`, `rate_limited`, `not_ready`, `partial_delete`, `move_left_a_copy`, `invalid_content_type_pattern`, `mint_backoff`, `request_failed`.
 
 A refusal keeps its code all the way to the browser, so hooks switch on `error.code` rather than status numbers. Bad option values (`'5mib'`, a missing token) throw a `TypeError` where they are written, not a `BlobError` per request.
 
