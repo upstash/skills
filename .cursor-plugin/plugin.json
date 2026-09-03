@@ -1,7 +1,12 @@
 {
   "name": "upstash",
   "description": "Agent skills for Upstash SDKs and CLIs — Redis, QStash, Workflow, Box (SDKs and the box CLI), Ratelimit, Vector, and Search.",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "mcpServers": {
+    "upstash": {
+      "url": "https://mcp.upstash.com/mcp"
+    }
+  },
   "author": {
     "name": "Upstash",
     "email": "support@upstash.com"
