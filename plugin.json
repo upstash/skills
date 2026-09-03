@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "upstash",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Agent skills for all Upstash SDKs — Redis, QStash, Workflow, Box, Ratelimit, Vector, and Search.",
   "author": {
     "name": "Upstash",

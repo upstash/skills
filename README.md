@@ -12,6 +12,7 @@ This repo works as an [Agent Skills](https://agentskills.io/) repo, a [Claude Co
 | [upstash-box-js](skills/upstash-box-js/) | Sandboxed cloud containers with AI agents, shell, filesystem, and git. |
 | [upstash-box-py](skills/upstash-box-py/) | The same sandboxed cloud containers, from the Python SDK. |
 | [upstash-cli](skills/upstash-cli/) | Drive the Upstash Developer API from the terminal with the `upstash` CLI. |
+| [upstash-mcp](skills/upstash-mcp/) | Connect an agent to the Upstash MCP server (hosted remote or local package) to manage Upstash. |
 | [upstash-qstash-js](skills/upstash-qstash-js/) | Serverless messaging and scheduling via HTTP endpoints. |
 | [upstash-ratelimit-js](skills/upstash-ratelimit-js/) | Rate limiting with the Redis Rate Limit TypeScript SDK. |
 | [upstash-redis-js](skills/upstash-redis-js/) | Serverless Redis — caching, sessions, leaderboards, full-text search. |
