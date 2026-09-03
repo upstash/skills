@@ -153,7 +153,7 @@ upstash blob credentials [--bucket-id <id>]
 
 Buckets are `private` by default. `blob get` returns the bucket token, which is a bearer secret for the whole bucket — pass `--hide-credentials` when you only need the metadata.
 
-`blob credentials` exchanges a bucket token for temporary, bucket-scoped S3 credentials to use with the AWS CLI, rclone, or any S3 SDK. With `--bucket-id` it reads the token through the Developer API; with no flag it uses `UPSTASH_BLOB_TOKEN` and needs no account auth at all. `expiresAt` is the expiry — re-mint before it passes rather than caching.
+`blob credentials` exchanges a bucket token for temporary, bucket-scoped S3 credentials to use with the AWS CLI, rclone, or any S3 SDK. With `--bucket-id` it reads the token through the Developer API; with no flag it uses `UPSTASH_BLOB_TOKEN` and needs no account auth at all. `expiresAt` is the expiry as a **unix timestamp in seconds** (multiply by 1000 before comparing with `Date.now()`) — re-mint before it passes rather than caching.
 
 ```bash
 CREDS=$(upstash blob credentials --bucket-id <id>)

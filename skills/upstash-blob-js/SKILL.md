@@ -59,7 +59,7 @@ import { uniquePath } from "@upstash/blob"
 uniquePath`${user.id}/${file.name}`   // 'u7/holiday-pic-3xK9mBqR.png'
 ```
 
-Use `uniquePath` for any value you don't control. Each `${}` becomes one slugged filename that can never add a directory, and the finished path gets a random suffix — so two uploads of `photo.png` never collide. Paths with `.` or `..` segments are rejected.
+Use `uniquePath` for any value you don't control. Each `${}` becomes one slugged filename that can never add a directory, and the finished path gets a random suffix — so two uploads of `photo.png` never collide. The literal parts of the template are passed through as written, so keep `.` and `..` out of them yourself: a path with those segments is refused later, by the call that uses it, with a `TypeError` rather than a `BlobError`.
 
 Also: `bucket.copy(from, to)`, `bucket.move(from, to)`, and `bucket.updateJson(path, fn)` for a read-modify-write with automatic retry on conflict.
 
@@ -126,6 +126,8 @@ export const uploads = uploadHandler({
 
 ```ts
 // app/api/upload/route.ts
+import { uploads } from "@/lib/uploads"
+
 export const { GET, POST } = uploads
 ```
 
@@ -139,6 +141,8 @@ export const { useUpload } = uploadHooks<typeof uploads>()
 ```
 
 ```tsx
+import { useUpload } from "@/lib/upload-hooks"
+
 const { start, upload, accept } = useUpload()
 
 <input type="file" accept={accept} onChange={(e) => start({ file: e.target.files?.[0] })} />
@@ -148,6 +152,8 @@ const { start, upload, accept } = useUpload()
 ```
 
 `GET` serves the route's constraints, so `accept` fills the file dialog and an oversized file is refused before any request leaves the browser. `uploadHooks<typeof uploads>()` types route names and completion data at compile time; `import type` keeps server code out of the bundle.
+
+This example assumes a **public** bucket. On a private one `url` is `undefined`, so store `path` instead and hand the client a `bucket.signedReadUrl(path)` when it needs to read.
 
 Two rules that bite:
 
@@ -194,6 +200,9 @@ A refusal keeps its code all the way to the browser, so hooks switch on `error.c
 ```ts
 const config = bucket.s3()
 const s3 = new S3Client(config)   // endpoint and credentials are async providers
+
+// config.bucket is the underlying bucket id, available nowhere else
+await s3.send(new GetObjectCommand({ Bucket: config.bucket, Key: "reports/q3.pdf" }))
 ```
 
 Buckets are S3-compatible. Use this for what the SDK doesn't wrap — byte ranges, conditional GETs, tagging. Pass the providers through as they come so the AWS SDK can refresh an expired credential.
