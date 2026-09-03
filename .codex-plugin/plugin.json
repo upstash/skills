@@ -1,7 +1,7 @@
 {
   "name": "upstash",
-  "version": "1.0.0",
-  "description": "Agent skills for all Upstash SDKs — Redis, QStash, Workflow, Box, Ratelimit, Vector, and Search.",
+  "version": "1.1.0",
+  "description": "Agent skills for all Upstash SDKs — Redis, QStash, Workflow, Box, Blob, Ratelimit, Vector, and Search.",
   "author": {
     "name": "Upstash",
     "email": "support@upstash.com"
@@ -13,7 +13,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Upstash",
-    "shortDescription": "Skills for Upstash SDKs (Redis, QStash, Workflow, Box, Ratelimit, Vector, Search)",
+    "shortDescription": "Skills for Upstash SDKs (Redis, QStash, Workflow, Box, Blob, Ratelimit, Vector, Search)",
     "category": "Productivity",
     "developerName": "Upstash",
     "websiteURL": "https://upstash.com",

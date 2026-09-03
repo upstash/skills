@@ -1,6 +1,6 @@
 ---
 name: upstash
-description: Work with any Upstash product, SDK, or tool, including serverless Redis (caching, sessions, leaderboards, key-value storage), Ratelimit (rate limiting and throttling), QStash (message queue, cron schedules, background jobs), Workflow (durable long-running functions), Vector (vector database for embeddings, semantic search, and RAG), Search (full-text and semantic search), Box (sandboxed cloud containers for AI agents, TypeScript/JavaScript and Python), the Upstash CLI, and no-signup scratch Redis for agents. Use when the user mentions Upstash or needs any of these capabilities in a serverless, edge, or Node.js app.
+description: Work with any Upstash product, SDK, or tool, including serverless Redis (caching, sessions, leaderboards, key-value storage), Ratelimit (rate limiting and throttling), QStash (message queue, cron schedules, background jobs), Workflow (durable long-running functions), Vector (vector database for embeddings, semantic search, and RAG), Search (full-text and semantic search), Box (sandboxed cloud containers for AI agents, TypeScript/JavaScript and Python), Blob (serverless S3-compatible file storage with direct browser uploads), the Upstash CLI, and no-signup scratch Redis for agents. Use when the user mentions Upstash or needs any of these capabilities in a serverless, edge, or Node.js app.
 license: MIT
 metadata:
   author: Upstash
@@ -10,6 +10,10 @@ metadata:
 # Upstash Skills
 
 This skill combines documentation for all Upstash SDKs. Pick the relevant sub-skill below.
+
+## [upstash-blob-js](upstash-blob-js/overview.md)
+
+Work with the @upstash/blob TypeScript/JavaScript SDK for S3-compatible object storage with direct browser uploads, presigned URLs, multipart, and signed reads. Use when storing files or blobs, uploading avatars, images, videos, attachments or user documents, letting a browser upload straight to storage without proxying bytes through a server, generating public or time-limited signed URLs, serving private files, streaming large files with pause and resume, setting cache headers on stored objects, or reaching an S3-compatible bucket from the AWS SDK.
 
 ## [upstash-box-cli](upstash-box-cli/overview.md)
 
@@ -25,7 +29,7 @@ Work with the upstash-box Python SDK for sandboxed cloud containers with AI agen
 
 ## [upstash-cli](upstash-cli/overview.md)
 
-Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, and teams, with non-interactive commands and JSON output for scripts, CI, and agents. Use when creating, listing, renaming, or deleting Redis databases, changing plans, regions, TLS, eviction, auto-upgrade, or budgets, managing backups, running Redis commands with `upstash redis exec`, creating or inspecting Vector and Search indexes, managing QStash instances and tokens, managing team members, reading usage stats, or automating any Upstash account operation from the terminal. Also use when the user asks how to provision or manage Upstash resources without the console.
+Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, Blob, and teams, with non-interactive commands and JSON output for scripts, CI, and agents. Use when creating, listing, renaming, or deleting Redis databases, changing plans, regions, TLS, eviction, auto-upgrade, or budgets, managing backups, running Redis commands with `upstash redis exec`, creating or inspecting Vector and Search indexes, managing QStash instances and tokens, creating Blob buckets or minting temporary S3 credentials for one, managing team members, reading usage stats, or automating any Upstash account operation from the terminal. Also use when the user asks how to provision or manage Upstash resources without the console.
 
 ## [upstash-qstash-js](upstash-qstash-js/overview.md)
 

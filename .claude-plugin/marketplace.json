@@ -11,7 +11,7 @@
     {
       "name": "upstash",
       "source": "./",
-      "description": "Agent skills for all Upstash SDKs — Redis, QStash, Workflow, Box, Ratelimit, Vector, and Search."
+      "description": "Agent skills for all Upstash SDKs — Redis, QStash, Workflow, Box, Blob, Ratelimit, Vector, and Search."
     }
   ]
 }
