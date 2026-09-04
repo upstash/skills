@@ -18,6 +18,24 @@ CI runs `npm run check`, which fails if the generated output is stale. `check.mj
 
 The build's pre-check also refuses to run while `skills/upstash/` has unstaged changes — if you edited it by mistake, `git restore skills/upstash/` first.
 
+## MCP first, CLI second
+
+The plugins now install the hosted MCP server alongside the skills, so for
+account and data operations the agent usually has authenticated tools already
+in the session — creating and inspecting databases and indexes, running Redis
+commands, stats, logs, backups, QStash schedules and the DLQ. The CLI covers
+the same ground but needs a global npm install, a login and an API key.
+
+So `skills/upstash-cli/` opens by telling the agent to prefer the MCP when its
+tools are present and to fall back to the CLI for shell work — CI steps,
+provisioning scripts, piping JSON — and `scripts/header.md` says the same in
+the combined skill's routing preamble. Keep that ordering when editing either
+one, and do not add CLI instructions to an SDK skill that would pull an agent
+away from the MCP.
+
+The SDK skills are unaffected. They are about writing application code, which
+the MCP does not do.
+
 ## Skill descriptions are the search index
 
 skills.sh matches multi-word searches against each skill's `description` (single-word searches match the name). Keep descriptions long and intent-rich: what the SDK is, a "Use when…" list of concrete tasks, and the words users actually type (rate limiting, message queue, background jobs, vector database, session storage…). Never rename a skill to improve ranking — change the description instead. `description` must stay on one line and must not contain `: ` (the build script parses it with a regex, and YAML would otherwise need quoting).

@@ -1,11 +1,22 @@
 ---
 name: upstash-cli
-description: Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, and teams, with non-interactive commands and JSON output for scripts, CI, and agents. Use when creating, listing, renaming, or deleting Redis databases, changing plans, regions, TLS, eviction, auto-upgrade, or budgets, managing backups, running Redis commands with `upstash redis exec`, creating or inspecting Vector and Search indexes, managing QStash instances and tokens, managing team members, reading usage stats, or automating any Upstash account operation from the terminal. Also use when the user asks how to provision or manage Upstash resources without the console.
+description: Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, and teams, with non-interactive commands and JSON output for scripts, CI, and agents. Use when creating, listing, renaming, or deleting Redis databases, changing plans, regions, TLS, eviction, auto-upgrade, or budgets, managing backups, running Redis commands with `upstash redis exec`, creating or inspecting Vector and Search indexes, managing QStash instances and tokens, managing team members, reading usage stats, or automating any Upstash account operation from the terminal. Also use when the user asks how to provision or manage Upstash resources without the console. Prefer the Upstash MCP server when its tools are available in the session, and use this skill for terminal, CI, and scripting work.
 license: MIT
 metadata:
   author: Upstash
   homepage: https://upstash.com
 ---
+
+## Prefer the MCP server when it is available
+
+If Upstash MCP tools are in the session, call them instead of shelling out to the CLI. They are
+already authenticated and cover the same ground — creating and inspecting Redis databases, running
+Redis commands, usage stats, backups, Vector and Search indexes, QStash schedules and messages, the
+DLQ, and logs. Installing the Upstash plugin registers the hosted server at
+`https://mcp.upstash.com/mcp`.
+
+Use the CLI when there is no MCP in the session, or when the work is inherently shell work — a CI
+step, a provisioning script, or piping JSON into other commands.
 
 The Upstash CLI (`upstash`) manages Upstash services via the Upstash Developer API. All commands are non-interactive and emit JSON on stdout. Errors go to stderr as `{ "error": "..." }` with exit code `1`.
 

@@ -11,6 +11,11 @@ metadata:
 
 This skill combines documentation for all Upstash SDKs. Pick the relevant sub-skill below.
 
+If Upstash MCP tools are available in this session, prefer them for account and data operations —
+creating and inspecting databases and indexes, running Redis commands, reading stats, logs and the
+DLQ. The sub-skills below are for writing application code; reach for `upstash-cli` only when there
+is no MCP or the work is inherently shell work.
+
 ## [upstash-box-cli](upstash-box-cli/overview.md)
 
 Drive an Upstash Box (a remote sandboxed workspace) from the terminal with the `box` CLI. Use when asked to run commands, edit files, clone repos, run builds or tests, publish a public URL, or do any work inside a box rather than on this machine.
@@ -25,7 +30,7 @@ Work with the upstash-box Python SDK for sandboxed cloud containers with AI agen
 
 ## [upstash-cli](upstash-cli/overview.md)
 
-Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, and teams, with non-interactive commands and JSON output for scripts, CI, and agents. Use when creating, listing, renaming, or deleting Redis databases, changing plans, regions, TLS, eviction, auto-upgrade, or budgets, managing backups, running Redis commands with `upstash redis exec`, creating or inspecting Vector and Search indexes, managing QStash instances and tokens, managing team members, reading usage stats, or automating any Upstash account operation from the terminal. Also use when the user asks how to provision or manage Upstash resources without the console.
+Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, and teams, with non-interactive commands and JSON output for scripts, CI, and agents. Use when creating, listing, renaming, or deleting Redis databases, changing plans, regions, TLS, eviction, auto-upgrade, or budgets, managing backups, running Redis commands with `upstash redis exec`, creating or inspecting Vector and Search indexes, managing QStash instances and tokens, managing team members, reading usage stats, or automating any Upstash account operation from the terminal. Also use when the user asks how to provision or manage Upstash resources without the console. Prefer the Upstash MCP server when its tools are available in the session, and use this skill for terminal, CI, and scripting work.
 
 ## [upstash-qstash-js](upstash-qstash-js/overview.md)
 

@@ -1,3 +1,14 @@
+## Prefer the MCP server when it is available
+
+If Upstash MCP tools are in the session, call them instead of shelling out to the CLI. They are
+already authenticated and cover the same ground — creating and inspecting Redis databases, running
+Redis commands, usage stats, backups, Vector and Search indexes, QStash schedules and messages, the
+DLQ, and logs. Installing the Upstash plugin registers the hosted server at
+`https://mcp.upstash.com/mcp`.
+
+Use the CLI when there is no MCP in the session, or when the work is inherently shell work — a CI
+step, a provisioning script, or piping JSON into other commands.
+
 The Upstash CLI (`upstash`) manages Upstash services via the Upstash Developer API. All commands are non-interactive and emit JSON on stdout. Errors go to stderr as `{ "error": "..." }` with exit code `1`.
 
 ## Install
