@@ -18,6 +18,7 @@ Connect your AI coding agent to Upstash. This repo ships **skills** (per-SDK ins
 - **`skills/upstash/`** — the combined skill, **generated** from all the sources by `npm run build`. Never hand-edit it (see [`AGENTS.md`](AGENTS.md)).
 - **Plugin manifests** — `.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`, `gemini-extension.json`, and the portable [Agent Plugins](https://agent-plugins.org) `plugin.json` + `mcp.json`. They make the repo installable as a plugin/extension. **These plugins now bundle the remote Upstash MCP server (OAuth), so installing the plugin sets up the skills *and* the MCP in one step** — no separate MCP configuration for Claude Code, Codex, Cursor, or Gemini CLI.
 - **`zed-extension/`** — a Zed MCP server extension (Rust → Wasm).
+- **`assets/`** — branding used on the plugin card. Only Codex reads it (`interface.logo` / `interface.composerIcon` in `.codex-plugin/plugin.json`); the other clients have no icon field.
 
 ## Available Skills
 

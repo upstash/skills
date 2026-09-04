@@ -25,3 +25,33 @@ skills.sh matches multi-word searches against each skill's `description` (single
 ## Gemini CLI extension
 
 `gemini-extension.json` at the root makes the repo installable with `gemini extensions install https://github.com/upstash/skills` (it clones the default branch; no tag needed). Listing in the gallery at geminicli.com/extensions is crawler-only: the repo must carry the `gemini-cli-extension` GitHub topic and have a tag, and there is no publish command or submission form. We have not tagged this repo for that yet, so bump `version` in `gemini-extension.json` only when the skills change in a way users should see.
+
+## Plugin manifests must stay in sync
+
+Six manifests describe the same plugin to different clients: `plugin.json`
+(portable Agent Plugins) plus `mcp.json`, `.claude-plugin/`, `.codex-plugin/`,
+`.cursor-plugin/` and `gemini-extension.json`. They drift easily — a change to
+one is almost always a change to all of them.
+
+There is deliberately no `opencode.json` in the repo. Nothing would install it:
+OpenCode users get the skills from `npx skills add upstash/skills --agent
+opencode` and configure the MCP themselves (see the README). OpenCode reads
+`opencode.json` from the project root, so a committed one would only ever
+configure OpenCode for people running it *inside a clone of this repo* — a
+personal dev setting, not something the repo should ship. It is gitignored;
+keep your own if you want the MCP while working here.
+
+`npm run check` runs `scripts/check-manifests.mjs`, which asserts that:
+
+- `version` and `description` match `plugin.json` everywhere, including the
+  Claude and Cursor marketplace entries;
+- the description mentions the MCP server, since that is the only place a user
+  learns the plugin ships one;
+- every client points the MCP at `https://mcp.upstash.com/mcp`;
+- `.codex-plugin/plugin.json` carries a complete `interface` block — Codex
+  renders the plugin card from it, and a missing `logo`/`composerIcon` is why
+  an installed plugin shows no Upstash icon.
+
+Branding assets live in `assets/`. Only Codex consumes them; Claude Code,
+Cursor, Gemini CLI and the Agent Plugins schema have no icon field, so the
+icon cannot be wired up for those clients.

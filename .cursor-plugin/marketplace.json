@@ -2,7 +2,8 @@
   "name": "upstash",
   "owner": {
     "name": "Upstash",
-    "email": "support@upstash.com"
+    "email": "support@upstash.com",
+    "url": "https://upstash.com"
   },
   "metadata": {
     "description": "Official Upstash plugin marketplace"
@@ -10,8 +11,21 @@
   "plugins": [
     {
       "name": "upstash",
+      "displayName": "Upstash",
       "source": "./",
-      "description": "Agent skills for Upstash SDKs and CLIs — Redis, QStash, Workflow, Box (SDKs and the box CLI), Ratelimit, Vector, and Search."
+      "description": "The Upstash MCP server plus agent skills for every Upstash SDK and CLI — Redis, QStash, Workflow, Box, Ratelimit, Vector, and Search.",
+      "version": "1.2.0",
+      "author": {
+        "name": "Upstash",
+        "email": "support@upstash.com",
+        "url": "https://upstash.com"
+      },
+      "homepage": "https://upstash.com",
+      "repository": "https://github.com/upstash/skills",
+      "license": "MIT",
+      "keywords": ["upstash", "mcp", "redis", "qstash", "vector", "workflow", "ratelimit", "serverless", "sandbox"],
+      "category": "database",
+      "tags": ["mcp", "redis", "queue", "vector", "search", "serverless"]
     }
   ]
 }

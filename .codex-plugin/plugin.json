@@ -1,28 +1,40 @@
 {
   "name": "upstash",
-  "version": "1.1.0",
+  "version": "1.2.0",
+  "description": "The Upstash MCP server plus agent skills for every Upstash SDK and CLI — Redis, QStash, Workflow, Box, Ratelimit, Vector, and Search.",
+  "author": {
+    "name": "Upstash",
+    "email": "support@upstash.com",
+    "url": "https://upstash.com"
+  },
+  "homepage": "https://upstash.com",
+  "repository": "https://github.com/upstash/skills",
+  "license": "MIT",
+  "keywords": ["upstash", "mcp", "redis", "qstash", "vector", "workflow", "ratelimit", "serverless", "sandbox"],
+  "skills": "./skills/",
   "mcpServers": {
     "upstash": {
       "type": "http",
       "url": "https://mcp.upstash.com/mcp"
     }
   },
-  "description": "Agent skills for all Upstash SDKs — Redis, QStash, Workflow, Box, Ratelimit, Vector, and Search.",
-  "author": {
-    "name": "Upstash",
-    "email": "support@upstash.com"
-  },
-  "homepage": "https://upstash.com",
-  "repository": "https://github.com/upstash/skills",
-  "license": "MIT",
-  "keywords": ["upstash", "redis", "qstash", "vector", "workflow", "ratelimit", "serverless", "sandbox"],
-  "skills": "./skills/",
   "interface": {
     "displayName": "Upstash",
-    "shortDescription": "Skills for Upstash SDKs (Redis, QStash, Workflow, Box, Ratelimit, Vector, Search)",
-    "category": "Productivity",
+    "shortDescription": "Upstash MCP server and skills for every Upstash SDK",
+    "longDescription": "Build on Upstash without leaving your agent. Bundles the hosted Upstash MCP server (OAuth on first use) for live access to your databases, queues, and indexes, together with skills for Redis, Ratelimit, QStash, Workflow, Vector, Search, Box, and the Upstash CLI.",
     "developerName": "Upstash",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"],
     "websiteURL": "https://upstash.com",
-    "repository": "https://github.com/upstash/skills"
+    "privacyPolicyURL": "https://upstash.com/trust/privacy.pdf",
+    "termsOfServiceURL": "https://upstash.com/trust/terms.pdf",
+    "defaultPrompt": [
+      "List my Upstash databases and show their usage stats.",
+      "Add caching to this route with Upstash Redis.",
+      "Run this background job through QStash on a cron schedule."
+    ],
+    "brandColor": "#00C98D",
+    "composerIcon": "./assets/upstash-icon-white-bg.png",
+    "logo": "./assets/upstash-icon-white-bg.png"
   }
 }
