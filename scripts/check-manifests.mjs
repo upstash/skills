@@ -73,21 +73,62 @@ for (const [name, manifest] of Object.entries(manifests)) {
   }
 }
 
-// Marketplace entries must mirror the plugin they point at.
+// Marketplace entries must mirror the plugin they point at. The two schemas
+// differ: Claude's entry carries full metadata, Cursor's allows only
+// name/source/description under additionalProperties:false, so extra fields
+// there are a validation error rather than harmless noise.
+const CURSOR_ENTRY_FIELDS = ["name", "source", "description", "minClientVersions"];
+
 for (const [name, market] of [[".claude-plugin/marketplace.json", claudeMarket], [".cursor-plugin/marketplace.json", cursorMarket]]) {
-  const entry = market.plugins?.find((p) => p.name === "upstash");
+  const entry = market.plugins?.find((p) => p.name === SLUG);
   if (!entry) {
-    fail(`${name} has no "upstash" plugin entry.`);
+    fail(`${name} has no ${JSON.stringify(SLUG)} plugin entry.`);
     continue;
   }
-  for (const field of ["description", "version"]) {
-    if (entry[field] !== root[field]) fail(`${name} plugin entry ${field} must match plugin.json.`);
-  }
-  if (entry.displayName !== DISPLAY_NAME) {
-    fail(`${name} plugin entry displayName must be ${JSON.stringify(DISPLAY_NAME)} (got ${JSON.stringify(entry.displayName)}).`);
+  if (entry.description !== root.description) {
+    fail(`${name} plugin entry description must match plugin.json.`);
   }
   if (market.owner?.name !== VENDOR) {
     fail(`${name} owner.name must stay ${JSON.stringify(VENDOR)} — the marketplace is the vendor's, not the plugin's.`);
+  }
+}
+
+// Claude's entry is the only one that may carry the richer metadata.
+const claudeEntry = claudeMarket.plugins?.find((p) => p.name === SLUG);
+if (claudeEntry) {
+  if (claudeEntry.version !== root.version) fail(".claude-plugin/marketplace.json plugin entry version must match plugin.json.");
+  if (claudeEntry.displayName !== DISPLAY_NAME) {
+    fail(`.claude-plugin/marketplace.json plugin entry displayName must be ${JSON.stringify(DISPLAY_NAME)} (got ${JSON.stringify(claudeEntry.displayName)}).`);
+  }
+}
+
+// Cursor rejects anything outside its four entry fields.
+for (const entry of cursorMarket.plugins ?? []) {
+  const extra = Object.keys(entry).filter((k) => !CURSOR_ENTRY_FIELDS.includes(k));
+  if (extra.length > 0) {
+    fail(`.cursor-plugin/marketplace.json entry "${entry.name}" has fields Cursor's schema rejects (additionalProperties:false): ${extra.join(", ")}. Put plugin metadata in .cursor-plugin/plugin.json instead.`);
+  }
+}
+if (cursorMarket.owner && Object.keys(cursorMarket.owner).some((k) => !["name", "email"].includes(k))) {
+  fail(".cursor-plugin/marketplace.json owner allows only name and email.");
+}
+
+// $schema is only safe where the client actually accepts it. Cursor's schemas
+// are additionalProperties:false and declare no $schema property (and none of
+// Cursor's own 65 manifests carry one), so adding it there is a violation.
+const schemaRefs = {
+  "plugin.json": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "mcp.json": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  ".claude-plugin/plugin.json": "https://code.claude.com/schemas/plugin.json",
+  ".claude-plugin/marketplace.json": "https://code.claude.com/schemas/marketplace.json",
+};
+for (const [name, expected] of Object.entries(schemaRefs)) {
+  const actual = { "plugin.json": root, "mcp.json": mcp, ".claude-plugin/plugin.json": claude, ".claude-plugin/marketplace.json": claudeMarket }[name].$schema;
+  if (actual !== expected) fail(`${name} $schema must be ${JSON.stringify(expected)} (got ${JSON.stringify(actual)}).`);
+}
+for (const [name, manifest] of [[".cursor-plugin/plugin.json", cursor], [".cursor-plugin/marketplace.json", cursorMarket]]) {
+  if (manifest.$schema !== undefined) {
+    fail(`${name} must not declare $schema — Cursor's schema is additionalProperties:false and does not allow the key.`);
   }
 }
 
@@ -149,6 +190,16 @@ if (!iface || typeof iface !== "object") {
       fail(`.codex-plugin/plugin.json interface.${field} references a missing file: ${value}`);
     }
   }
+}
+
+// Cursor has its own logo field (relative to the plugin root, no "./" prefix
+// in Cursor's own plugins), so the icon is wired up there as well as in Codex.
+if (typeof cursor.logo !== "string" || !cursor.logo) {
+  fail(".cursor-plugin/plugin.json logo is required so the plugin shows the Upstash icon in Cursor.");
+} else if (cursor.logo.startsWith("/") || cursor.logo.startsWith("./")) {
+  fail(`.cursor-plugin/plugin.json logo must be a plain path relative to the plugin root (got ${JSON.stringify(cursor.logo)}).`);
+} else if (!existsSync(resolve(ROOT, cursor.logo))) {
+  fail(`.cursor-plugin/plugin.json logo references a missing file: ${cursor.logo}`);
 }
 
 // Skills are the payload — every client that can be pointed at them should be.

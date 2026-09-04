@@ -79,6 +79,34 @@ keep your own if you want the MCP while working here.
   renders the plugin card from it, and a missing `logo`/`composerIcon` is why
   an installed plugin shows no Upstash icon.
 
-Branding assets live in `assets/`. Only Codex consumes them; Claude Code,
-Cursor, Gemini CLI and the Agent Plugins schema have no icon field, so the
-icon cannot be wired up for those clients.
+## Schemas are the source of truth, not the other manifests
+
+These clients look alike and are not. Check the real schema before copying a
+field from one manifest to another — several are `additionalProperties: false`,
+where a stray field is a hard validation failure rather than harmless noise.
+
+| Client | Schema | Strict? | Icon field | `$schema` key |
+|---|---|---|---|---|
+| Agent Plugins | `agent-plugins.org/schemas/1.0.0/` (serves JSON) | yes | none | yes, and it resolves |
+| Claude Code | `code.claude.com/schemas/` (serves the docs page, not JSON) | no | none | accepted by `claude plugin validate` |
+| Cursor | `github.com/cursor/plugins/schemas/` | yes | `logo` | **no** — the key itself is rejected |
+| Codex | `plugin-json-spec.md` in `openai/codex`, no URL | — | `interface.logo`, `interface.composerIcon` | none published |
+| Gemini CLI | none published | — | none | none published |
+
+Two traps worth remembering:
+
+- **Cursor's marketplace entry allows only `name`, `source`, `description` and
+  `minClientVersions`** — not the version/author/license/category/tags block
+  that Claude's entry takes. Per-plugin metadata goes in
+  `.cursor-plugin/plugin.json`, which does accept all of it plus `logo`.
+- **Cursor rejects `$schema`.** Its schemas declare no such property, and none
+  of Cursor's own 65 official manifests carry one.
+
+Validate for real rather than by eye: `claude plugin validate <path>` checks the
+Claude manifests, and Cursor's schemas can be diffed against ours from a clone
+of `github.com/cursor/plugins`. `scripts/check-manifests.mjs` encodes what both
+found.
+
+Branding assets live in `assets/`. Codex and Cursor both render them; Claude
+Code, Gemini CLI and the Agent Plugins schema have no icon field, so the icon
+cannot be wired up for those clients.
