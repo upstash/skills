@@ -25,3 +25,88 @@ skills.sh matches multi-word searches against each skill's `description` (single
 ## Gemini CLI extension
 
 `gemini-extension.json` at the root makes the repo installable with `gemini extensions install https://github.com/upstash/skills` (it clones the default branch; no tag needed). Listing in the gallery at geminicli.com/extensions is crawler-only: the repo must carry the `gemini-cli-extension` GitHub topic and have a tag, and there is no publish command or submission form. We have not tagged this repo for that yet, so bump `version` in `gemini-extension.json` only when the skills change in a way users should see.
+
+## The plugin is titled "Upstash Redis"
+
+The skills and the MCP cover every Upstash product, and the descriptions list
+them all. The *title* is still **Upstash Redis**, because Redis is the flagship
+and because marketplace search is largely name-driven — someone browsing for
+"redis" has to find us. Every user-facing plugin title reads `Upstash Redis`:
+`displayName` in the Claude and Cursor `plugin.json` and in both marketplace
+entries, and `interface.displayName` for Codex.
+
+Three things nearby are **not** display surfaces and must not be renamed:
+
+- **`"name": "upstash"`** — the install identifier. It is what
+  `/plugin install upstash@upstash`, `codex plugin marketplace add` and
+  `enabledPlugins` key off. Renaming it breaks every install command in the
+  README and orphans existing installs.
+- **`author.name` / `owner.name`: `"Upstash"`** — the company publishing the
+  plugin, not the plugin itself.
+- **Marketplace-level `displayName`** (`.agents/plugins/marketplace.json`) —
+  names the vendor's marketplace, which hosts the plugin; the plugin's own
+  title comes from `.codex-plugin/plugin.json`.
+
+This does not loosen the skills rule above: skill names are still never changed
+for ranking. That rule is about the `name:` in a `SKILL.md` frontmatter, whose
+slug is a stable identifier; this one is about plugin titles, which are free
+text. `scripts/check-manifests.mjs` enforces both halves — the titles must say
+"Upstash Redis", the slug and vendor must not.
+
+## Plugin manifests must stay in sync
+
+Six manifests describe the same plugin to different clients: `plugin.json`
+(portable Agent Plugins) plus `mcp.json`, `.claude-plugin/`, `.codex-plugin/`,
+`.cursor-plugin/` and `gemini-extension.json`. They drift easily — a change to
+one is almost always a change to all of them.
+
+There is deliberately no `opencode.json` in the repo. Nothing would install it:
+OpenCode users get the skills from `npx skills add upstash/skills --agent
+opencode` and configure the MCP themselves (see the README). OpenCode reads
+`opencode.json` from the project root, so a committed one would only ever
+configure OpenCode for people running it *inside a clone of this repo* — a
+personal dev setting, not something the repo should ship. It is gitignored;
+keep your own if you want the MCP while working here.
+
+`npm run check` runs `scripts/check-manifests.mjs`, which asserts that:
+
+- `version` and `description` match `plugin.json` everywhere, including the
+  Claude and Cursor marketplace entries;
+- the description mentions the MCP server, since that is the only place a user
+  learns the plugin ships one;
+- every client points the MCP at `https://mcp.upstash.com/mcp`;
+- `.codex-plugin/plugin.json` carries a complete `interface` block — Codex
+  renders the plugin card from it, and a missing `logo`/`composerIcon` is why
+  an installed plugin shows no Upstash icon.
+
+## Schemas are the source of truth, not the other manifests
+
+These clients look alike and are not. Check the real schema before copying a
+field from one manifest to another — several are `additionalProperties: false`,
+where a stray field is a hard validation failure rather than harmless noise.
+
+| Client | Schema | Strict? | Icon field | `$schema` key |
+|---|---|---|---|---|
+| Agent Plugins | `agent-plugins.org/schemas/1.0.0/` (serves JSON) | yes | none | yes, and it resolves |
+| Claude Code | `code.claude.com/schemas/` (serves the docs page, not JSON) | no | none | accepted by `claude plugin validate` |
+| Cursor | `github.com/cursor/plugins/schemas/` | yes | `logo` | **no** — the key itself is rejected |
+| Codex | `plugin-json-spec.md` in `openai/codex`, no URL | — | `interface.logo`, `interface.composerIcon` | none published |
+| Gemini CLI | none published | — | none | none published |
+
+Two traps worth remembering:
+
+- **Cursor's marketplace entry allows only `name`, `source`, `description` and
+  `minClientVersions`** — not the version/author/license/category/tags block
+  that Claude's entry takes. Per-plugin metadata goes in
+  `.cursor-plugin/plugin.json`, which does accept all of it plus `logo`.
+- **Cursor rejects `$schema`.** Its schemas declare no such property, and none
+  of Cursor's own 65 official manifests carry one.
+
+Validate for real rather than by eye: `claude plugin validate <path>` checks the
+Claude manifests, and Cursor's schemas can be diffed against ours from a clone
+of `github.com/cursor/plugins`. `scripts/check-manifests.mjs` encodes what both
+found.
+
+Branding assets live in `assets/`. Codex and Cursor both render them; Claude
+Code, Gemini CLI and the Agent Plugins schema have no icon field, so the icon
+cannot be wired up for those clients.

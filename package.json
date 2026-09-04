@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build.mjs",
-    "check": "node scripts/build.mjs && node scripts/check.mjs"
+    "check": "node scripts/check-manifests.mjs && node scripts/build.mjs && node scripts/check.mjs",
+    "check:manifests": "node scripts/check-manifests.mjs"
   },
   "dsh": {
     "bundle": {
