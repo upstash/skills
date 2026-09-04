@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build.mjs",
-    "check": "node scripts/build.mjs && node scripts/check.mjs"
+    "check": "node scripts/build.mjs && node scripts/check.mjs",
+    "check:box-cli": "node scripts/check-box-cli-coverage.mjs"
   },
   "dsh": {
     "bundle": {

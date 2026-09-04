@@ -50,6 +50,7 @@ Clean up when the work is done. Boxes cost money while they exist:
 
 ```bash
 box pause                   # keeps the workspace, resumes on the next command
+box resume                  # rarely needed; any command resumes a paused box
 box delete --yes            # irreversible; --yes is required without a terminal
 ```
 
@@ -306,3 +307,6 @@ reject it rather than answering an automation caller with a prompt:
 box files list --json | jq -r '.[].name'
 box get "$(cat .box)" --json
 ```
+
+`box init-demo` and `box completion` exist but are for people, not agents: one
+scaffolds a local demo project, the other prints a shell completion script.
