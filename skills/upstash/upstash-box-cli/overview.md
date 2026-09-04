@@ -30,7 +30,8 @@ box use <box-id>                                       # pin one to this directo
 box status                                             # id, where it came from, state
 ```
 
-Flags worth knowing at create time, because they cannot be set afterwards:
+`--keep-alive`, `--browser` and `--env` can only be chosen at create time; to
+change any of them you make a new box:
 
 ```bash
 box create --no-repl --keep-alive          # do not auto-pause when idle
@@ -223,6 +224,18 @@ box browser goto https://example.com/login
 box browser act "click the login button"
 box browser close
 box browser cdp-url                     # drive it with Playwright instead
+box browser observe "what can I click here?"
+box browser live-url                    # a URL for a human to watch the tab
+```
+
+Recordings, when you need to show what happened rather than describe it:
+
+```bash
+box browser recordings start --max-seconds 120
+box browser recordings stop
+box browser recordings list
+box browser recordings get <recording-id>
+box browser recordings download <recording-id> -o session.mp4
 ```
 
 `--tab <id>` is optional while one tab is open and required once there are
@@ -245,7 +258,9 @@ Cron on the box, in UTC. Nothing inside the container can register one.
 box schedule exec --cron '0 9 * * *' -- npm run backup
 box schedule agent --cron '@daily' "summarise yesterday's errors"
 box schedule list
+box schedule get <schedule-id>            # includes run and failure counts
 box schedule pause <schedule-id>
+box schedule resume <schedule-id>
 box schedule update <schedule-id> --cron '0 10 * * *'
 box schedule delete <schedule-id>
 ```
@@ -257,10 +272,27 @@ box schedule delete <schedule-id>
 ```bash
 box skills add upstash-redis-js        # skills available to the box's agent
 box skills list
+box skills remove upstash-redis-js
 box config model anthropic/claude-sonnet-5
 box config init-command set "npm ci"   # runs when the box starts
+box config init-command get
+box config init-command delete
 box config network deny-all            # or allow-all, or custom
 box config network custom --allow-domain api.example.com
+box config harness --command my-agent  # a custom agent harness
+```
+
+Account-level settings, which apply to boxes you create later rather than to
+this one:
+
+```bash
+box env set KEY VAL                    # box create --env is per-box instead
+box env list
+box env delete KEY
+box env set-all A=1 B=2                # replaces every var, does not merge
+box labels add staging                 # then: box list --label staging
+box labels list
+box labels remove staging
 ```
 
 ## Output
