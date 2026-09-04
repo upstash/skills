@@ -1,6 +1,6 @@
 {
   "name": "upstash",
-  "displayName": "Upstash",
+  "displayName": "Upstash Redis",
   "description": "The Upstash MCP server plus agent skills for every Upstash SDK and CLI — Redis, QStash, Workflow, Box, Ratelimit, Vector, and Search.",
   "version": "1.2.0",
   "skills": "./skills/",

@@ -26,6 +26,33 @@ skills.sh matches multi-word searches against each skill's `description` (single
 
 `gemini-extension.json` at the root makes the repo installable with `gemini extensions install https://github.com/upstash/skills` (it clones the default branch; no tag needed). Listing in the gallery at geminicli.com/extensions is crawler-only: the repo must carry the `gemini-cli-extension` GitHub topic and have a tag, and there is no publish command or submission form. We have not tagged this repo for that yet, so bump `version` in `gemini-extension.json` only when the skills change in a way users should see.
 
+## The plugin is titled "Upstash Redis"
+
+The skills and the MCP cover every Upstash product, and the descriptions list
+them all. The *title* is still **Upstash Redis**, because Redis is the flagship
+and because marketplace search is largely name-driven — someone browsing for
+"redis" has to find us. Every user-facing plugin title reads `Upstash Redis`:
+`displayName` in the Claude and Cursor `plugin.json` and in both marketplace
+entries, and `interface.displayName` for Codex.
+
+Three things nearby are **not** display surfaces and must not be renamed:
+
+- **`"name": "upstash"`** — the install identifier. It is what
+  `/plugin install upstash@upstash`, `codex plugin marketplace add` and
+  `enabledPlugins` key off. Renaming it breaks every install command in the
+  README and orphans existing installs.
+- **`author.name` / `owner.name`: `"Upstash"`** — the company publishing the
+  plugin, not the plugin itself.
+- **Marketplace-level `displayName`** (`.agents/plugins/marketplace.json`) —
+  names the vendor's marketplace, which hosts the plugin; the plugin's own
+  title comes from `.codex-plugin/plugin.json`.
+
+This does not loosen the skills rule above: skill names are still never changed
+for ranking. That rule is about the `name:` in a `SKILL.md` frontmatter, whose
+slug is a stable identifier; this one is about plugin titles, which are free
+text. `scripts/check-manifests.mjs` enforces both halves — the titles must say
+"Upstash Redis", the slug and vendor must not.
+
 ## Plugin manifests must stay in sync
 
 Six manifests describe the same plugin to different clients: `plugin.json`

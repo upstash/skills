@@ -19,7 +19,7 @@
     }
   },
   "interface": {
-    "displayName": "Upstash",
+    "displayName": "Upstash Redis",
     "shortDescription": "Upstash MCP server and skills for every Upstash SDK",
     "longDescription": "Build on Upstash without leaving your agent. Bundles the hosted Upstash MCP server (OAuth on first use) for live access to your databases, queues, and indexes, together with skills for Redis, Ratelimit, QStash, Workflow, Vector, Search, Box, and the Upstash CLI.",
     "developerName": "Upstash",

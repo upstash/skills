@@ -9,6 +9,16 @@ const fail = (msg) => errors.push(msg);
 
 const MCP_URL = "https://mcp.upstash.com/mcp";
 
+// Redis is the flagship, so every user-facing plugin title says so — people
+// searching a marketplace for "redis" have to find us. See AGENTS.md.
+const DISPLAY_NAME = "Upstash Redis";
+
+// The slug is the install identifier (`/plugin install upstash@upstash`) and
+// the vendor is the company. Neither is a display surface; renaming the slug
+// would break every install command in the README.
+const SLUG = "upstash";
+const VENDOR = "Upstash";
+
 const root = read("plugin.json");
 const claude = read(".claude-plugin/plugin.json");
 const claudeMarket = read(".claude-plugin/marketplace.json");
@@ -41,6 +51,28 @@ for (const [name, manifest] of [[".claude-plugin/plugin.json", claude], [".codex
   }
 }
 
+// The plugin is titled after the flagship product everywhere it is shown.
+const displayNames = {
+  ".claude-plugin/plugin.json": claude.displayName,
+  ".cursor-plugin/plugin.json": cursor.displayName,
+  ".codex-plugin/plugin.json": codex.interface?.displayName,
+};
+for (const [name, value] of Object.entries(displayNames)) {
+  if (value !== DISPLAY_NAME) {
+    fail(`${name} display name must be ${JSON.stringify(DISPLAY_NAME)} (got ${JSON.stringify(value)}).`);
+  }
+}
+
+// ...but the slug and the vendor are not display surfaces.
+for (const [name, manifest] of Object.entries(manifests)) {
+  if (manifest.name !== SLUG) {
+    fail(`${name} name must stay ${JSON.stringify(SLUG)} — it is the install identifier, not a title (got ${JSON.stringify(manifest.name)}).`);
+  }
+  if (manifest.author && manifest.author.name !== VENDOR) {
+    fail(`${name} author.name must stay ${JSON.stringify(VENDOR)} — that is the company, not the plugin (got ${JSON.stringify(manifest.author.name)}).`);
+  }
+}
+
 // Marketplace entries must mirror the plugin they point at.
 for (const [name, market] of [[".claude-plugin/marketplace.json", claudeMarket], [".cursor-plugin/marketplace.json", cursorMarket]]) {
   const entry = market.plugins?.find((p) => p.name === "upstash");
@@ -50,6 +82,12 @@ for (const [name, market] of [[".claude-plugin/marketplace.json", claudeMarket],
   }
   for (const field of ["description", "version"]) {
     if (entry[field] !== root[field]) fail(`${name} plugin entry ${field} must match plugin.json.`);
+  }
+  if (entry.displayName !== DISPLAY_NAME) {
+    fail(`${name} plugin entry displayName must be ${JSON.stringify(DISPLAY_NAME)} (got ${JSON.stringify(entry.displayName)}).`);
+  }
+  if (market.owner?.name !== VENDOR) {
+    fail(`${name} owner.name must stay ${JSON.stringify(VENDOR)} — the marketplace is the vendor's, not the plugin's.`);
   }
 }
 
