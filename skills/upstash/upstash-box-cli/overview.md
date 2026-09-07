@@ -179,12 +179,47 @@ box git exec -C repo -- add -A
 box git commit -C repo -m "message"
 box git push -C repo
 box git create-pr -C repo --title "Fix the thing" --base main
+box git create-issue -C repo --title "Search returns nothing"
 ```
 
 `box git exec` takes git's arguments without the leading `git`, and passes git's exit
 code through.
 
 Private repos and PRs need a token at creation: `box create --no-repl --git-token $GITHUB_TOKEN`.
+
+## Attaching a screenshot to a pull request or issue
+
+`--attach` uploads an image or video to the new pull request or issue, and repeats
+for several. Alt text for an image goes after a `#`. A video renders as a player and
+takes no alt text.
+
+The path is read inside the box, relative to `-C`. A browser screenshot is written to
+the machine running the CLI, not into the box, so it has to be uploaded first. That
+upload is the step people miss:
+
+```bash
+box browser screenshot -o /tmp/shot.png          # lands here, not in the box
+box files upload /tmp/shot.png repo/shot.png     # now it is in the repository
+box git create-issue -C repo \
+  --title "Search returns nothing" \
+  --body 'Reproduced on staging.
+
+![what I saw](./shot.png)' \
+  --attach 'shot.png#the empty result list'
+```
+
+A `![alt](./shot.png)` reference in the body is rewritten to point at the uploaded
+asset, so the image renders in the issue instead of pointing at a path that exists
+only inside the box.
+
+Four rules are enforced, each a 400 before anything is created: the extension must be
+png, jpg, jpeg, gif, webp, mp4, mov or webm; at most 50 files; the path must stay
+inside the `-C` directory; and a video cannot carry alt text.
+
+When some attachments upload and others fail, the item is still created and its URL
+is still returned, with a `warning` alongside it. Text output prints the warning on
+its own line, and `--json` carries it as the `warning` field. Check it before
+reporting the issue as filed with its evidence attached.
 
 ## Agent
 
@@ -240,7 +275,9 @@ box browser recordings download <recording-id> -o session.mp4
 ```
 
 `--tab <id>` is optional while one tab is open and required once there are
-several. `screenshot` writes to a file because stdout carries text.
+several. `screenshot` writes to a file because stdout carries text, and that file
+lands on this machine rather than in the box. To put a screenshot on a pull request
+or issue, see "Attaching a screenshot to a pull request or issue".
 
 Pull structured data off the page with a flat JSON Schema file:
 
