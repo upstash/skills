@@ -1,6 +1,6 @@
 {
   "name": "upstash",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Redis and other Upstash products",
   "author": {
     "name": "Upstash",
