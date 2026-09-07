@@ -93,7 +93,8 @@ const [usTop, euTop] = await Promise.all([
 ]);
 
 // Score range query (players with score 1000-2000)
-const midRange = await redis.zrangebyscore("leaderboard:global", 1000, 2000, {
+const midRange = await redis.zrange("leaderboard:global", 1000, 2000, {
+  byScore: true,
   withScores: true,
 });
 
