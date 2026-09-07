@@ -71,7 +71,7 @@ same = Box.get(box.id, git_token="ghp_...")  # git_token, not git={...}, when re
 by_name = Box.get_by_name("my-box")
 all_boxes = Box.list()
 beta = Box.list(label="beta")  # filter by label
-box.pause()
+box.pause()  # raises on keep-alive boxes — they are never idle-paused
 box.resume()
 box.delete()  # irreversible
 status = box.get_status()["status"]
@@ -213,8 +213,10 @@ Unlike the JS generic `AgentOptions<TProvider>`, Python does not narrow
 ```python
 from upstash_box import ClaudeCode, OpenAICodex, OpenCodeModel, CursorModel, OpenRouterModel, VercelModel
 
+ClaudeCode.FABLE_5_1  # "anthropic/claude-fable-5-1"
 ClaudeCode.OPUS_5  # "anthropic/claude-opus-5"
 ClaudeCode.SONNET_5  # "anthropic/claude-sonnet-5"
+OpenAICodex.GPT_6_ASTRA  # "openai/gpt-6-astra"
 OpenAICodex.GPT_5_6  # "openai/gpt-5.6"
 OpenCodeModel.CLAUDE_OPUS_5  # "opencode/claude-opus-5"
 CursorModel.COMPOSER_2_5  # "cursor/composer-2.5"
@@ -315,6 +317,48 @@ for chunk in stream:
     ...
 ```
 
+### Live sessions
+
+`exec.session()` opens a WebSocket to a process that is *still running* — stdin,
+streamed stdout/stderr, PTY resize, and signals. It is the one feature not carried
+by `httpx`; the `websockets` dependency is imported lazily, only when a session
+opens. Available on `Box`, `AsyncBox`, and both ephemeral clients.
+
+```python
+session = box.exec.session(
+    cmd="sort",               # run via `bash -lc`; argv=["sort"] runs the program with
+                              # no shell and takes precedence over cmd
+    cwd="/workspace/home",    # defaults to the box's tracked cwd
+    env=["LOG_LEVEL=debug"],  # KEY=VALUE entries overlaid on the box environment
+    on_stdout=lambda b: print(b.decode(), end=""),  # bytes
+    on_stderr=lambda b: print(b.decode(), end=""),  # separate stream unless tty
+)
+
+session.pid       # in-box PID, always non-zero
+session.exec_id   # server-side exec id
+session.write("banana\napple\n")
+session.end_stdin()             # EOF — a command that reads to EOF now exits by itself
+exit_code = session.wait()      # -1 if torn down while still running; wait(timeout=5) raises TimeoutError
+session.close()                 # hang up; also kills the process
+
+# Interactive programs / TUIs — tty allocates a real PTY, merging stderr into stdout
+with box.exec.session(argv=["bash", "-i"], tty=True, rows=40, cols=120) as shell:
+    shell.resize(50, 160)
+    shell.kill("INT")      # allowlist: TERM KILL INT HUP TSTP QUIT USR1 USR2 (default TERM)
+    shell.terminate(5000)  # server-side SIGTERM, then SIGKILL after the grace (first call wins)
+```
+
+The session owns the process: `close()` (or leaving the `with` block), a dropped
+connection, or the program exiting all kill the command, and a session cannot be
+reattached. Use `wait()` to run something to completion.
+
+On `AsyncBox` every handle method is a coroutine (`await session.write(...)`,
+`await session.wait()`, `async with await box.exec.session(...) as s:`) and an
+`async` callback is awaited; `wait()` there takes no timeout. In the sync client
+the callbacks run on a background reader
+thread — keep them short, and never call `wait()` from inside one, since the exit
+frame it waits for arrives on the very thread it is blocking.
+
 ## Filesystem
 
 ```python
@@ -325,6 +369,23 @@ entries = box.files.list("/workspace/home")  # [FileEntry(name, path, size, is_d
 # Binary files — use encoding="base64" for read and write
 box.files.write(path="/workspace/home/image.png", content=base64_string, encoding="base64")
 b64 = box.files.read("/workspace/home/image.png", encoding="base64")
+
+# Bounded byte-range read — the *presence* of `length` selects the range, so
+# length=0 reads zero bytes rather than the whole file. Server caps it at 8 MiB.
+head = box.files.read("/workspace/home/big.log", length=64 * 1024)
+chunk = box.files.read("/workspace/home/big.log", offset=1024, length=512)
+
+# Metadata — defaults to lstat, so a symlink reports type "symlink"
+stat = box.files.stat("/workspace/home/app.py")
+# stat: FileStat(type="file" | "directory" | "symlink" | "other", size, mod_time, inode, version)
+# `version` is an opaque freshness token (inode + mtime + size) for optimistic-concurrency
+# guards — compare it for equality, never parse it.
+target = box.files.stat("/workspace/home/link", follow=True)  # dereference
+
+# Directories, moves, deletes
+box.files.mkdir("build/cache", parents=True)  # parents mirrors `mkdir -p`
+box.files.rename("draft.md", "docs/final.md")  # positional (from_path, to_path)
+box.files.remove("build/cache", recursive=True)  # recursive required for a directory
 
 # Upload local files
 box.files.upload([{"path": "./local/file.txt", "destination": "/workspace/home/file.txt"}])
@@ -377,7 +438,9 @@ pr = box.git.create_pr(title="Fix bug", body="...", base="main")
 cfg = box.git.update_config(user_name="Bot", user_email="bot@example.com")
 # cfg: GitConfigResult(git_user_name, git_user_email)
 
-# Arbitrary git commands — returns the output string
+# Arbitrary git commands — returns the output string only. Unlike the JS SDK, which
+# returns { output, exit_code }, Python drops the status, so a failure (exit 128 when
+# the cwd is not a repository) is indistinguishable from success — check the output.
 output = box.git.exec(args=["log", "--oneline", "-5"])
 ```
 
@@ -583,7 +646,9 @@ ebox.network_policy
 ebox.expires_at  # unix timestamp when auto-deleted
 ebox.exec.command("python -c 'print(1+1)'")
 ebox.exec.code(code="print('hi')", lang="python")
+ebox.exec.session(argv=["bash", "-i"], tty=True)  # whole exec namespace, session included
 ebox.files.write(path="/workspace/home/data.json", content="{}")
+ebox.files.stat("/workspace/home/data.json")  # whole files namespace, stat/mkdir/rename/remove included
 ebox.schedule.exec(cron="* * * * *", command=["bash", "-c", "date"])
 ebox.cd("subdir")
 snap = ebox.snapshot(name="checkpoint")
@@ -736,6 +801,12 @@ asyncio.run(main())
 - `run.exit_code` is `None` for agent runs, only available for exec commands.
 - `run.result` is stdout on success and stderr on failure — a command that exits 0 writing only to stderr yields `""`; read `run.stderr` for it.
 - `files.download(folder=...)` takes a path *inside the box*; output lands in `./<basename>` locally.
+- `files.read()` slices only when `length` is given — `offset=` alone reads the whole file, and `length=0` reads nothing.
+- `files.stat()` is an lstat by default: a symlink reports `type="symlink"` unless you pass `follow=True`.
+- `files.remove()` needs `recursive=True` for a directory, and `files.mkdir()` needs `parents=True` for nested paths.
+- `files.rename(from_path, to_path)` takes positional arguments (`from` is a Python keyword); JS spells it `rename(from, to)`.
+- `exec.session()` handles own the process — `close()` or a dropped connection kills the command, and sessions cannot be reattached. `tty=True` merges stderr into stdout, so `on_stderr` never fires for a PTY session.
+- The sync `session.wait(timeout=...)` has no async counterpart (`await handle.wait()` blocks until exit); it raises `TimeoutError` when the timeout elapses.
 - `box.browser` requires a box created with `browser=True`.
 - There is **no** `tab.run()` — the autonomous browser agent was removed. Loop `observe` + `act(action)` + `extract` yourself, hand the goal to the in-box agent, or drive Playwright over `cdp_url()`.
 - `tab.act(action)` (replaying an `observe()` result) costs no tokens and needs no model provider key; only `act(instruction)` with a string is metered.
