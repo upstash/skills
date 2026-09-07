@@ -16,6 +16,7 @@ A bucket is **public** (every object has a URL) or **private** (no URL; reads go
 import { Bucket } from "@upstash/blob"
 
 export const bucket = Bucket.fromEnv()                          // reads UPSTASH_BLOB_TOKEN
+Bucket.fromEnv({ cache: "immutable" })                        // default variable, plus options
 Bucket.fromEnv("MEDIA_TOKEN", { cache: "immutable" })           // another variable, plus options
 new Bucket({ token: env.UPSTASH_BLOB_TOKEN })                   // Workers: no process.env
 ```
@@ -52,7 +53,7 @@ uniquePath`${user.id}/${file.name}`   // 'u7/holiday-pic-3xK9mBqR.png'
 
 Use `uniquePath` for any value you don't control. Each `${}` becomes one slugged filename that can never add a directory, and the finished path gets a random suffix — so two uploads of `photo.png` never collide. The literal parts of the template are passed through as written, so keep `.` and `..` out of them yourself: a path with those segments is refused later, by the call that uses it, with a `TypeError` rather than a `BlobError`.
 
-Also: `bucket.copy(from, to)`, `bucket.move(from, to)`, and `bucket.updateJson(path, fn)` for a read-modify-write with automatic retry on conflict.
+`bucket.copy(from, to, { contentType, cache, metadata })` and `bucket.move(from, to, options)` preserve source properties you omit. `bucket.updateJson(path, fn, { maxAttempts: 6 })` retries a read-modify-write on conflict with backoff.
 
 ## Reading
 
@@ -92,12 +93,14 @@ Already-gone counts as success, so deletes are safe to retry. An array or prefix
 
 ## Browser uploads
 
-The handler authorizes and records; the bytes go browser → storage, so platform request body caps don't apply.
+The handler authorizes and records; the bytes go browser → storage, so platform request body caps don't apply. Supply your application's `getUser` and `db.files.upsert` implementations below.
 
 ```ts
 // lib/uploads.ts
 import "server-only"
 import { BlobError, uniquePath, uploadHandler } from "@upstash/blob"
+import { getUser } from "@/lib/auth"
+import { db } from "@/lib/db"
 
 export const uploads = uploadHandler({
   constraints: { maxSize: "20mb", contentTypes: ["image/*", "application/pdf"] },
@@ -109,6 +112,7 @@ export const uploads = uploadHandler({
   },
 
   onUploadComplete: async ({ uploadId, path, url, metadata }) => {
+    if (!metadata.owner) throw new BlobError("unauthorized")
     await db.files.upsert({ id: uploadId, owner: metadata.owner, path, url })
     return { path }                                    // becomes upload.blob.data
   },
@@ -132,14 +136,19 @@ export const { useUpload } = uploadHooks<typeof uploads>()
 ```
 
 ```tsx
+"use client"
 import { useUpload } from "@/lib/upload-hooks"
 
-const { start, upload, accept } = useUpload()
+export function UploadForm() {
+  const { start, upload, accept } = useUpload()
 
-<input type="file" accept={accept} onChange={(e) => start({ file: e.target.files?.[0] })} />
-{upload?.pending && <progress value={upload.percent} max={100} />}
-{upload?.status === "done" && <a href={upload.blob.url}>{upload.blob.data.path}</a>}
-{upload?.status === "error" && <p>{upload.error.message}</p>}
+  return <>
+    <input type="file" accept={accept} onChange={(e) => start({ file: e.target.files?.[0] })} />
+    {upload?.pending && <progress value={upload.percent} max={100} />}
+    {upload?.status === "done" && <a href={upload.blob.url}>{upload.blob.data.path}</a>}
+    {upload?.status === "error" && <p>{upload.error.message}</p>}
+  </>
+}
 ```
 
 `GET` serves the route's constraints, so `accept` fills the file dialog and an oversized file is refused before any request leaves the browser. `uploadHooks<typeof uploads>()` types route names and completion data at compile time; `import type` keeps server code out of the bundle.
@@ -189,6 +198,8 @@ A refusal keeps its code all the way to the browser, so hooks switch on `error.c
 ## S3 clients
 
 ```ts
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3"
+
 const config = bucket.s3()
 const s3 = new S3Client(config)   // endpoint and credentials are async providers
 

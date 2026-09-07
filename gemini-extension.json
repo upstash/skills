@@ -1,5 +1,10 @@
 {
   "name": "upstash",
-  "version": "1.1.0",
-  "description": "Agent skills for all Upstash SDKs: Redis, Ratelimit, QStash, Workflow, Vector, Search, Box, Blob, and the Upstash CLI."
+  "version": "1.2.2",
+  "description": "The Upstash MCP server plus agent skills for every Upstash SDK and CLI — Redis, QStash, Workflow, Box, Blob, Ratelimit, Vector, and Search.",
+  "mcpServers": {
+    "upstash": {
+      "httpUrl": "https://mcp.upstash.com/mcp"
+    }
+  }
 }
