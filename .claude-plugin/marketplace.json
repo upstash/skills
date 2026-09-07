@@ -14,7 +14,7 @@
       "name": "upstash",
       "displayName": "Upstash Redis",
       "source": "./",
-      "description": "Redis and other Upstash products",
+      "description": "The Upstash MCP server plus agent skills for every Upstash SDK and CLI — Redis, QStash, Workflow, Box, Ratelimit, Vector, and Search.",
       "version": "1.2.1",
       "author": {
         "name": "Upstash",
