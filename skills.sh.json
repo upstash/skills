@@ -36,6 +36,13 @@
       ]
     },
     {
+      "title": "File and object storage",
+      "description": "S3-compatible object storage for uploads, images, video, and user documents, with direct browser uploads and signed URLs.",
+      "skills": [
+        "upstash-blob-js"
+      ]
+    },
+    {
       "title": "Sandboxed containers for agents",
       "description": "Upstash Box: cloud sandboxes with shell, filesystem, git, cron, snapshots, and a headless browser.",
       "skills": [

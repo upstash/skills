@@ -1,8 +1,8 @@
 {
   "name": "upstash",
   "displayName": "Upstash Redis",
-  "description": "The Upstash MCP server plus agent skills for every Upstash SDK and CLI — Redis, QStash, Workflow, Box, Ratelimit, Vector, and Search.",
-  "version": "1.2.1",
+  "description": "The Upstash MCP server plus agent skills for every Upstash SDK and CLI — Redis, QStash, Workflow, Box, Blob, Ratelimit, Vector, and Search.",
+  "version": "1.2.2",
   "skills": "./skills/",
   "mcpServers": {
     "upstash": {
@@ -17,7 +17,7 @@
   "repository": "https://github.com/upstash/skills",
   "license": "MIT",
   "logo": "assets/upstash-icon-white-bg.png",
-  "keywords": ["upstash", "mcp", "redis", "cache", "qstash", "queue", "vector", "search", "workflow", "ratelimit", "box", "sandbox", "serverless"],
+  "keywords": ["upstash", "mcp", "redis", "cache", "qstash", "queue", "vector", "search", "workflow", "ratelimit", "box", "sandbox", "blob", "storage", "serverless"],
   "category": "developer-tools",
   "tags": ["mcp", "redis", "queue", "vector", "search", "serverless"]
 }
