@@ -52,6 +52,26 @@ box create --no-repl --keep-alive                            # stays up when idl
 box create --no-repl --keep-alive --init-command "npm ci"    # startup script
 ```
 
+The rest of the create-time options, all equally unchangeable afterwards:
+
+```bash
+box create --no-repl --skill upstash/skills/redis      # repeatable
+box create --no-repl --mcp docs=@org/mcp-server        # or name=https://url
+box create --no-repl --mcp-file servers.json           # for args and headers
+box create --no-repl --network-policy deny-all         # or allow-all, or custom
+box create --no-repl --network-policy custom --allow-domain api.example.com
+box create --no-repl --attach-headers-file headers.json
+```
+
+`--attach-headers-file` holds a JSON object keyed by host pattern
+(`{"api.stripe.com": {"Authorization": "Bearer ..."}}`), and those headers are
+injected into matching outbound requests from the box. There is an
+`--attach-header host:Name=value` form too, but the value lands in `ps` and in
+shell history, so prefer the file for anything secret.
+
+A skill id has three parts, `owner/repo/skill-name`. A malformed one is only
+warned about server-side, so the box comes up with the skill silently absent.
+
 `--env` is per-box. `box env set` is account-level: it is merged into every box
 created afterwards, never into one that already exists. A per-box `--env` wins
 for the same key, so account-level values only fill in what the box did not set.
@@ -196,7 +216,8 @@ box files mkdir -p a/b/c
 box files rename old.ts new.ts
 box files remove build -r                      # a directory needs -r
 box files upload ./local.zip /workspace/home/local.zip
-box files download repo
+box files download repo                        # a folder lands in ./repo
+box files download logs/app.log -o ./app.log   # a file; -o names the destination
 ```
 
 Write code with `-` and stdin. Passing source as an argument mangles it in the shell.
@@ -218,10 +239,14 @@ box git config -C repo --name "Bot" --email bot@example.com
 box git checkout -C repo feature/x             # creates the branch if missing
 box git exec -C repo -- add -A
 box git commit -C repo -m "message"
-box git push -C repo
+box git push -C repo                           # pushes the checked-out branch
 box git create-pr -C repo --title "Fix the thing" --base main
+box git create-pr -C repo --title "Fix the thing" --body-file notes.md
 box git create-issue -C repo --title "Search returns nothing"
 ```
+
+Use `--body-file` for anything longer than a sentence: a body worth writing does
+not survive shell quoting. `-` reads stdin.
 
 `box git exec` takes git's arguments without the leading `git`, and passes git's exit
 code through.
