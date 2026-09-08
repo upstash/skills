@@ -36,18 +36,27 @@ box status                                             # id, where it came from,
 ```
 
 `--keep-alive`, `--browser` and `--env` can only be chosen at create time; to
-change any of them you make a new box:
+change any of them you make a new box.
+
+Default to a plain `box create --no-repl`. A plain box pauses when it goes idle
+and resumes on the next command, which is what almost all work wants:
 
 ```bash
-box create --no-repl --keep-alive          # do not auto-pause when idle
 box create --no-repl --browser             # provision a headless Chromium
 box create --no-repl --env KEY=VAL         # env for this box (repeatable)
-box create --no-repl --keep-alive --init-command "npm ci"   # startup script
 ```
 
-`--keep-alive` matters whenever you leave something running: an idle box pauses,
-and the detached server in the example below dies with it. `--env` is per-box;
-`box env` is account-level and applies to every box you create later.
+Add `--keep-alive` only when something has to survive an idle gap: a detached
+server you are about to reach over a preview URL, or a job that keeps running
+between commands. It stops the box pausing, so the box keeps costing money until
+you pause or delete it. `--init-command` is rejected without it:
+
+```bash
+box create --no-repl --keep-alive                            # stays up when idle
+box create --no-repl --keep-alive --init-command "npm ci"    # startup script
+```
+
+`--env` is per-box. `box env set` is account-level rather than per-box.
 
 `paused` is not an error; the next command resumes the box.
 
