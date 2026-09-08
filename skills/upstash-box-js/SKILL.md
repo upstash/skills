@@ -68,7 +68,7 @@ const same = await Box.get(box.id, { gitToken: process.env.GITHUB_TOKEN })
 const byName = await Box.getByName("my-box")
 const all = await Box.list()
 const beta = await Box.list({ label: "beta" }) // filter by label
-await box.pause()
+await box.pause()   // throws on keep-alive boxes — they are never idle-paused
 await box.resume()
 await box.delete()  // irreversible
 const { status } = await box.getStatus()
@@ -203,8 +203,10 @@ enums: `ClaudeCode`, `OpenAICodex`, `OpenCodeModel`, `CursorModel`,
 ```ts
 import { ClaudeCode, OpenAICodex, OpenCodeModel, CursorModel, OpenRouterModel, VercelModel } from "@upstash/box"
 
+ClaudeCode.Fable_5_1     // "anthropic/claude-fable-5-1"
 ClaudeCode.Opus_5        // "anthropic/claude-opus-5"
 ClaudeCode.Sonnet_5      // "anthropic/claude-sonnet-5"
+OpenAICodex.GPT_6_Astra  // "openai/gpt-6-astra"
 OpenAICodex.GPT_5_6      // "openai/gpt-5.6"
 OpenCodeModel.Claude_Opus_5   // "opencode/claude-opus-5"
 CursorModel.Composer_2_5 // "cursor/composer-2.5"
@@ -297,6 +299,41 @@ for await (const chunk of stream) {
 }
 ```
 
+### Live sessions
+
+`exec.session()` opens a WebSocket to a process that is *still running* — stdin,
+streamed stdout/stderr, PTY resize, and signals. Node-only: auth is a handshake
+header, which browsers cannot set (`ws` ships as an SDK dependency, nothing to
+install). Available on `Box` and `EphemeralBox`.
+
+```ts
+const session = await box.exec.session({
+  cmd: "sort",              // run via `bash -lc`; `argv: ["sort"]` runs the program with
+                            // no shell and takes precedence over cmd
+  cwd: "/workspace/home",   // defaults to the box's tracked cwd
+  env: ["LOG_LEVEL=debug"], // KEY=VALUE entries overlaid on the box environment
+  onStdout: (bytes) => process.stdout.write(bytes), // Uint8Array
+  onStderr: (bytes) => process.stderr.write(bytes), // separate stream unless tty
+})
+
+session.pid                        // in-box PID, always non-zero
+session.execId                     // server-side exec id
+session.write("banana\napple\n")
+session.endStdin()                 // EOF — a command that reads to EOF now exits by itself
+const exitCode = await session.wait()  // -1 if torn down while still running
+session.close()                    // hang up; also kills the process
+
+// Interactive programs / TUIs — tty allocates a real PTY, merging stderr into stdout
+const shell = await box.exec.session({ argv: ["bash", "-i"], tty: true, rows: 40, cols: 120 })
+shell.resize(50, 160)
+shell.kill("INT")     // allowlist: TERM KILL INT HUP TSTP QUIT USR1 USR2 (default TERM)
+shell.terminate(5000) // server-side SIGTERM, then SIGKILL after the grace (first call wins)
+```
+
+The session owns the process: `close()`, a dropped connection, or your process
+exiting all kill the command, and a session cannot be reattached. Use `wait()`
+to run something to completion.
+
 ## Filesystem
 
 ```ts
@@ -307,6 +344,23 @@ const entries = await box.files.list("/workspace/home") // [{ name, path, size, 
 // Binary files — use encoding: "base64" for read and write
 await box.files.write({ path: "/workspace/home/image.png", content: base64String, encoding: "base64" })
 const b64 = await box.files.read("/workspace/home/image.png", { encoding: "base64" })
+
+// Bounded byte-range read — the *presence* of `length` selects the range, so
+// { length: 0 } reads zero bytes rather than the whole file. Server caps it at 8 MiB.
+const head = await box.files.read("/workspace/home/big.log", { length: 64 * 1024 })
+const slice = await box.files.read("/workspace/home/big.log", { offset: 1024, length: 512 })
+
+// Metadata — defaults to lstat, so a symlink reports type "symlink"
+const stat = await box.files.stat("/workspace/home/app.js")
+// stat: { type: "file" | "directory" | "symlink" | "other", size, mod_time, inode, version }
+// `version` is an opaque freshness token (inode + mtime + size) for optimistic-concurrency
+// guards — compare it for equality, never parse it.
+const target = await box.files.stat("/workspace/home/link", { follow: true }) // dereference
+
+// Directories, moves, deletes
+await box.files.mkdir("build/cache", { parents: true }) // parents mirrors `mkdir -p`
+await box.files.rename("draft.md", "docs/final.md")     // move/rename
+await box.files.remove("build/cache", { recursive: true }) // recursive required for a directory
 
 // Upload local files
 await box.files.upload([{ path: "./local/file.txt", destination: "/workspace/home/file.txt" }])
@@ -556,7 +610,9 @@ ebox.networkPolicy
 ebox.expiresAt // unix timestamp when auto-deleted
 await ebox.exec.command("python -c 'print(1+1)'")
 await ebox.exec.code({ code: "print('hi')", lang: "python" })
+await ebox.exec.session({ argv: ["bash", "-i"], tty: true }) // whole exec namespace, session included
 await ebox.files.write({ path: "/workspace/home/data.json", content: "{}" })
+await ebox.files.stat("/workspace/home/data.json")           // whole files namespace, stat/mkdir/rename/remove included
 await ebox.schedule.exec({ cron: "* * * * *", command: ["bash", "-c", "date"] })
 await ebox.cd("subdir")
 const snap = await ebox.snapshot({ name: "checkpoint" })
@@ -684,6 +740,11 @@ ssh <box-id>@us-east-1.box.upstash.com
 - `run.exitCode` is `null` for agent runs, only available for exec commands
 - `run.result` is stdout on success and stderr on failure — a command that exits 0 writing only to stderr yields `""`; read `run.stderr` for it
 - `files.download({ folder })` takes a path *inside the box*; output lands in `./<basename>` locally
+- `files.read()` slices only when `length` is present — `{ offset }` alone reads the whole file, and `{ length: 0 }` reads nothing
+- `files.stat()` is an lstat by default: a symlink reports `type: "symlink"` unless you pass `{ follow: true }`
+- `files.remove()` needs `{ recursive: true }` for a directory, and `files.mkdir()` needs `{ parents: true }` for nested paths
+- `exec.session()` is Node-only (the WebSocket handshake carries an auth header) and the handle owns the process — `close()` or a dropped connection kills the command, and sessions cannot be reattached
+- `exec.session({ tty: true })` merges stderr into stdout, so `onStderr` never fires for a PTY session
 - `box.browser` requires a box created with `browser: true`
 - There is **no** `tab.run()` — the autonomous browser agent was removed in 0.7.0. Loop `observe` + `act(action)` + `extract` yourself, hand the goal to the in-box agent, or drive Playwright over `cdpUrl()`
 - `tab.act(action)` (replaying an `observe()` result) costs no tokens and needs no model provider key; only `act(instruction)` with a string is metered
