@@ -139,7 +139,7 @@ const http = require("http"), fs = require("fs");
 http.createServer((_, res) => {
   res.writeHead(200, { "Content-Type": "text/html" });
   res.end(fs.readFileSync("index.html"));
-}).listen(3000);
+}).listen(3000, "0.0.0.0");   // the default binds ::, which the check below misses
 JS
 
 box exec -- '( node server.js > server.log 2>&1 & )'          # detached, or it dies
@@ -275,8 +275,10 @@ takes the id, so a long agent run or build is interruptible from a fresh shell.
 
 Only on a box created with `--browser`. Chromium **runs inside the box**, so it
 reaches your app on `http://localhost:3000` with no public URL involved. What
-lives outside is only the control path: you drive it through these commands
-rather than from a shell in the box, which is why `box exec` has no equivalent.
+lives outside is only the control path: these commands reach Chromium through
+the API, so there is no `box exec` spelling of them. A script running in the box
+can still talk to Chromium directly over CDP, which is the escape hatch at the
+end of this section.
 
 ```bash
 box browser open https://example.com    # prints the tab id
@@ -326,18 +328,41 @@ image into the box costs an upload. Chromium's CDP is open on `127.0.0.1:9222`
 write in one step, and can do full-page and element-clipped captures that the
 CLI does not expose:
 
+Write the script with `box files write` rather than inlining it: the remote
+shell is `sh`, and quoting a program through `box exec` is where this goes
+wrong.
+
 ```bash
-box exec -- 'node -e "
-  const [t] = (await (await fetch(\"http://127.0.0.1:9222/json\")).json())
-    .filter((x) => x.type === \"page\");
-  // …open a WebSocket to t.webSocketDebuggerUrl, send Page.captureScreenshot,
-  // then write the base64 result to a file.
-"'
+box files write shot.mjs - <<'JS'
+const targets = await (await fetch("http://127.0.0.1:9222/json")).json();
+const page = targets.find((t) => t.type === "page");
+const ws = new WebSocket(page.webSocketDebuggerUrl);
+await new Promise((r) => (ws.onopen = r));
+ws.send(JSON.stringify({
+  id: 1,
+  method: "Page.captureScreenshot",
+  params: { format: "png", captureBeyondViewport: true },
+}));
+const { data } = await new Promise((r) => {
+  ws.onmessage = (m) => {
+    const msg = JSON.parse(m.data);
+    if (msg.id === 1) r(msg.result);
+  };
+});
+await import("node:fs").then((fs) => fs.writeFileSync("shot.png", Buffer.from(data, "base64")));
+ws.close();
+JS
+
+box exec -- 'node shot.mjs'      # shot.png is now in the box
 ```
 
-Node's global `fetch` and `WebSocket` are enough, so this needs nothing
-installed. Worth it only when you want the image to stay in the box or need a
-capture the CLI cannot make; otherwise `screenshot -o` and `files upload` is
+`captureBeyondViewport` is the full-page capture the CLI does not expose;
+element-clipped captures come from the same call with a `clip`. Node's global
+`fetch` and `WebSocket` are enough, so nothing has to be installed, but Chromium
+must have been started once by a `box browser` command first.
+
+This is only worth it when the image should stay in the box or you need a
+capture the CLI cannot make. Otherwise `screenshot -o` then `files upload` is
 shorter.
 
 ## Schedules
@@ -376,9 +401,7 @@ Account-level settings, which apply to boxes you create later rather than to
 this one:
 
 ```bash
-box env set KEY VAL                    # box create --env is per-box instead
-                                       # and the clean way to give a box a secret:
-                                       # it never appears in a command line
+box env set KEY VAL                    # applies to boxes created after this
 box env list
 box env delete KEY
 box env set-all A=1 B=2                # replaces every var, does not merge
@@ -386,6 +409,11 @@ box labels add staging                 # then: box list --label staging
 box labels list
 box labels remove staging
 ```
+
+Both `box env set` and `box create --env` take the value as an argument, so a
+secret passed either way is visible in `ps` and lands in shell history. Neither
+is a secrets mechanism; keep real credentials out of both and use a token the
+box fetches for itself.
 
 ## Output
 
