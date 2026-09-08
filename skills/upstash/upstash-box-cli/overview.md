@@ -46,6 +46,11 @@ and the detached server in the example below dies with it. `--env` is per-box;
 
 `paused` is not an error; the next command resumes the box.
 
+A `.box` file is found by walking **up** from the working directory, so `cd`-ing
+into another project can silently pick up a pin left there earlier and run
+against the wrong box. In any session touching more than one box, pass `--box`
+explicitly; `box status` says which box it resolved and where that came from.
+
 Clean up when the work is done. Boxes cost money while they exist:
 
 ```bash
@@ -72,6 +77,17 @@ Put the remote command after `--`, or its flags are parsed as `box`'s own.
 box exec -- npm install
 box exec -C repo -- npm test
 box exec --json -- node -e 'console.log(1)'   # {stdout, stderr, exit_code}
+```
+
+The remote shell is `sh`, not bash. A heredoc inside `box exec` fails with
+`Syntax error: redirection unexpected`; write the file with `box files write - `
+instead, or wrap the command in `bash -c` when the box has bash.
+
+Commands run as `boxuser`, so a global npm install needs sudo, which is
+passwordless:
+
+```bash
+box exec -- 'sudo npm install -g @upstash/docs7'   # EACCES without sudo
 ```
 
 One argument is a shell expression, sent as written, so pipes and redirection work.
@@ -122,16 +138,21 @@ http.createServer((_, res) => {
 JS
 
 box exec -- '( node server.js > server.log 2>&1 & )'          # detached, or it dies
-box exec -- 'sleep 1; curl -sf localhost:3000 >/dev/null && echo up'
+box exec -- 'sleep 1; ss -ltn | grep -q "0.0.0.0:3000" && echo up'
 box public-url 3000                                           # the link to reply with
 ```
 
 Node's own `http` module rather than a package: no install, no network fetch, and it
 works on a bare `node` runtime.
 
-Check the port answers before publishing it. A public URL for a port nothing is
-listening on returns 502, which reads as a broken game rather than as a race with a
-server that had not finished starting.
+Check the port before publishing it, and check what it is **bound to**, not just
+that it answers. A server on `127.0.0.1` replies to a curl from inside the box
+and still cannot be published: the proxy reaches the container by address, so
+`box public-url` returns 502. That is why the check above greps for `0.0.0.0`
+rather than curling localhost, which passes in exactly the case that fails.
+
+Most dev servers need telling: `--host 0.0.0.0` for Vite and many others,
+`-H 0.0.0.0` for some, and a few cannot be moved off loopback at all.
 
 `--keep-alive` is what keeps the link working. Without it the box pauses when
 idle, the detached server dies with it, and the URL you handed over starts
@@ -247,9 +268,10 @@ takes the id, so a long agent run or build is interruptible from a fresh shell.
 
 ## Browser
 
-Only on a box created with `--browser`. This is the one part of a box `box exec`
-cannot reach, because Chromium is driven through the API rather than from inside
-the container.
+Only on a box created with `--browser`. Chromium **runs inside the box**, so it
+reaches your app on `http://localhost:3000` with no public URL involved. What
+lives outside is only the control path: you drive it through these commands
+rather than from a shell in the box, which is why `box exec` has no equivalent.
 
 ```bash
 box browser open https://example.com    # prints the tab id
@@ -274,6 +296,9 @@ box browser recordings get <recording-id>
 box browser recordings download <recording-id> -o session.mp4
 ```
 
+Chromium starts on first use, so the very first `box browser open` is slower
+than the rest, and anything talking to CDP directly fails until it has run once.
+
 `--tab <id>` is optional while one tab is open and required once there are
 several. `screenshot` writes to a file because stdout carries text, and that file
 lands on this machine rather than in the box. To put a screenshot on a pull request
@@ -287,6 +312,28 @@ box browser extract "the listed price" --schema s.json
 ```
 
 A property not named in `required` is optional. Nested objects are refused.
+
+### Capturing straight into the box
+
+`box browser screenshot` writes to the machine running the CLI, so getting the
+image into the box costs an upload. Chromium's CDP is open on `127.0.0.1:9222`
+**from inside the box** with no token, so a script running there can capture and
+write in one step, and can do full-page and element-clipped captures that the
+CLI does not expose:
+
+```bash
+box exec -- 'node -e "
+  const [t] = (await (await fetch(\"http://127.0.0.1:9222/json\")).json())
+    .filter((x) => x.type === \"page\");
+  // …open a WebSocket to t.webSocketDebuggerUrl, send Page.captureScreenshot,
+  // then write the base64 result to a file.
+"'
+```
+
+Node's global `fetch` and `WebSocket` are enough, so this needs nothing
+installed. Worth it only when you want the image to stay in the box or need a
+capture the CLI cannot make; otherwise `screenshot -o` and `files upload` is
+shorter.
 
 ## Schedules
 
@@ -325,6 +372,8 @@ this one:
 
 ```bash
 box env set KEY VAL                    # box create --env is per-box instead
+                                       # and the clean way to give a box a secret:
+                                       # it never appears in a command line
 box env list
 box env delete KEY
 box env set-all A=1 B=2                # replaces every var, does not merge
