@@ -35,8 +35,8 @@ box use <box-id>                                       # pin one to this directo
 box status                                             # id, where it came from, state
 ```
 
-`--keep-alive`, `--browser` and `--env` can only be chosen at create time; to
-change any of them you make a new box.
+`--keep-alive`, `--browser`, `--env` and `--size` can only be chosen at create
+time; to change any of them you make a new box. There is no resize.
 
 Default to a plain `box create --no-repl`. A plain box pauses when it goes idle
 and resumes on the next command, which is what almost all work wants:
@@ -44,6 +44,7 @@ and resumes on the next command, which is what almost all work wants:
 ```bash
 box create --no-repl --browser             # provision a headless Chromium
 box create --no-repl --env KEY=VAL         # env for this box (repeatable)
+box create --no-repl --size medium         # small (default), medium, large
 ```
 
 Add `--keep-alive` only when something has to survive an idle gap: a detached
@@ -331,11 +332,13 @@ A property not named in `required` is optional. Nested objects are refused.
 
 ### Capturing straight into the box
 
-`box browser screenshot` writes to the machine running the CLI, so getting the
-image into the box costs an upload. Chromium's CDP is open on `127.0.0.1:9222`
-**from inside the box** with no token, so a script running there can capture and
-write in one step, and can do full-page and element-clipped captures that the
-CLI does not expose:
+`box browser screenshot --full-page -o page.png` is the short way, and it is
+enough whenever the image can live on this machine. It writes to the machine
+running the CLI, though, so getting the image into the box costs an upload.
+
+Chromium's CDP is open on `127.0.0.1:9222` **from inside the box** with no
+token, so a script running there captures and writes in one step, and can clip
+to a single element, which the CLI does not expose:
 
 Write the script with `box files write` rather than inlining it: the remote
 shell is `sh`, and quoting a program through `box exec` is where this goes
@@ -381,9 +384,9 @@ JS
 box exec -- 'node shot.mjs'      # shot.png is now in the box
 ```
 
-The `clip` is what makes this a full-page capture rather than a viewport one,
-and it is what the CLI does not expose. An element-clipped capture is the same
-call with that element's box as the clip. Node's global
+The `clip` is what makes this a full-page capture rather than a viewport one;
+`--full-page` does the same thing. An element-clipped capture is the same call
+with that element's box as the clip, and that one has no CLI flag. Node's global
 `fetch` and `WebSocket` are enough, so nothing has to be installed, but Chromium
 must have been started once by a `box browser` command first.
 
@@ -440,6 +443,46 @@ Both `box env set` and `box create --env` take the value as an argument, so a
 secret passed either way is visible in `ps` and lands in shell history. Neither
 is a secrets mechanism; keep real credentials out of both and use a token the
 box fetches for itself.
+
+## Flag reference
+
+The flags the walkthroughs above do not reach. Every command also takes the
+global `--box`, `--json` and `--token`.
+
+```bash
+box create --no-repl --git-user-name N --git-user-email E   # commit identity
+box create --no-repl --agent-api-key stored                 # key saved in the console
+box create --no-repl --no-use                               # do not write .box
+box init-demo --directory my-demo                           # scaffold elsewhere
+
+box exec -C /srv/app -- npm test         # -C/--cwd: working directory
+box run --timeout 600 -q "..."           # -q/--quiet: no tool-call logs on stderr
+box code --timeout 120 "..."             # both take --timeout in seconds
+
+box files read --offset 0 --length 65536 big.log   # a slice; 8 MiB per read
+box files read --encoding base64 logo.png          # binary out
+box files write --encoding base64 logo.png -       # binary in
+box files remove -r build/                         # -r required for a directory
+box files mkdir -p a/b/c                           # -p creates missing parents
+box files stat --follow link                       # resolve a final symlink
+
+box git clone --branch main --depth 1 <url>        # shallow, single branch
+box git clone --github-token $TOKEN <url>          # private repository
+box git commit -m "msg" --author-name N --author-email E
+box git push --branch feature/x                    # names the branch to push
+
+box public-url 3000 --bearer-token       # or --basic-auth; both generate credentials
+box use --unset                          # drop this directory's .box, never a parent's
+
+box schedule agent --cron "0 9 * * *" --model <m> --timeout 300 --webhook-url <url> "..."
+box schedule update <id> --timeout 0     # 0 clears the timeout; --prompt, --cron, --model too
+
+box config network custom --allow-domain a.test --allow-cidr 10.0.0.0/8 --deny-cidr 10.1.0.0/16
+box config harness --command my-agent --arg --verbose   # --arg repeatable, sent before the prompt
+```
+
+`-C` means the working directory on `box exec` (`--cwd`) and the repository
+directory on every `box git` and `box schedule` subcommand (`--folder`).
 
 ## Output
 
