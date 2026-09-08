@@ -57,7 +57,10 @@ box create --no-repl --keep-alive                            # stays up when idl
 box create --no-repl --keep-alive --init-command "npm ci"    # startup script
 ```
 
-`--env` is per-box. `box env set` is account-level rather than per-box.
+`--env` is per-box. `box env set` is account-level: it is merged into every box
+created afterwards, never into one that already exists. A per-box `--env` wins
+for the same key, so account-level values only fill in what the box did not set.
+Account-level skills and MCP servers are merged the same way.
 
 `paused` is not an error; the next command resumes the box.
 
@@ -97,6 +100,13 @@ box exec --json -- node -e 'console.log(1)'   # {stdout, stderr, exit_code}
 The remote shell is `sh`, not bash. A heredoc inside `box exec` fails with
 `Syntax error: redirection unexpected`; write the file with `box files write - `
 instead, or wrap the command in `bash -c` when the box has bash.
+
+For an interactive shell, ssh straight in. The box id is the user and the Box
+API key is the password:
+
+```bash
+ssh <box-id>@us-east-1.box.upstash.com
+```
 
 Commands run as `boxuser`, so a global npm install needs sudo, which is
 passwordless:
@@ -303,6 +313,11 @@ box browser observe "what can I click here?"
 box browser live-url                    # a URL for a human to watch the tab
 ```
 
+Every `box browser act` is metered: it takes an instruction in words and needs
+a model to read the page. The SDK can replay an `observe()` result for free,
+but the CLI takes only the string form, so a loop of `act` calls costs a model
+call each time. `content`, `goto`, `screenshot` and `close` are not metered.
+
 Recordings, when you need to show what happened rather than describe it:
 
 ```bash
@@ -418,7 +433,7 @@ box skills add upstash-redis-js        # skills available to the box's agent
 box skills list
 box skills remove upstash-redis-js
 box config model anthropic/claude-sonnet-5
-box config init-command set "npm ci"   # runs when the box starts
+box config init-command set "npm ci"   # keep-alive boxes only; runs on start
 box config init-command get
 box config init-command delete
 box config network deny-all            # or allow-all, or custom
