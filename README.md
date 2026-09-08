@@ -18,12 +18,14 @@ Connect your AI coding agent to Upstash. This repo ships **skills** (per-SDK ins
 - **`skills/upstash/`** — the combined skill, **generated** from all the sources by `npm run build`. Never hand-edit it (see [`AGENTS.md`](AGENTS.md)).
 - **Plugin manifests** — `.claude-plugin/`, `.codex-plugin/`, `.cursor-plugin/`, `gemini-extension.json`, and the portable [Agent Plugins](https://agent-plugins.org) `plugin.json` + `mcp.json`. They make the repo installable as a plugin/extension. **These plugins now bundle the remote Upstash MCP server (OAuth), so installing the plugin sets up the skills *and* the MCP in one step** — no separate MCP configuration for Claude Code, Codex, Cursor, or Gemini CLI.
 - **`zed-extension/`** — a Zed MCP server extension (Rust → Wasm).
+- **`assets/`** — branding used on the plugin card, read by Codex (`interface.logo` / `interface.composerIcon`) and Cursor (`logo`). Claude Code, Gemini CLI and the Agent Plugins schema have no icon field.
 
 ## Available Skills
 
 | Skill | Description |
 |-------|-------------|
 | [upstash](skills/upstash/) | Combined skill covering all Upstash SDKs and CLIs. |
+| [upstash-blob-js](skills/upstash-blob-js/) | S3-compatible object storage with direct browser uploads and signed URLs. |
 | [upstash-box-cli](skills/upstash-box-cli/) | Drive a sandboxed cloud container from the terminal with the `box` CLI. |
 | [upstash-box-js](skills/upstash-box-js/) | Sandboxed cloud containers with AI agents, shell, filesystem, and git. |
 | [upstash-box-py](skills/upstash-box-py/) | The same sandboxed cloud containers, from the Python SDK. |

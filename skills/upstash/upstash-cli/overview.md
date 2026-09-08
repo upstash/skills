@@ -1,3 +1,14 @@
+## Prefer the MCP server when it is available
+
+If Upstash MCP tools are in the session, call them instead of shelling out to the CLI. They are
+already authenticated and cover the same ground — creating and inspecting Redis databases, running
+Redis commands, usage stats, backups, Vector and Search indexes, QStash schedules and messages, the
+DLQ, and logs. Installing the Upstash plugin registers the hosted server at
+`https://mcp.upstash.com/mcp`.
+
+Use the CLI when there is no MCP in the session, or when the work is inherently shell work — a CI
+step, a provisioning script, or piping JSON into other commands.
+
 The Upstash CLI (`upstash`) manages Upstash services via the Upstash Developer API. All commands are non-interactive and emit JSON on stdout. Errors go to stderr as `{ "error": "..." }` with exit code `1`.
 
 ## Install
@@ -30,6 +41,7 @@ Precedence: flags > env vars > `.env` > saved config. Prefer a **read-only** API
 | `--db-id <id>` | Redis |
 | `--index-id <id>` | Vector, Search |
 | `--qstash-id <id>` | QStash |
+| `--bucket-id <id>` | Blob |
 | `--team-id <id>` | Team |
 
 ## Redis
@@ -131,8 +143,36 @@ upstash qstash update-budget --qstash-id <id> --budget <dollars>    # 0 = no lim
 upstash qstash {enable,disable}-prodpack --qstash-id <id>
 ```
 
+## Blob
+
+Run `upstash blob --help` to check that the installed CLI includes Blob support. If the command is unavailable, use the console for bucket management and `upstash-blob-js` for application code until a CLI release includes it.
+
+```bash
+upstash blob list
+upstash blob get --bucket-id <id> [--hide-credentials]
+upstash blob create --name <name> [--visibility <private|public>] [--cors <origin> <origin>]
+upstash blob delete --bucket-id <id> [--dry-run]
+upstash blob credentials [--bucket-id <id>]
+```
+
+Buckets are `private` by default. `blob get` returns the bucket token, which is a bearer secret for the whole bucket — pass `--hide-credentials` when you only need the metadata.
+
+`blob credentials` exchanges a bucket token for temporary, bucket-scoped S3 credentials to use with the AWS CLI, rclone, or any S3 SDK. With `--bucket-id` it reads the token through the Developer API; with no flag it uses `UPSTASH_BLOB_TOKEN` and needs no account auth at all. `expiresAt` is the expiry as a **unix timestamp in seconds** (multiply by 1000 before comparing with `Date.now()`) — re-mint before it passes rather than caching.
+
+```bash
+CREDS=$(upstash blob credentials --bucket-id <id>)
+export AWS_ACCESS_KEY_ID=$(echo "$CREDS" | jq -r .accessKeyId)
+export AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | jq -r .secretAccessKey)
+export AWS_SESSION_TOKEN=$(echo "$CREDS" | jq -r .sessionToken)
+
+aws s3 cp image.png "s3://$(echo "$CREDS" | jq -r .bucket)/image.png" \
+  --endpoint-url "$(echo "$CREDS" | jq -r .endpoint)" --region auto
+```
+
+Object operations are not CLI commands — the bucket is S3-compatible, so use the credentials above with an S3 tool, or the `upstash-blob-js` skill for the TypeScript SDK.
+
 ## Conventions
 
 - Pipe any output to `jq` for field extraction, e.g. `upstash redis list | jq '.[].database_id'`.
 - Use `--dry-run` first on any `delete` or `remove-member`.
-- Use `--hide-credentials` on `redis get` when the password isn't needed.
+- Use `--hide-credentials` on `redis get` and `blob get` when the secret isn't needed.
