@@ -54,6 +54,10 @@ box resume                  # rarely needed; any command resumes a paused box
 box delete --yes            # irreversible; --yes is required without a terminal
 ```
 
+`box pause` is refused on the two kinds of box that are never idle-paused anyway:
+a `--keep-alive` box and an ephemeral one both answer "cannot be paused". For those,
+`box delete` is the only way to stop paying for them.
+
 Never run `box create` or `box connect` without `--no-repl`: they open an
 interactive REPL and will hang. `box from-snapshot` takes `--no-repl` too.
 
@@ -150,7 +154,10 @@ box files list src
 box files read src/index.ts
 box files write src/app.ts -    < local.ts    # - reads stdin: use this for code
 box files write notes.txt "short text"
+box files read big.log --length 65536          # first 64 KiB, not the whole file
+box files read big.log --offset 1024 --length 512
 box files stat src/index.ts
+box files stat link.png --follow               # report the target, not the link
 box files mkdir -p a/b/c
 box files rename old.ts new.ts
 box files remove build -r                      # a directory needs -r
@@ -159,6 +166,14 @@ box files download repo
 ```
 
 Write code with `-` and stdin. Passing source as an argument mangles it in the shell.
+
+`--length` is what selects a ranged read, so `--offset` alone is ignored and reads the
+whole file. One read returns at most 8 MiB. Use `--encoding base64` for binary.
+
+`box files stat` reports the link itself, so a symlink comes back as
+`type: "symlink"` with the length of its target path as the size. `--follow`
+dereferences it. The `version` field is an opaque freshness token: compare it for
+equality to notice a file changed, never parse it.
 
 To search, use the box's own tools: `box exec -- grep -rn TODO src`.
 
