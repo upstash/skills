@@ -30,19 +30,32 @@ box use <box-id>                                       # pin one to this directo
 box status                                             # id, where it came from, state
 ```
 
-`--keep-alive`, `--browser` and `--env` can only be chosen at create time; to
-change any of them you make a new box:
+`--keep-alive`, `--browser`, `--env` and `--size` can only be chosen at create
+time; to change any of them you make a new box. There is no resize.
+
+Default to a plain `box create --no-repl`. A plain box pauses when it goes idle
+and resumes on the next command, which is what almost all work wants:
 
 ```bash
-box create --no-repl --keep-alive          # do not auto-pause when idle
 box create --no-repl --browser             # provision a headless Chromium
 box create --no-repl --env KEY=VAL         # env for this box (repeatable)
-box create --no-repl --keep-alive --init-command "npm ci"   # startup script
+box create --no-repl --size medium         # small (default), medium, large
 ```
 
-`--keep-alive` matters whenever you leave something running: an idle box pauses,
-and the detached server in the example below dies with it. `--env` is per-box;
-`box env` is account-level and applies to every box you create later.
+Add `--keep-alive` only when something has to survive an idle gap: a detached
+server you are about to reach over a preview URL, or a job that keeps running
+between commands. It stops the box pausing, so the box keeps costing money until
+you pause or delete it. `--init-command` is rejected without it:
+
+```bash
+box create --no-repl --keep-alive                            # stays up when idle
+box create --no-repl --keep-alive --init-command "npm ci"    # startup script
+```
+
+`--env` is per-box. `box env set` is account-level: it is merged into every box
+created afterwards, never into one that already exists. A per-box `--env` wins
+for the same key, so account-level values only fill in what the box did not set.
+Account-level skills and MCP servers are merged the same way.
 
 `paused` is not an error; the next command resumes the box.
 
@@ -82,6 +95,13 @@ box exec --json -- node -e 'console.log(1)'   # {stdout, stderr, exit_code}
 The remote shell is `sh`, not bash. A heredoc inside `box exec` fails with
 `Syntax error: redirection unexpected`; write the file with `box files write - `
 instead, or wrap the command in `bash -c` when the box has bash.
+
+For an interactive shell, ssh straight in. The box id is the user and the Box
+API key is the password:
+
+```bash
+ssh <box-id>@us-east-1.box.upstash.com
+```
 
 Commands run as `boxuser`, so a global npm install needs sudo, which is
 passwordless:
@@ -288,6 +308,11 @@ box browser observe "what can I click here?"
 box browser live-url                    # a URL for a human to watch the tab
 ```
 
+Every `box browser act` is metered: it takes an instruction in words and needs
+a model to read the page. The SDK can replay an `observe()` result for free,
+but the CLI takes only the string form, so a loop of `act` calls costs a model
+call each time. `content`, `goto`, `screenshot` and `close` are not metered.
+
 Recordings, when you need to show what happened rather than describe it:
 
 ```bash
@@ -317,11 +342,13 @@ A property not named in `required` is optional. Nested objects are refused.
 
 ### Capturing straight into the box
 
-`box browser screenshot` writes to the machine running the CLI, so getting the
-image into the box costs an upload. Chromium's CDP is open on `127.0.0.1:9222`
-**from inside the box** with no token, so a script running there can capture and
-write in one step, and can do full-page and element-clipped captures that the
-CLI does not expose:
+`box browser screenshot --full-page -o page.png` is the short way, and it is
+enough whenever the image can live on this machine. It writes to the machine
+running the CLI, though, so getting the image into the box costs an upload.
+
+Chromium's CDP is open on `127.0.0.1:9222` **from inside the box** with no
+token, so a script running there captures and writes in one step, and can clip
+to a single element, which the CLI does not expose:
 
 Write the script with `box files write` rather than inlining it: the remote
 shell is `sh`, and quoting a program through `box exec` is where this goes
@@ -367,9 +394,9 @@ JS
 box exec -- 'node shot.mjs'      # shot.png is now in the box
 ```
 
-The `clip` is what makes this a full-page capture rather than a viewport one,
-and it is what the CLI does not expose. An element-clipped capture is the same
-call with that element's box as the clip. Node's global
+The `clip` is what makes this a full-page capture rather than a viewport one;
+`--full-page` does the same thing. An element-clipped capture is the same call
+with that element's box as the clip, and that one has no CLI flag. Node's global
 `fetch` and `WebSocket` are enough, so nothing has to be installed, but Chromium
 must have been started once by a `box browser` command first.
 
@@ -401,7 +428,7 @@ box skills add upstash-redis-js        # skills available to the box's agent
 box skills list
 box skills remove upstash-redis-js
 box config model anthropic/claude-sonnet-5
-box config init-command set "npm ci"   # runs when the box starts
+box config init-command set "npm ci"   # keep-alive boxes only; runs on start
 box config init-command get
 box config init-command delete
 box config network deny-all            # or allow-all, or custom
@@ -426,6 +453,46 @@ Both `box env set` and `box create --env` take the value as an argument, so a
 secret passed either way is visible in `ps` and lands in shell history. Neither
 is a secrets mechanism; keep real credentials out of both and use a token the
 box fetches for itself.
+
+## Flag reference
+
+The flags the walkthroughs above do not reach. Every command also takes the
+global `--box`, `--json` and `--token`.
+
+```bash
+box create --no-repl --git-user-name N --git-user-email E   # commit identity
+box create --no-repl --agent-api-key stored                 # key saved in the console
+box create --no-repl --no-use                               # do not write .box
+box init-demo --directory my-demo                           # scaffold elsewhere
+
+box exec -C /srv/app -- npm test         # -C/--cwd: working directory
+box run --timeout 600 -q "..."           # -q/--quiet: no tool-call logs on stderr
+box code --timeout 120 "..."             # both take --timeout in seconds
+
+box files read --offset 0 --length 65536 big.log   # a slice; 8 MiB per read
+box files read --encoding base64 logo.png          # binary out
+box files write --encoding base64 logo.png -       # binary in
+box files remove -r build/                         # -r required for a directory
+box files mkdir -p a/b/c                           # -p creates missing parents
+box files stat --follow link                       # resolve a final symlink
+
+box git clone --branch main --depth 1 <url>        # shallow, single branch
+box git clone --github-token $TOKEN <url>          # private repository
+box git commit -m "msg" --author-name N --author-email E
+box git push --branch feature/x                    # names the branch to push
+
+box public-url 3000 --bearer-token       # or --basic-auth; both generate credentials
+box use --unset                          # drop this directory's .box, never a parent's
+
+box schedule agent --cron "0 9 * * *" --model <m> --timeout 300 --webhook-url <url> "..."
+box schedule update <id> --timeout 0     # 0 clears the timeout; --prompt, --cron, --model too
+
+box config network custom --allow-domain a.test --allow-cidr 10.0.0.0/8 --deny-cidr 10.1.0.0/16
+box config harness --command my-agent --arg --verbose   # --arg repeatable, sent before the prompt
+```
+
+`-C` means the working directory on `box exec` (`--cwd`) and the repository
+directory on every `box git` and `box schedule` subcommand (`--folder`).
 
 ## Output
 
