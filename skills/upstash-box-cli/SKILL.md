@@ -338,26 +338,43 @@ const targets = await (await fetch("http://127.0.0.1:9222/json")).json();
 const page = targets.find((t) => t.type === "page");
 const ws = new WebSocket(page.webSocketDebuggerUrl);
 await new Promise((r) => (ws.onopen = r));
-ws.send(JSON.stringify({
-  id: 1,
-  method: "Page.captureScreenshot",
-  params: { format: "png", captureBeyondViewport: true },
-}));
-const { data } = await new Promise((r) => {
-  ws.onmessage = (m) => {
-    const msg = JSON.parse(m.data);
-    if (msg.id === 1) r(msg.result);
-  };
+
+let id = 0;
+const pending = new Map();
+ws.onmessage = (m) => {
+  const msg = JSON.parse(m.data);
+  pending.get(msg.id)?.(msg.result);
+  pending.delete(msg.id);
+};
+const send = (method, params = {}) =>
+  new Promise((resolve) => {
+    const callId = ++id;
+    pending.set(callId, resolve);
+    ws.send(JSON.stringify({ id: callId, method, params }));
+  });
+
+// captureBeyondViewport only permits capture outside the viewport; the clip is
+// what makes it the whole page. cssContentSize is in CSS pixels, which is what
+// clip expects.
+const metrics = await send("Page.getLayoutMetrics");
+const size = metrics.cssContentSize ?? metrics.contentSize;
+const { data } = await send("Page.captureScreenshot", {
+  format: "png",
+  captureBeyondViewport: true,
+  clip: { x: 0, y: 0, width: size.width, height: size.height, scale: 1 },
 });
-await import("node:fs").then((fs) => fs.writeFileSync("shot.png", Buffer.from(data, "base64")));
+
+const fs = await import("node:fs");
+fs.writeFileSync("shot.png", Buffer.from(data, "base64"));
 ws.close();
 JS
 
 box exec -- 'node shot.mjs'      # shot.png is now in the box
 ```
 
-`captureBeyondViewport` is the full-page capture the CLI does not expose;
-element-clipped captures come from the same call with a `clip`. Node's global
+The `clip` is what makes this a full-page capture rather than a viewport one,
+and it is what the CLI does not expose. An element-clipped capture is the same
+call with that element's box as the clip. Node's global
 `fetch` and `WebSocket` are enough, so nothing has to be installed, but Chromium
 must have been started once by a `box browser` command first.
 
