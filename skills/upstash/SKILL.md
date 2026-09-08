@@ -22,7 +22,7 @@ Work with the @upstash/blob TypeScript/JavaScript SDK for S3-compatible object s
 
 ## [upstash-box-cli](upstash-box-cli/overview.md)
 
-Drive an Upstash Box (a remote sandboxed workspace) from the terminal with the `box` CLI. Use when asked to run commands, edit files, clone repos, run builds or tests, publish a public URL, or do any work inside a box rather than on this machine.
+Drive an Upstash Box (a remote sandboxed workspace) from the terminal with the `box` CLI. Use when asked to run commands, edit files, clone repos, run builds or tests, publish a public URL, browse or screenshot a page, open a pull request or issue with a screenshot attached, schedule recurring work, run an AI agent, or do any work inside a box rather than on this machine.
 
 ## [upstash-box-js](upstash-box-js/overview.md)
 
