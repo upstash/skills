@@ -1,6 +1,6 @@
 ---
 name: upstash-redis-js
-description: Work with the @upstash/redis TypeScript/JavaScript SDK, a serverless HTTP-based Redis client for Next.js, Vercel, Cloudflare Workers, edge runtimes, and Node.js. Use when adding a cache (cache-aside, write-through, TTL and expiration strategies), session storage and user sessions, a key-value store, leaderboards and rankings with sorted sets, counters, distributed locks, queues with lists, streams and consumer groups, JSON documents, pipelines and MULTI/EXEC transactions, Lua scripting, read replicas, or full-text search, typo-tolerant search, facets, and aggregations with Upstash Redis Search (different from regular FT.SEARCH; also available for TCP clients via @upstash/search-redis and @upstash/search-ioredis). Also use when migrating from ioredis or node-redis, when a Redis connection is needed from a serverless function without connection pooling, when integrating @upstash/ratelimit, or when the user says Redis cache, KV store, session store, serverless Redis, or Upstash Redis. Supports automatic serialization/deserialization of JavaScript types.
+description: Work with the @upstash/redis TypeScript/JavaScript SDK, a serverless HTTP-based Redis client for Next.js, Vercel, Cloudflare Workers, edge runtimes, and Node.js. Use when adding a cache (cache-aside, write-through, TTL and expiration strategies), session storage and user sessions, a key-value store, leaderboards and rankings with sorted sets, counters, distributed locks, queues with lists, streams and consumer groups, sparse index-addressed arrays and ring buffers (ARSET, ARINSERT, ARRING, ARGREP, AROP), JSON documents, pipelines and MULTI/EXEC transactions, Lua scripting, read replicas, or full-text search, typo-tolerant search, facets, and aggregations with Upstash Redis Search (different from regular FT.SEARCH; also available for TCP clients via @upstash/search-redis and @upstash/search-ioredis). Also use when migrating from ioredis or node-redis, when a Redis connection is needed from a serverless function without connection pooling, when integrating @upstash/ratelimit, or when the user says Redis cache, KV store, session store, serverless Redis, or Upstash Redis. Supports automatic serialization/deserialization of JavaScript types.
 license: MIT
 metadata:
   author: Upstash
@@ -58,6 +58,7 @@ Redis data types with auto-serialization examples:
 - **sorted-sets.md** - ZADD, ZRANGE, ZRANK, leaderboard patterns
 - **json.md** - JSON.SET, JSON.GET, JSONPath queries for nested objects
 - **streams.md** - XADD, XREAD, XGROUP, consumer groups
+- **arrays.md** - ARSET, ARINSERT, ARSCAN, ARGREP, AROP, ring buffers with ARRING on sparse index-addressed arrays
 
 ### Advanced Features (advanced-features/)
 
