@@ -86,7 +86,7 @@ Full-text search, filtering, and aggregation extension for Redis:
 - **overview.md** - Schema definition, field types, pitfalls, package overview
 - **commands/querying.md** - Query and count with filters, pagination, sorting, highlighting
 - **commands/aggregating.md** - Metric aggregations ($avg, $sum, $stats), bucket aggregations ($terms, $range, $histogram, $facet)
-- **commands/index-management.md** - Create, describe, drop indexes, waitIndexing
+- **commands/index-management.md** - Create, describe, drop indexes (including stream indexes over XADD entries), waitIndexing
 - **commands/aliases.md** - Index aliases for zero-downtime reindexing
 - **adapters.md** - Using search with node-redis and ioredis via @upstash/search-redis and @upstash/search-ioredis
 

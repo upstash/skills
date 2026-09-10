@@ -1,6 +1,6 @@
 ---
 name: upstash-redis-js
-description: Work with the @upstash/redis TypeScript/JavaScript SDK, a serverless HTTP-based Redis client for Next.js, Vercel, Cloudflare Workers, edge runtimes, and Node.js. Use when adding a cache (cache-aside, write-through, TTL and expiration strategies), session storage and user sessions, a key-value store, leaderboards and rankings with sorted sets, counters, distributed locks, queues with lists, streams and consumer groups, JSON documents, pipelines and MULTI/EXEC transactions, Lua scripting, read replicas, or full-text search, typo-tolerant search, facets, and aggregations with Upstash Redis Search (different from regular FT.SEARCH; also available for TCP clients via @upstash/search-redis and @upstash/search-ioredis). Also use when migrating from ioredis or node-redis, when a Redis connection is needed from a serverless function without connection pooling, when integrating @upstash/ratelimit, or when the user says Redis cache, KV store, session store, serverless Redis, or Upstash Redis. Supports automatic serialization/deserialization of JavaScript types.
+description: Work with the @upstash/redis TypeScript/JavaScript SDK, a serverless HTTP-based Redis client for Next.js, Vercel, Cloudflare Workers, edge runtimes, and Node.js. Use when adding a cache (cache-aside, write-through, TTL and expiration strategies), session storage and user sessions, a key-value store, leaderboards and rankings with sorted sets, counters, distributed locks, queues with lists, streams and consumer groups, JSON documents, pipelines and MULTI/EXEC transactions, Lua scripting, read replicas, or full-text search, typo-tolerant search, facets, aggregations, and search over Redis stream entries with Upstash Redis Search (different from regular FT.SEARCH; also available for TCP clients via @upstash/search-redis and @upstash/search-ioredis). Also use when migrating from ioredis or node-redis, when a Redis connection is needed from a serverless function without connection pooling, when integrating @upstash/ratelimit, or when the user says Redis cache, KV store, session store, serverless Redis, or Upstash Redis. Supports automatic serialization/deserialization of JavaScript types.
 license: MIT
 metadata:
   author: Upstash
@@ -95,7 +95,7 @@ Full-text search, filtering, and aggregation extension for Redis:
 - **overview.md** - Schema definition, field types, pitfalls, package overview
 - **commands/querying.md** - Query and count with filters, pagination, sorting, highlighting
 - **commands/aggregating.md** - Metric aggregations ($avg, $sum, $stats), bucket aggregations ($terms, $range, $histogram, $facet)
-- **commands/index-management.md** - Create, describe, drop indexes, waitIndexing
+- **commands/index-management.md** - Create, describe, drop indexes (including stream indexes over XADD entries), waitIndexing
 - **commands/aliases.md** - Index aliases for zero-downtime reindexing
 - **adapters.md** - Using search with node-redis and ioredis via @upstash/search-redis and @upstash/search-ioredis
 
