@@ -49,6 +49,7 @@ Redis data types with auto-serialization examples:
 - **sorted-sets.md** - ZADD, ZRANGE, ZRANK, leaderboard patterns
 - **json.md** - JSON.SET, JSON.GET, JSONPath queries for nested objects
 - **streams.md** - XADD, XREAD, XGROUP, consumer groups
+- **arrays.md** - ARSET, ARINSERT, ARSCAN, ARGREP, AROP, ring buffers with ARRING on sparse index-addressed arrays
 
 ### Advanced Features (advanced-features/)
 
@@ -86,7 +87,7 @@ Full-text search, filtering, and aggregation extension for Redis:
 - **overview.md** - Schema definition, field types, pitfalls, package overview
 - **commands/querying.md** - Query and count with filters, pagination, sorting, highlighting
 - **commands/aggregating.md** - Metric aggregations ($avg, $sum, $stats), bucket aggregations ($terms, $range, $histogram, $facet)
-- **commands/index-management.md** - Create, describe, drop indexes (including stream indexes over XADD entries), waitIndexing
+- **commands/index-management.md** - Create, describe, drop indexes, waitIndexing
 - **commands/aliases.md** - Index aliases for zero-downtime reindexing
 - **adapters.md** - Using search with node-redis and ioredis via @upstash/search-redis and @upstash/search-ioredis
 
