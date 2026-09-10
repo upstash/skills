@@ -2,8 +2,8 @@
 
 If Upstash MCP tools are in the session, call them instead of shelling out to the CLI. They are
 already authenticated and cover the same ground — creating and inspecting Redis databases, running
-Redis commands, usage stats, backups, Vector and Search indexes, QStash schedules and messages, the
-DLQ, and logs. Installing the Upstash plugin registers the hosted server at
+Redis commands, usage stats, backups, Vector and Search indexes, Blob buckets, QStash schedules and
+messages, the DLQ, and logs. Installing the Upstash plugin registers the hosted server at
 `https://mcp.upstash.com/mcp`.
 
 Use the CLI when there is no MCP in the session, or when the work is inherently shell work — a CI

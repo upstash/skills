@@ -4,7 +4,7 @@ Connect your AI coding agent to Upstash. This repo ships **skills** (per-SDK ins
 
 ## The Upstash agent surface
 
-- **Skills** — packaged instructions and CLI references for each Upstash SDK (Redis, QStash, Workflow, Vector, Search, Box, Ratelimit). No credentials needed. → [docs](https://upstash.com/docs/agent-resources/skills)
+- **Skills** — packaged instructions and CLI references for each Upstash SDK (Redis, QStash, Workflow, Vector, Search, Box, Blob, Ratelimit). No credentials needed. → [docs](https://upstash.com/docs/agent-resources/skills)
 - **MCP server** — live tools to query, debug, and manage your account. Two ways to run it:
   - **Remote (hosted)** — `https://mcp.upstash.com/mcp`, streamable HTTP, authenticated with OAuth (browser consent, on first use) or a developer API key header. Nothing to install.
   - **Local (stdio)** — [`@upstash/mcp-server`](https://www.npmjs.com/package/@upstash/mcp-server) run with `npx`, authenticated with your account email + a developer API key.

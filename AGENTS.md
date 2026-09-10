@@ -22,8 +22,8 @@ The build's pre-check also refuses to run while `skills/upstash/` has unstaged c
 
 The plugins now install the hosted MCP server alongside the skills, so for
 account and data operations the agent usually has authenticated tools already
-in the session — creating and inspecting databases and indexes, running Redis
-commands, stats, logs, backups, QStash schedules and the DLQ. The CLI covers
+in the session — creating and inspecting databases, indexes and Blob buckets,
+running Redis commands, stats, logs, backups, QStash schedules and the DLQ. The CLI covers
 the same ground but needs a global npm install, a login and an API key.
 
 So `skills/upstash-cli/` opens by telling the agent to prefer the MCP when its
