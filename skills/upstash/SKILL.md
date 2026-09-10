@@ -12,8 +12,8 @@ metadata:
 This skill combines documentation for all Upstash SDKs. Pick the relevant sub-skill below.
 
 If Upstash MCP tools are available in this session, prefer them for account and data operations —
-creating and inspecting databases and indexes, running Redis commands, reading stats, logs and the
-DLQ. The sub-skills below are for writing application code; reach for `upstash-cli` only when there
+creating and inspecting databases, indexes and Blob buckets, running Redis commands, reading stats,
+logs and the DLQ. The sub-skills below are for writing application code; reach for `upstash-cli` only when there
 is no MCP or the work is inherently shell work.
 
 ## [upstash-blob-js](upstash-blob-js/overview.md)
