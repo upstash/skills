@@ -44,10 +44,11 @@
     },
     {
       "title": "Sandboxed containers for agents",
-      "description": "Upstash Box: cloud sandboxes with shell, filesystem, git, cron, snapshots, and a headless browser.",
+      "description": "Upstash Box: cloud sandboxes with shell, filesystem, git, cron, snapshots, and a headless browser, from the SDKs or the remote MCP server.",
       "skills": [
         "upstash-box-js",
-        "upstash-box-py"
+        "upstash-box-py",
+        "upstash-box-remote-work"
       ]
     }
   ]
