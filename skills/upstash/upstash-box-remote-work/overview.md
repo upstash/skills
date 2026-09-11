@@ -23,11 +23,10 @@ different checkouts, and neither side reports the mismatch.
 ## Connect
 
 The plugin already registers `https://mcp.upstash.com/mcp`, and the box and
-blob tool groups are part of the default set. To add the server by hand, or to
-scope a connection to just these tools:
+blob tools are part of its default tool set. To add the server by hand:
 
 ```bash
-claude mcp add --scope user --transport http upstash "https://mcp.upstash.com/mcp?features=box,blob"
+claude mcp add --scope user --transport http upstash "https://mcp.upstash.com/mcp"
 ```
 
 On first use the client opens the Upstash consent page. Pick the account or
