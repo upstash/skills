@@ -28,8 +28,8 @@ Connect your AI coding agent to Upstash. This repo ships **skills** (per-SDK ins
 | [upstash-blob-js](skills/upstash-blob-js/) | S3-compatible object storage with direct browser uploads and signed URLs. |
 | [upstash-box-cli](skills/upstash-box-cli/) | Drive a sandboxed cloud container from the terminal with the `box` CLI. |
 | [upstash-box-js](skills/upstash-box-js/) | Sandboxed cloud containers with AI agents, shell, filesystem, and git. |
-| [upstash-box-proof-of-work](skills/upstash-box-proof-of-work/) | Do a task in a Box over the remote MCP and open a PR with screenshots uploaded to Blob. |
 | [upstash-box-py](skills/upstash-box-py/) | The same sandboxed cloud containers, from the Python SDK. |
+| [upstash-box-remote-work](skills/upstash-box-remote-work/) | Do work in a sandboxed cloud Box over the remote MCP, with preview URLs, screenshots, and PRs. |
 | [upstash-cli](skills/upstash-cli/) | Drive the Upstash Developer API from the terminal with the `upstash` CLI. |
 | [upstash-qstash-js](skills/upstash-qstash-js/) | Serverless messaging and scheduling via HTTP endpoints. |
 | [upstash-ratelimit-js](skills/upstash-ratelimit-js/) | Rate limiting with the Redis Rate Limit TypeScript SDK. |

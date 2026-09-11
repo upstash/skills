@@ -13,8 +13,8 @@ This skill combines documentation for all Upstash SDKs. Pick the relevant sub-sk
 
 If Upstash MCP tools are available in this session, prefer them for account and data operations —
 creating and inspecting databases, indexes and Blob buckets, running Redis commands, reading stats,
-logs and the DLQ, and driving a Box (shell, browser, git, PRs) with screenshots uploaded to Blob
-(see `upstash-box-proof-of-work`). The sub-skills below are for writing application code; reach for
+logs and the DLQ, and remote work in a Box (shell, browser, git, preview URLs, PRs, screenshots
+uploaded to Blob; see `upstash-box-remote-work`). The sub-skills below are for writing application code; reach for
 `upstash-cli` only when there is no MCP or the work is inherently shell work.
 
 ## [upstash-blob-js](upstash-blob-js/overview.md)
@@ -29,13 +29,13 @@ Drive an Upstash Box (a remote sandboxed workspace) from the terminal with the `
 
 Work with the @upstash/box TypeScript/JavaScript SDK for sandboxed cloud containers with AI agents, shell, filesystem, git, cron schedules, snapshots, and a headless browser. Use when building with Upstash Box, creating a sandbox or isolated environment to run untrusted or agent-generated code, running AI coding agents in containers, giving an agent a cloud dev environment with a shell and repository, browser automation from a box, scheduling recurring jobs inside a box, saving and restoring snapshots, or orchestrating parallel boxes.
 
-## [upstash-box-proof-of-work](upstash-box-proof-of-work/overview.md)
-
-Do a task inside an Upstash Box through the remote Upstash MCP server (mcp.upstash.com) and hand back a pull request with screenshots as proof, uploading the images straight from the box to Upstash Blob over presigned URLs. Use when asked to run, build, test, or browse something in a Box and deliver a PR with visual evidence, when screenshots or files produced inside a box need a public URL, or whenever the session has the box_* and blob_* MCP tools rather than the box CLI or SDK.
-
 ## [upstash-box-py](upstash-box-py/overview.md)
 
 Work with the upstash-box Python SDK for sandboxed cloud containers with AI agents, shell, filesystem, git, cron schedules, snapshots, and a headless browser. Use when building with Upstash Box in Python, creating a sandbox or isolated environment to run untrusted or agent-generated code, running AI coding agents in containers, giving an agent a cloud dev environment with a shell and repository, browser automation from a box, scheduling recurring jobs inside a box, saving and restoring snapshots, or orchestrating parallel boxes.
+
+## [upstash-box-remote-work](upstash-box-remote-work/overview.md)
+
+Do work in an Upstash Box, a sandboxed cloud container driven through the remote Upstash MCP server (mcp.upstash.com), instead of on the local machine. Use when the user asks to run, build, test, clone, or edit something remotely, in a sandbox, in the cloud, or in a box, when the deliverable is a pull request, a public preview URL, or a screenshot of a running app, when the local machine cannot deliver (no GitHub login for gh, no way to expose a port, a dirty or slow local checkout), or when several independent tasks should run in parallel on separate machines. Applies whenever the session has the box_* and blob_* MCP tools, even when Upstash is not named.
 
 ## [upstash-cli](upstash-cli/overview.md)
 
