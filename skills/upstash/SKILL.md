@@ -35,7 +35,7 @@ Work with the upstash-box Python SDK for sandboxed cloud containers with AI agen
 
 ## [upstash-box-remote-work](upstash-box-remote-work/overview.md)
 
-Do work in an Upstash Box, a sandboxed cloud container driven through the remote Upstash MCP server (mcp.upstash.com), instead of on the local machine. Use when the user asks to run, build, test, clone, or edit something remotely, in a sandbox, in the cloud, or in a box, when the deliverable is a pull request, a public preview URL, or a screenshot of a running app, when the local machine cannot deliver (no GitHub login for gh, no way to expose a port, a dirty or slow local checkout), or when several independent tasks should run in parallel on separate machines. Applies whenever the session has the box_* and blob_* MCP tools, even when Upstash is not named.
+Do work in an Upstash Box, a sandboxed cloud container driven through the remote Upstash MCP server (mcp.upstash.com), instead of on the local machine. Use when the user asks to run, build, test, clone, or edit something remotely, in a sandbox, in the cloud, or in a box, when the deliverable is a pull request, a public preview URL, or a screenshot of a running app, when the local machine cannot deliver (no GitHub login for gh, no way to expose a port, a dirty or slow local checkout), or when several independent tasks should run in parallel on separate machines, a code factory that turns a list of tasks into a list of pull requests. Applies whenever the session has the box_* and blob_* MCP tools, even when Upstash is not named.
 
 ## [upstash-cli](upstash-cli/overview.md)
 
