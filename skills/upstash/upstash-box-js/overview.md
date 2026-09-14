@@ -389,16 +389,41 @@ await box.cd("repo") // the clone lands in a directory named after the repo
 
 const status = await box.git.status()
 const diff = await box.git.diff()
+
+// commit stages `git add -A` server-side: it commits the whole working tree, not
+// just what you staged. Use git.exec to commit only the index.
 const { sha } = await box.git.commit({
   message: "fix: resolve bug",
   authorName: "Jane Doe",      // optional per-commit override
   authorEmail: "jane@example.com",
 })
+
+// Always pass `branch`. Without it the API force-moves the ref (`checkout -B`) and
+// pushes to a branch named after the box.
 await box.git.push({ branch: "feature/fix" })
 
+// checkout runs `git checkout X || git checkout -b X` and reports success on either
+// — including when X is a file path, which restores that file and leaves HEAD put.
 await box.git.checkout({ branch: "release/v2" })
-const pr = await box.git.createPR({ title: "Fix bug", body: "...", base: "main" })
-// pr: { url, number, title, base }
+const { output: head } = await box.git.exec({ args: ["rev-parse", "--abbrev-ref", "HEAD"] })
+
+// PRs and issues. `attach` uploads image/video files relative to the working directory;
+// alt text for an image is `shot.png#alt text` (a video takes none). Reference one from
+// the body as `![alt](./shot.png)` and GitHub rewrites it to the uploaded asset.
+const pr = await box.git.createPR({
+  title: "Fix bug",
+  body: "Before and after:\n\n![after](./shot.png)",
+  base: "main",
+  attach: ["shot.png#after the fix", "demo.mp4"],
+})
+// pr: { url, number, title, base, warning? }
+
+const issue = await box.git.createIssue({ title: "Flaky test", body: "...", attach: ["log.png"] })
+// issue: { url, number, title, warning? }
+
+// `warning` is set when gh exited non-zero but still returned a URL — the item exists
+// while an attachment is missing, or the PR was already open. It is the only signal
+// that an otherwise successful call did not do everything it was asked.
 
 // Update the box-wide git identity
 const cfg = await box.git.updateConfig({ userName: "Bot", userEmail: "bot@example.com" })
@@ -715,6 +740,15 @@ try {
 }
 ```
 
+`maxRetries` retries transient failures only — an abort is never retried, so cancelling
+a run no longer starts a second billed one behind your back. A run that hits its
+`timeout` rejects with `BoxError("Run timed out")` (`"Stream timed out"` from `stream()`)
+carrying the abort as `cause`; `run.cancel()` rejects with that abort itself, not a
+timeout. `BoxError` takes an optional `cause` for this.
+
+`box.agent.run()` / `stream()` throw the "No agent configured" `BoxError`
+**synchronously** — wrap the call in `try`/`catch`; a bare `.catch()` never sees it.
+
 Shell into a box directly (Box API key is the SSH password):
 
 ```bash
@@ -730,7 +764,7 @@ ssh <box-id>@us-east-1.box.upstash.com
 - `EphemeralBox` does NOT support `agent`, `git`, `skills`, `browser`, or public URLs — use full `Box` for those (it does support `schedule` and snapshots)
 - `run.exitCode` is `null` for agent runs, only available for exec commands
 - `run.result` is stdout on success and stderr on failure — a command that exits 0 writing only to stderr yields `""`; read `run.stderr` for it
-- `files.download({ folder })` takes a path *inside the box*; output lands in `./<basename>` locally
+- `files.download({ folder })` takes a path *inside the box*; output lands in `./<basename>` locally. It only downloads **directories** — given a file path it creates an empty local directory and resolves; use `files.read()` for a single file
 - `files.read()` slices only when `length` is present — `{ offset }` alone reads the whole file, and `{ length: 0 }` reads nothing
 - `files.stat()` is an lstat by default: a symlink reports `type: "symlink"` unless you pass `{ follow: true }`
 - `files.remove()` needs `{ recursive: true }` for a directory, and `files.mkdir()` needs `{ parents: true }` for nested paths
@@ -742,6 +776,11 @@ ssh <box-id>@us-east-1.box.upstash.com
 - `getInitCommand` / `setInitCommand` / `deleteInitCommand` throw unless the box was created with `keepAlive: true`
 - `box.delete()` is irreversible — snapshot first if you need the state
 - Git operations require `git.token` in `BoxConfig` for private repos and PRs
+- `git.push()` with no `branch` force-moves the ref (`checkout -B`) and pushes to a branch named after the box — always pass `branch`
+- `git.commit()` runs `git add -A` server-side, so it commits the whole working tree, not just what you staged — use `git.exec({ args: ["commit", ...] })` to commit only the index
+- `git.checkout()` succeeds whether it switched or created the branch, and a *path* argument restores that file without moving HEAD — read HEAD back with `git.exec` when it matters
+- `createPR()` / `createIssue()` can return a `warning` beside the URL: the item exists but an attachment failed to upload, or the PR was already open
+- `maxRetries` never retries an aborted run (cancel or timeout); `agent.run()` / `agent.stream()` throw "No agent configured" synchronously, not as a rejection
 - `Box.fromSnapshot()` creates a new box — it does not modify the original, and it does not forward `browser`, `skills`, or `mcpServers` from the config you pass
 - `EphemeralBox` has no `updateNetworkPolicy` — set `networkPolicy` at create time
 - `responseSchema` and browser `schema` need `zod` installed (peer dependency, v3 or v4)

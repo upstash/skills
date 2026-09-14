@@ -423,16 +423,41 @@ box.cd("repo")  # the clone lands in a directory named after the repo
 
 status = box.git.status()
 diff = box.git.diff()
+
+# commit stages `git add -A` server-side: it commits the whole working tree, not
+# just what you staged. Use git.exec to commit only the index.
 result = box.git.commit(  # GitCommitResult(sha, message)
     message="fix: resolve bug",
     author_name="Jane Doe",  # optional per-commit override
     author_email="jane@example.com",
 )
+
+# Always pass `branch`. Without it the API force-moves the ref (`checkout -B`) and
+# pushes to a branch named after the box.
 box.git.push(branch="feature/fix")
 
+# checkout runs `git checkout X || git checkout -b X` and reports success on either
+# — including when X is a file path, which restores that file and leaves HEAD put.
 box.git.checkout(branch="release/v2")
-pr = box.git.create_pr(title="Fix bug", body="...", base="main")
-# pr: PullRequest(url, number, title, base)
+head = box.git.exec(args=["rev-parse", "--abbrev-ref", "HEAD"]).strip()
+
+# PRs and issues. `attach` uploads image/video files relative to the working directory;
+# alt text for an image is `shot.png#alt text` (a video takes none). Reference one from
+# the body as `![alt](./shot.png)` and GitHub rewrites it to the uploaded asset.
+pr = box.git.create_pr(
+    title="Fix bug",
+    body="Before and after:\n\n![after](./shot.png)",
+    base="main",
+    attach=["shot.png#after the fix", "demo.mp4"],
+)
+# pr: PullRequest(url, number, title, base, warning)
+
+issue = box.git.create_issue(title="Flaky test", body="...", attach=["log.png"])
+# issue: Issue(url, number, title, warning)
+
+# `warning` is set when gh exited non-zero but still returned a URL — the item exists
+# while an attachment is missing, or the PR was already open. It is the only signal
+# that an otherwise successful call did not do everything it was asked.
 
 # Update the box-wide git identity
 cfg = box.git.update_config(user_name="Bot", user_email="bot@example.com")
@@ -759,6 +784,13 @@ except BoxError as e:
     print(e, e.status_code)
 ```
 
+`BoxError` is the only error class, but the agent run path is not fully wrapped:
+`agent.run(timeout=...)` passes the timeout to httpx, so exceeding it raises
+`httpx.ReadTimeout`, not `BoxError`. `max_retries` retries *any* failure including
+that timeout (the JS SDK stopped retrying aborts), and `run.cancel()` only calls the
+cancel endpoint — it does not abort an in-flight `run()`. Cancel an async run by
+cancelling its asyncio task.
+
 Shell into a box directly (Box API key is the SSH password):
 
 ```bash
@@ -800,7 +832,7 @@ asyncio.run(main())
 - `EphemeralBox` does NOT support `agent`, `git`, `skills`, the `labels` namespace, the browser, or public URLs — use full `Box` for those (it does support `schedule` and snapshots).
 - `run.exit_code` is `None` for agent runs, only available for exec commands.
 - `run.result` is stdout on success and stderr on failure — a command that exits 0 writing only to stderr yields `""`; read `run.stderr` for it.
-- `files.download(folder=...)` takes a path *inside the box*; output lands in `./<basename>` locally.
+- `files.download(folder=...)` takes a path *inside the box*; output lands in `./<basename>` locally. It only downloads **directories** — given a file path it creates an empty local directory and returns; use `files.read()` for a single file.
 - `files.read()` slices only when `length` is given — `offset=` alone reads the whole file, and `length=0` reads nothing.
 - `files.stat()` is an lstat by default: a symlink reports `type="symlink"` unless you pass `follow=True`.
 - `files.remove()` needs `recursive=True` for a directory, and `files.mkdir()` needs `parents=True` for nested paths.
@@ -814,6 +846,11 @@ asyncio.run(main())
 - The JS static `Box.delete({boxIds})` is `Box.delete_boxes(box_ids=...)` here, to avoid clashing with the instance `delete()`.
 - `box.delete()` is irreversible — snapshot first if you need the state.
 - Git operations require `git.token` in the box config for private repos and PRs.
+- `git.push()` with no `branch` force-moves the ref (`checkout -B`) and pushes to a branch named after the box — always pass `branch`.
+- `git.commit()` runs `git add -A` server-side, so it commits the whole working tree, not just what you staged — use `git.exec(args=["commit", ...])` to commit only the index.
+- `git.checkout()` succeeds whether it switched or created the branch, and a *path* argument restores that file without moving HEAD — read HEAD back with `git.exec` when it matters.
+- `create_pr()` / `create_issue()` can return a `warning` beside the URL: the item exists but an attachment failed to upload, or the PR was already open.
+- `agent.run(timeout=...)` raises `httpx.ReadTimeout`, not `BoxError`, and `max_retries` retries it — unlike the JS SDK, which never retries an aborted run.
 - `Box.from_snapshot()` creates a new box — it does not modify the original. It reuses the full create body, so `browser` / `skills` / `mcp_servers` are forwarded (the JS `Box.fromSnapshot()` drops those).
 - `EphemeralBox` has no `update_network_policy` — set `network_policy` at create time.
 - All `timeout` values are in **milliseconds** (matching the JS SDK), default `600000`.
