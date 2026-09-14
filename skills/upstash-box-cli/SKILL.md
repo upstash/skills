@@ -1,6 +1,10 @@
 ---
 name: upstash-box-cli
 description: Drive an Upstash Box (a remote sandboxed workspace) from the terminal with the `box` CLI. Use when asked to run commands, edit files, clone repos, run builds or tests, publish a public URL, browse or screenshot a page, open a pull request or issue with a screenshot attached, schedule recurring work, run an AI agent, or do any work inside a box rather than on this machine.
+license: MIT
+metadata:
+  author: Upstash
+  homepage: https://upstash.com
 ---
 
 `box` operates on a **remote container**, not this machine. Your own file and shell
@@ -97,8 +101,9 @@ box resume                  # rarely needed; any command resumes a paused box
 box delete --yes            # irreversible; --yes is required without a terminal
 ```
 
-Never run `box create` or `box connect` without `--no-repl`: they open an
-interactive REPL and will hang. `box from-snapshot` takes `--no-repl` too.
+Never run `box create` or `box from-snapshot` without `--no-repl`: they open an
+interactive REPL and will hang. `box connect` has no `--no-repl` — it only ever
+opens the REPL, so never run it non-interactively.
 
 ```bash
 box snapshot                                # snapshot this box, prints the id
@@ -474,9 +479,15 @@ box env set KEY VAL                    # applies to boxes created after this
 box env list
 box env delete KEY
 box env set-all A=1 B=2                # replaces every var, does not merge
-box labels add staging                 # then: box list --label staging
-box labels list
-box labels remove staging
+```
+
+Labels are per-box, not account-level, and every subcommand needs the box id
+spelled out — they ignore `--box`, `$BOX_ID` and `.box`:
+
+```bash
+box labels add <box-id> staging        # then: box list --label staging
+box labels list <box-id>
+box labels remove <box-id> staging
 ```
 
 Both `box env set` and `box create --env` take the value as an argument, so a
@@ -487,7 +498,8 @@ box fetches for itself.
 ## Flag reference
 
 The flags the walkthroughs above do not reach. Every command also takes the
-global `--box`, `--json` and `--token`.
+global `--box`, `--json` and `--token`, except that `box env *` and
+`box labels *` ignore `--box`.
 
 ```bash
 box create --no-repl --git-user-name N --git-user-email E   # commit identity

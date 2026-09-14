@@ -42,6 +42,8 @@ the MCP does not do.
 
 skills.sh matches multi-word searches against each skill's `description` (single-word searches match the name). Keep descriptions long and intent-rich: what the SDK is, a "Use when…" list of concrete tasks, and the words users actually type (rate limiting, message queue, background jobs, vector database, session storage…). Never rename a skill to improve ranking — change the description instead. `description` must stay on one line and must not contain `: ` (the build script parses it with a regex, and YAML would otherwise need quoting).
 
+Every `SKILL.md` carries the same frontmatter block — `name`, `description`, `license: MIT`, and `metadata` with `author: Upstash` and `homepage: https://upstash.com` — matching `scripts/header.md`. The build strips frontmatter, so these fields only matter to clients that install a skill on its own; add them to any new skill anyway. Also add the skill to a grouping in `skills.sh.json`, which is not generated and is easy to forget.
+
 ## Gemini CLI extension
 
 `gemini-extension.json` at the root makes the repo installable with `gemini extensions install https://github.com/upstash/skills` (it clones the default branch; no tag needed). Listing in the gallery at geminicli.com/extensions is crawler-only: the repo must carry the `gemini-cli-extension` GitHub topic and have a tag, and there is no publish command or submission form. We have not tagged this repo for that yet, so bump `version` in `gemini-extension.json` only when the skills change in a way users should see.
