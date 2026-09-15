@@ -2,6 +2,10 @@
 
 S3-compatible object storage. `Bucket` runs on your server; `uploadHandler` plus React hooks upload from the browser straight to storage so the bytes never pass through your app.
 
+## Bundled docs and source
+
+The `@upstash/blob` npm package includes docs in `node_modules/@upstash/blob/docs/` and readable TypeScript source in `node_modules/@upstash/blob/src/`. Before writing or debugging SDK code, read and search the relevant docs and source.
+
 ## Install & Setup
 
 ```bash
