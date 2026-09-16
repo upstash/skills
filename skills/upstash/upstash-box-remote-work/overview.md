@@ -1,7 +1,7 @@
 A box is a sandboxed Linux container in the cloud with a shell, a filesystem,
 git, an optional headless Chromium, and public URLs for its ports. Everything
 here goes through the remote Upstash MCP server. There is no SDK to install
-and no API key in the environment (recording demo videos is the exception, see below): the server forwards the session's OAuth
+and no API key in the environment (recording videos is the exception, see below): the server forwards the session's OAuth
 token to the Box API, and screenshot bytes travel from the box to Blob
 without passing through the server.
 
@@ -110,78 +110,75 @@ grant.
 - A `live_view` URL lets a person watch a box's browser tab as it works
   (frames out, no input in); hand it over for long runs.
 
-## Demo videos of an agent at work
+## Recording videos in a box
 
 Recording is not an MCP tool yet, so this is the one flow that needs the SDK.
-Create a key with `box_apikey` `create`, keep it in a file inside the
-recorder box, drive the box from there with `@upstash/box`
-(`box.browser.recordings`, and `box.browser.cdpUrl()` for Playwright), and
-delete the key when done.
+Create a key with `box_apikey` `create`, keep it in a file inside the box,
+drive the box from there with `@upstash/box` (`box.browser.recordings`, and
+`box.browser.cdpUrl()` for Playwright), and delete the key when done.
 
-**Stage.** One recorder box per clip, `browser: true`. Run the agent's TUI in
-a fixed-size `tmux` session, serve it with
-`ttyd -i 127.0.0.1 -p 7681 tmux attach -t demo` (static binary from the ttyd
-GitHub releases; Debian has no package), and open `http://127.0.0.1:7681` in
-the box browser at 1280x800, the recording's resolution. Type prompts with
-`tmux send-keys -l` in small chunks: TUIs collapse bracketed pastes. Put an
-`AGENTS.md` in the agent's workspace: no clarifying questions, verify links
-before sharing them, short final reply with each link on its own line.
+**What gets recorded.** The box browser: every tab, following the foreground
+one, at a fixed resolution. Anything else has to be put into the browser. A
+terminal program goes through `ttyd` (static binary from its GitHub
+releases; Debian has no package) attached to a fixed-size `tmux` session;
+send input with `tmux send-keys -l` in small chunks, since TUIs collapse
+bracketed pastes. Stay in one tab where you can: a newly opened tab is not
+reliably followed.
 
-**Agent credentials.** A CLI agent started by hand in the box needs its own
-model key; the box's managed key only reaches prompts the Box runner starts.
-The box tools need an OAuth grant. Box SSH refuses `-L` forwarding, so a
-localhost OAuth callback cannot be tunneled: start the agent's MCP auth
-command in the box, let the user approve in their own browser, have them
-paste back the failed `http://127.0.0.1:<port>/...callback?code=...` URL, and
-`curl` it inside the box before the agent stops waiting (often 5 minutes).
-Consent picks the account, so create buckets in that account (free plans
-allow one).
+**Running an agent or CLI in the box.** A CLI agent started by hand needs its
+own model key; the box's managed key only reaches prompts the Box runner
+starts. Box SSH refuses `-L` forwarding, so a login that waits on a localhost
+OAuth callback cannot be tunneled: run the login in the box, let the user
+approve in their own browser, have them paste back the failed
+`http://127.0.0.1:<port>/...` callback URL, and `curl` it inside the box
+before the CLI stops waiting. The consent screen picks the account, so the
+resources the recording relies on must exist in that account. For unattended
+agent runs, workspace instructions that rule out clarifying questions keep a
+take from stalling.
 
-**Record the whole run.** Start the recording before typing and stop it after
-the final answer; a timelapse needs the middle. A recording lasts at most 600
-s, stops by itself after 3 minutes without a pixel change, and a box holds
-one at a time (a leftover one makes the next `start` return 409, so stop it
-in a crash handler and before every start). Take the timeline from the
-agent's own session export (tool-call start and end times, final text, links)
-against the recording's `startedAt`; text scraped from the terminal breaks
-URLs at line wraps. Redirect large CLI output to a file, pipes can truncate
-it. Shoot the outcome (page, preview, PR) as a second short recording in the
-same tab, since a new tab is not reliably followed, and log cursor positions
-and click times from Playwright bounding boxes (scroll the element into view
-first).
+**Limits.** A recording lasts at most 600 s and stops by itself after 3
+minutes without a pixel change. A box holds one active recording; a leftover
+one makes the next `start` return 409, so stop it in a crash handler and
+before every start. Record everything you intend to show, including waits you
+plan to speed up; a gap cannot be edited back in.
 
-**Edit to under 20 s** with ffmpeg, in four beats:
+**Timing.** Cut from timestamps, not by eye. Log the wall-clock time of every
+action your script takes, take the recorded program's own timeline from
+structured output (a session export, logs, API responses) rather than from
+the screen, and convert both with the recording's `startedAt`. Text scraped
+from a terminal breaks at line wraps. Redirect large CLI output to a file;
+pipes can truncate it.
 
-1. The prompt at real speed, plus about 2 s to read it.
-2. The run as a timelapse. A hard cut from prompt to answer reads as a
-   glitch. Round the factor to 10, 20, 30, 40 or 50x (5x for short runs) and
-   let the beat's length flex around 6-7 s. Show the factor as a badge and
-   caption the MCP tool running at that moment
-   (`Upstash MCP > blob_upload_url`), at least 0.7 s each; drop generic
-   `box_exec` captions when there are many.
-3. The final answer at real speed (about 2.5 s), with a cursor that moves onto
-   the link and clicks it. ttyd exposes `window.term`: cell size is the
-   `.xterm-screen` rect divided by `cols` and `rows`, and the row and column
-   come from searching `term.buffer.active`.
-4. The outcome, 2.5-4 s, with the URL drawn on top (a headless recording has
-   no address bar or pointer). Keep it short when the outcome is not the
-   point, as with a hosted page.
+**Editing** (ffmpeg):
+
+- Speed up long waits instead of cutting them out; a hard cut reads as a
+  glitch. Use round factors (5, 10, 20, 50x), let the segment's length follow
+  from the factor, and show the factor on screen.
+- Say what is happening in on-screen text: a short caption per step, held
+  long enough to read (about 0.7 s or more), thinned out when steps come fast.
+- A headless recording has no pointer and no address bar. Draw a cursor and a
+  click marker where input happens, and draw the URL when the address
+  matters. Take positions from Playwright bounding boxes (scroll the element
+  into view first), or for a terminal from ttyd's `window.term`: cell size is
+  the `.xterm-screen` rect divided by `cols` and `rows`, and the row and
+  column come from searching `term.buffer.active`.
+- Move the cursor with piecewise-linear overlay expressions, and add a hold
+  keyframe at each segment boundary so it does not drift toward the next one.
 
 ```text
-[0:v]trim=B0:B1,setpts=(PTS-STARTPTS)/40,fps=30,
-  drawtext=text='40x':x=w-tw-28:y=24,
-  drawtext=text='Upstash MCP > box_preview':enable='between(t,2.0,2.8)'[b]
-[v][cursor]overlay=x='<piecewise-linear in t>':y='...':eval=frame:enable='between(t,T0,T1)'
+[0:v]trim=T0:T1,setpts=(PTS-STARTPTS)/20,fps=30,
+  drawtext=text='20x':x=w-tw-28:y=24,
+  drawtext=text='<step>':enable='between(t,2.0,2.8)'[fast]
+[v][cursor]overlay=x='<piecewise-linear in t>':y='...':eval=frame:enable='between(t,A,B)'
 ```
 
-Give the cursor a hold keyframe at the end of each beat, or it drifts toward
-the next beat's first position. Check cuts on an `ffmpeg ... tile=3x3`
-contact sheet served with `python3 -m http.server` and opened with
-`box_browser`, never while a take is recording (it is the same browser).
-Upload the MP4 with `blob_upload_url`.
+Review cuts on an `ffmpeg ... tile=3x3` contact sheet served with
+`python3 -m http.server` and opened with `box_browser`, never while a
+recording is running (it is the same browser). Publish the video with
+`blob_upload_url`.
 
-**Several clips.** One recorder box per clip, driven in parallel by
-subagents when the client has them. Never share a recorder box between
+**Several recordings.** One box per recording, driven in parallel by
+subagents when the client has them. Never share a recording box between
 agents: the tmux server, the browser and the recording slot are per box, and
 two agents silently kill each other's sessions and overwrite each other's
 files.
