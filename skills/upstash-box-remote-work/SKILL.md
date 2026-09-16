@@ -1,12 +1,12 @@
 ---
 name: upstash-box-remote-work
-description: Do work in an Upstash Box, a sandboxed cloud container driven through the remote Upstash MCP server (mcp.upstash.com), instead of on the local machine. Use when the user asks to run, build, test, clone, or edit something remotely, in a sandbox, in the cloud, or in a box, when the deliverable is a pull request, a public preview URL, or a screenshot of a running app, when the local machine cannot deliver (no GitHub login for gh, no way to expose a port, a dirty or slow local checkout), or when several independent tasks should run in parallel on separate machines, a code factory that turns a list of tasks into a list of pull requests. Applies whenever the session has the box_* and blob_* MCP tools, even when Upstash is not named.
+description: Do work in an Upstash Box, a sandboxed cloud container driven through the remote Upstash MCP server (mcp.upstash.com), instead of on the local machine. Use when the user asks to run, build, test, clone, or edit something remotely, in a sandbox, in the cloud, or in a box, when the deliverable is a pull request, a public preview URL, or a screenshot of a running app, when the local machine cannot deliver (no GitHub login for gh, no way to expose a port, a dirty or slow local checkout), when several independent tasks should run in parallel on separate machines, a code factory that turns a list of tasks into a list of pull requests, or when the deliverable is a video, screen recording, demo or timelapse of a browser, web app, terminal program or agent run. Applies whenever the session has the box_* and blob_* MCP tools, even when Upstash is not named.
 ---
 
 A box is a sandboxed Linux container in the cloud with a shell, a filesystem,
 git, an optional headless Chromium, and public URLs for its ports. Everything
 here goes through the remote Upstash MCP server. There is no SDK to install
-and no API key in the environment: the server forwards the session's OAuth
+and no API key in the environment (recording videos is the exception, see below): the server forwards the session's OAuth
 token to the Box API, and screenshot bytes travel from the box to Blob
 without passing through the server.
 
@@ -104,6 +104,8 @@ grant.
 - One box per independent task. Create them with a shared `labels` entry,
   drive them in parallel, and `box_manage` `list` with `label` to find and
   delete them at the end. Never run two tasks in one box at once.
+- When the client has subagents, give each one its own box and run them in
+  parallel; agents sharing a box overwrite each other's files and processes.
 - When every task needs the same expensive setup (clone, dependency install,
   build cache), do it once, `box_snapshots` `create`, then `restore` one new
   box per task from the snapshot. `fork` does the same for an idle or paused
@@ -112,6 +114,92 @@ grant.
   oversizing all of them.
 - A `live_view` URL lets a person watch a box's browser tab as it works
   (frames out, no input in); hand it over for long runs.
+
+## Recording videos in a box
+
+Recording is not an MCP tool yet, so this is the one flow that needs the SDK.
+Create a key with `box_apikey` `create`, keep it in a file inside the box,
+drive the box from there with `@upstash/box` (`box.browser.recordings`, and
+`box.browser.cdpUrl()` for Playwright), and delete the key when done.
+
+**What gets recorded.** The box browser: every tab, following the foreground
+one, at a fixed resolution. Anything else has to be put into the browser. A
+terminal program goes through `ttyd` (static binary from its GitHub
+releases; Debian has no package) attached to a fixed-size `tmux` session;
+send input with `tmux send-keys -l` in small chunks, since TUIs collapse
+bracketed pastes. Stay in one tab where you can: a newly opened tab is not
+reliably followed.
+
+**Running an agent or CLI in the box.** A CLI agent started by hand needs its
+own model key; the box's managed key only reaches prompts the Box runner
+starts. Box SSH refuses `-L` forwarding, so a login that waits on a localhost
+OAuth callback cannot be tunneled: run the login in the box, let the user
+approve in their own browser, have them paste back the failed
+`http://127.0.0.1:<port>/...` callback URL, and `curl` it inside the box
+before the CLI stops waiting. The consent screen picks the account, so the
+resources the recording relies on must exist in that account. For unattended
+agent runs, workspace instructions that rule out clarifying questions keep a
+take from stalling.
+
+**Limits.** A recording lasts at most 600 s and stops by itself after 3
+minutes without a pixel change. A box holds one active recording; a leftover
+one makes the next `start` return 409, so stop it in a crash handler and
+before every start. Record everything you intend to show, including waits you
+plan to speed up; a gap cannot be edited back in.
+
+**Timing.** Cut from timestamps, not by eye. Log the wall-clock time of every
+action your script takes, take the recorded program's own timeline from
+structured output (a session export, logs, API responses) rather than from
+the screen, and convert both with the recording's `startedAt`. Text scraped
+from a terminal breaks at line wraps. Redirect large CLI output to a file;
+pipes can truncate it.
+
+**Editing** (ffmpeg):
+
+- Speed up long waits instead of cutting them out; a hard cut reads as a
+  glitch. Use round factors (5, 10, 20, 50x), let the segment's length follow
+  from the factor, and show the factor on screen.
+- Say what is happening in on-screen text: a short caption per step, held
+  long enough to read (about 0.7 s or more), thinned out when steps come fast.
+- A headless recording has no pointer and no address bar. Draw a cursor and a
+  click marker where input happens, and draw the URL when the address
+  matters. Take positions from Playwright bounding boxes (scroll the element
+  into view first), or for a terminal from ttyd's `window.term`: cell size is
+  the `.xterm-screen` rect divided by `cols` and `rows`, and the row and
+  column come from searching `term.buffer.active`.
+- Make the cursor look hand-moved. Use a small, thin, anti-aliased arrow
+  (about 25 px tall at 1280x800) with a soft shadow. Ease each move in and
+  out (smootherstep) along a slight curve (a quadratic Bezier with the control
+  point pushed sideways), let it arrive a beat before the click, and add a
+  faint drift while it rests. Mark a click with a short press (a slightly
+  smaller sprite for about 0.15 s) and a thin ripple that grows and fades
+  over about 0.4 s, not a solid ring. Hold the cursor at each segment
+  boundary so it does not glide toward the next segment's position.
+- Render the ripple as a PNG sequence and delay one copy per click with
+  `tpad`. Put the filtergraph in `-filter_complex_script`; commas inside a
+  quoted expression still need `\,` (the sketch below leaves that out).
+
+```text
+[0:v]trim=T0:T1,setpts=(PTS-STARTPTS)/20,fps=30,
+  drawtext=text='20x':x=w-tw-28:y=24,
+  drawtext=text='<step>':enable='between(t,2.0,2.8)'[fast]
+[ripple]format=rgba,tpad=start_duration=<click t>:color=0x00000000[r]
+[v][r]overlay=x=<cx-36>:y=<cy-36>:eof_action=pass[v2]
+[v2][cursor]overlay=eval=frame:enable='between(t,A,B)':
+  x='st(0,clip((t-T0)/D,0,1));st(1,ld(0)^3*(ld(0)*(6*ld(0)-15)+10));
+     (1-ld(1))^2*X0+2*(1-ld(1))*ld(1)*XC+ld(1)^2*X1':y='...'
+```
+
+Review cuts on an `ffmpeg ... tile=3x3` contact sheet served with
+`python3 -m http.server` and opened with `box_browser`, never while a
+recording is running (it is the same browser). Publish the video with
+`blob_upload_url`.
+
+**Several recordings.** One box per recording, driven in parallel by
+subagents when the client has them. Never share a recording box between
+agents: the tmux server, the browser and the recording slot are per box, and
+two agents silently kill each other's sessions and overwrite each other's
+files.
 
 ## Gotchas
 
@@ -137,3 +225,11 @@ grant.
   per-repo prefixes rather than creating one per run.
 - `box_browser` fails with "browser is not enabled for this box" unless the
   box was created with `browser: true`; there is no way to add it later.
+- A `box_exec` request times out after 60 s. Detach long jobs with
+  `setsid ... &`, poll in later calls, and check the process is still alive.
+- `pkill -f <pattern>` in `box_exec` also matches the calling shell's own
+  command line and kills the call (exit 143). Write `pkill -f 'patter[n]'`.
+- `tmux kill-server` followed at once by `tmux new-session` can fail with
+  "server exited unexpectedly"; wait for the old server to exit first.
+- The `node` image has no PIL or ImageMagick. `sudo apt-get install` what you
+  need, or write small PNGs with Python's `zlib`.
