@@ -167,14 +167,27 @@ pipes can truncate it.
   into view first), or for a terminal from ttyd's `window.term`: cell size is
   the `.xterm-screen` rect divided by `cols` and `rows`, and the row and
   column come from searching `term.buffer.active`.
-- Move the cursor with piecewise-linear overlay expressions, and add a hold
-  keyframe at each segment boundary so it does not drift toward the next one.
+- Make the cursor look hand-moved. Use a small, thin, anti-aliased arrow
+  (about 25 px tall at 1280x800) with a soft shadow. Ease each move in and
+  out (smootherstep) along a slight curve (a quadratic Bezier with the control
+  point pushed sideways), let it arrive a beat before the click, and add a
+  faint drift while it rests. Mark a click with a short press (a slightly
+  smaller sprite for about 0.15 s) and a thin ripple that grows and fades
+  over about 0.4 s, not a solid ring. Hold the cursor at each segment
+  boundary so it does not glide toward the next segment's position.
+- Render the ripple as a PNG sequence and delay one copy per click with
+  `tpad`. Put the filtergraph in `-filter_complex_script`; commas inside a
+  quoted expression still need `\,` (the sketch below leaves that out).
 
 ```text
 [0:v]trim=T0:T1,setpts=(PTS-STARTPTS)/20,fps=30,
   drawtext=text='20x':x=w-tw-28:y=24,
   drawtext=text='<step>':enable='between(t,2.0,2.8)'[fast]
-[v][cursor]overlay=x='<piecewise-linear in t>':y='...':eval=frame:enable='between(t,A,B)'
+[ripple]format=rgba,tpad=start_duration=<click t>:color=0x00000000[r]
+[v][r]overlay=x=<cx-36>:y=<cy-36>:eof_action=pass[v2]
+[v2][cursor]overlay=eval=frame:enable='between(t,A,B)':
+  x='st(0,clip((t-T0)/D,0,1));st(1,ld(0)^3*(ld(0)*(6*ld(0)-15)+10));
+     (1-ld(1))^2*X0+2*(1-ld(1))*ld(1)*XC+ld(1)^2*X1':y='...'
 ```
 
 Review cuts on an `ffmpeg ... tile=3x3` contact sheet served with
