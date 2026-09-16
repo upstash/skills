@@ -141,7 +141,13 @@ resources the recording relies on must exist in that account. For unattended
 agent runs, workspace instructions that rule out clarifying questions keep a
 take from stalling.
 
-**Limits.** A recording lasts at most 600 s and stops by itself after 3
+**Limits.** Recordings capture changes at a low frame rate (about 4 fps
+observed), so a smooth scroll or animation comes out as a few jumps, and
+frame times drift from wall-clock time. Use the recording for work you will
+speed up anyway; for moments shown at real speed (a page opening, scrolling,
+clicks changing state), take Playwright screenshots (a `fullPage` shot plus
+one after each action) and animate them in the edit. A recording lasts at
+most 600 s and stops by itself after 3
 minutes without a pixel change. A box holds one active recording; a leftover
 one makes the next `start` return 409, so stop it in a crash handler and
 before every start. Record everything you intend to show, including waits you
@@ -175,6 +181,13 @@ pipes can truncate it.
   smaller sprite for about 0.15 s) and a thin ripple that grows and fades
   over about 0.4 s, not a solid ring. Hold the cursor at each segment
   boundary so it does not glide toward the next segment's position.
+- When the viewer opens a page, start at its top and scroll to the part that
+  matters; landing mid-page hides what was opened. From a `fullPage`
+  screenshot, an eased `crop` y expression gives a smooth scroll.
+- Render in two passes: cut and speed up the base video first, then draw the
+  cursor and ripples over the short result. Looping sprite inputs next to a
+  long source that is being fast-forwarded can make ffmpeg fail with
+  "Resource temporarily unavailable".
 - Render the ripple as a PNG sequence and delay one copy per click with
   `tpad`. Put the filtergraph in `-filter_complex_script`; commas inside a
   quoted expression still need `\,` (the sketch below leaves that out).
