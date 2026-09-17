@@ -44,11 +44,6 @@ await index.count(); // 3
 await index.info(); // { dimension: 1536, metric: "COSINE" } | null if missing
 await index.delete("doc-1"); // 1 | 0
 await index.drop(); // 1 | 0
-
-// Bulk load in one round trip
-const pipe = redis.pipeline();
-for (const doc of docs) pipe.vector.add("docs", doc.id, doc.embedding);
-await pipe.exec();
 ```
 
 ## Common Mistakes
@@ -56,4 +51,5 @@ await pipe.exec();
 - Importing `@upstash/vector` for these commands. They are part of `@upstash/redis` and use the Redis REST URL and token.
 - Changing `dimension` or `metric` on an existing index. Drop and recreate it instead.
 - Comparing `get()` output to the original embedding exactly. Values are stored as 32-bit floats.
+- Expecting `redis.pipeline()` or `redis.multi()` to batch vector commands. Like search, the vector namespace is not available on pipelines: every call is its own request, so bulk loads should be chunked and run with `Promise.all` instead.
 - Checking existence with `count()`. It returns `0` for both a missing and an empty index; `info()` returns `null` only when the index is missing.
