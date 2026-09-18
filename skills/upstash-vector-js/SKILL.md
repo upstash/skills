@@ -9,6 +9,10 @@ metadata:
 
 # Vector Documentation Skill
 
+## Bundled docs and source
+
+Before writing or debugging SDK code, check `node_modules/@upstash/vector/docs/` for bundled docs and `node_modules/@upstash/vector/src/` for readable TypeScript source. Read and search the relevant files when present; otherwise use the references in this skill.
+
 ## Quick Start
 
 Vector is a high‑performance vector database for storing, querying, and managing vector embeddings.
