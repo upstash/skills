@@ -1,1 +1,0 @@
-Create a fresh box, clone github.com/upstash/upstash-web into it, start the Next.js dev server and give me a public preview URL I can open.

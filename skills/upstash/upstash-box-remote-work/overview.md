@@ -144,16 +144,28 @@ recording relies on must exist in that account. For unattended agent runs,
 workspace instructions that rule out clarifying questions keep a take from
 stalling.
 
-**Bundled scripts** (`scripts/`, arm64 Debian box with `ffmpeg tmux
-fonts-jetbrains-mono python3-pil`, `ttyd`, and `npm i @upstash/box
-playwright-core tsx`; a Box API key in `.env`):
+**Bundled scripts** (`scripts/`; generic building blocks, nothing in them
+knows what is being recorded). The box needs `ffmpeg tmux fonts-jetbrains-mono
+python3-pil` from apt, `ttyd`, `npm i @upstash/box playwright-core tsx`, and a
+Box API key in `.env`:
 
-- `start-session.sh` — fixed-size tmux session running the agent TUI, served by ttyd on :7681.
-- `rec.mts <name>` — types `prompts/<name>.txt` into the TUI, records until the agent's session export settles, finds the link in the terminal buffer, saves `full/<name>.{mp4,json}` and the export.
-- `outcome.mts <name>` — warms the produced URL, then records it loading.
-- `take.sh <name>` — the two above after a fresh session; run detached and poll its log.
-- `sprites.py` — cursor, press and ripple PNGs. `sheet.py` — contact sheet at given seconds.
-- `edit.py <name> [--factor N]` — the cut described below in one ffmpeg run: prompt at 1x, work as a round-factor timelapse with badge and tool captions from the export, answer with the cursor click, outcome with a URL pill.
+- `lib/recorder.mts` — `connect()` gives a Playwright page on the box browser;
+  `record(box, take, body)` starts a recording, waits a pre-roll, runs your
+  steps, stops, downloads `full/<name>.mp4` and writes `full/<name>.json` with
+  every `take.log()` event in wall-clock ms; `findInTerminal(page, re)` gives
+  the pixel position of a line on a ttyd page.
+- `render.py <spec.json>` — one ffmpeg run from a cut spec: segments with a
+  speed factor (badge drawn for you), captions, a cursor with eased moves and
+  clicks, a URL pill. The docstring shows the spec.
+- `tty-session.sh '<command>'` — the command in a fixed-size tmux session
+  served by ttyd, status bar off.
+- `sprites.py` (cursor, press, ripple PNGs), `sheet.py` (contact sheet),
+  `secret-form.py` (one-shot form that appends a secret to `.env`).
+
+A take script composes them: connect, `record` around your input steps, build
+a spec from the logged events plus the program's own timeline, `render.py`.
+The `opencode` skill in upstash/dev-skills has a complete example for an
+agent TUI.
 
 **Limits.** A recording lasts at most 600 s and stops by itself after 3
 minutes without a pixel change. A box holds one active recording; a leftover
