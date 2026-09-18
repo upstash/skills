@@ -122,19 +122,50 @@ one, at a fixed resolution. Anything else has to be put into the browser. A
 terminal program goes through `ttyd` (static binary from its GitHub
 releases; Debian has no package) attached to a fixed-size `tmux` session;
 send input with `tmux send-keys -l` in small chunks, since TUIs collapse
-bracketed pastes. Stay in one tab where you can: a newly opened tab is not
-reliably followed.
+bracketed pastes; `tmux set -g status off`, or the status bar is in every
+frame. Stay in one tab where you can: a newly opened tab is not reliably
+followed.
 
 **Running an agent or CLI in the box.** A CLI agent started by hand needs its
 own model key; the box's managed key only reaches prompts the Box runner
-starts. Box SSH refuses `-L` forwarding, so a login that waits on a localhost
-OAuth callback cannot be tunneled: run the login in the box, let the user
-approve in their own browser, have them paste back the failed
-`http://127.0.0.1:<port>/...` callback URL, and `curl` it inside the box
-before the CLI stops waiting. The consent screen picks the account, so the
-resources the recording relies on must exist in that account. For unattended
-agent runs, workspace instructions that rule out clarifying questions keep a
-take from stalling.
+starts. Get a key into the box without pasting it in chat: serve a one-shot
+form from the box (`scripts/secret-form.py`), expose it with `box_preview`,
+send the user the link, and it appends the value to a file and exits. A login
+that waits on a localhost OAuth callback cannot be tunneled (Box SSH refuses
+`-L`). If the CLI lets you set the redirect URI (OpenCode: `oauth.redirect_uri`
+in `opencode.json`), point it at a Box preview URL: the callback server still
+binds 127.0.0.1 on the URI's port (443 for https, allowed unprivileged), and
+previews reach only 0.0.0.0, so relay the preview port to it for the duration
+of the grant. Otherwise run the login in the box, let the user approve in
+their own browser, and have them paste back the failed
+`http://127.0.0.1:<port>/...` URL to `curl` inside the box before the CLI
+stops waiting. The consent screen picks the account, so the resources the
+recording relies on must exist in that account. For unattended agent runs,
+workspace instructions that rule out clarifying questions keep a take from
+stalling.
+
+**Bundled scripts** (`scripts/`; generic building blocks, nothing in them
+knows what is being recorded). The box needs `ffmpeg tmux fonts-jetbrains-mono
+python3-pil` from apt, `ttyd`, `npm i @upstash/box playwright-core tsx`, and a
+Box API key in `.env`:
+
+- `lib/recorder.mts` — `connect()` gives a Playwright page on the box browser;
+  `record(box, take, body)` starts a recording, waits a pre-roll, runs your
+  steps, stops, downloads `full/<name>.mp4` and writes `full/<name>.json` with
+  every `take.log()` event in wall-clock ms; `findInTerminal(page, re)` gives
+  the pixel position of a line on a ttyd page.
+- `render.py <spec.json>` — one ffmpeg run from a cut spec: segments with a
+  speed factor (badge drawn for you), captions, a cursor with eased moves and
+  clicks, a URL pill. The docstring shows the spec.
+- `tty-session.sh '<command>'` — the command in a fixed-size tmux session
+  served by ttyd, status bar off.
+- `sprites.py` (cursor, press, ripple PNGs), `sheet.py` (contact sheet),
+  `secret-form.py` (one-shot form that appends a secret to `.env`).
+
+A take script composes them: connect, `record` around your input steps, build
+a spec from the logged events plus the program's own timeline, `render.py`.
+The `opencode` skill in upstash/dev-skills has a complete example for an
+agent TUI.
 
 **Limits.** A recording lasts at most 600 s and stops by itself after 3
 minutes without a pixel change. A box holds one active recording; a leftover
@@ -145,15 +176,19 @@ plan to speed up; a gap cannot be edited back in.
 **Timing.** Cut from timestamps, not by eye. Log the wall-clock time of every
 action your script takes, take the recorded program's own timeline from
 structured output (a session export, logs, API responses) rather than from
-the screen, and convert both with the recording's `startedAt`. Text scraped
-from a terminal breaks at line wraps. Redirect large CLI output to a file;
-pipes can truncate it.
+the screen, and convert both to video time. Anchor on the end, not the start:
+capture begins about 2 s after `startedAt`, so the first frame is
+`endedAt - <file duration>` (ffprobe), and `startedAt` puts every cut early.
+Text scraped from a terminal breaks at line wraps. Redirect large CLI output
+to a file; pipes can truncate it.
 
 **Editing** (ffmpeg):
 
 - Speed up long waits instead of cutting them out; a hard cut reads as a
   glitch. Use round factors (5, 10, 20, 50x), let the segment's length follow
-  from the factor, and show the factor on screen.
+  from the factor, and show the factor on screen as a solid green pill with
+  dark text in a corner (`box=1:boxcolor=0x00d48a`), not a translucent badge:
+  it has to read at a glance over any background.
 - Say what is happening in on-screen text: a short caption per step, held
   long enough to read (about 0.7 s or more), thinned out when steps come fast.
 - A headless recording has no pointer and no address bar. Draw a cursor and a
@@ -176,7 +211,7 @@ pipes can truncate it.
 
 ```text
 [0:v]trim=T0:T1,setpts=(PTS-STARTPTS)/20,fps=30,
-  drawtext=text='20x':x=w-tw-28:y=24,
+  drawtext=text='20x':fontcolor=0x062b1f:box=1:boxcolor=0x00d48a:boxborderw=10:x=w-tw-30:y=26,
   drawtext=text='<step>':enable='between(t,2.0,2.8)'[fast]
 [ripple]format=rgba,tpad=start_duration=<click t>:color=0x00000000[r]
 [v][r]overlay=x=<cx-36>:y=<cy-36>:eof_action=pass[v2]
@@ -189,6 +224,12 @@ Review cuts on an `ffmpeg ... tile=3x3` contact sheet served with
 `python3 -m http.server` and opened with `box_browser`, never while a
 recording is running (it is the same browser). Publish the video with
 `blob_upload_url`.
+
+**Between takes.** An agent recorded with box tools lists what exists before
+it creates anything: a box left by the previous take makes it skip the clone
+and reuse that box. Delete leftovers first, or say "a fresh box" in the
+prompt. Boxes the recorded agent creates live in the account it consented
+to, which is not necessarily the one your own session can see.
 
 **Several recordings.** One box per recording, driven in parallel by
 subagents when the client has them. Never share a recording box between
@@ -220,6 +261,10 @@ files.
   per-repo prefixes rather than creating one per run.
 - `box_browser` fails with "browser is not enabled for this box" unless the
   box was created with `browser: true`; there is no way to add it later.
+- A public Blob host caches objects for an hour (`cache-control` on the
+  upload). Re-uploading to the same path keeps serving the old bytes: publish
+  a replacement under a new name, and add a query string when you read back
+  something you just overwrote.
 - A `box_exec` request times out after 60 s. Detach long jobs with
   `setsid ... &`, poll in later calls, and check the process is still alive.
 - `pkill -f <pattern>` in `box_exec` also matches the calling shell's own
