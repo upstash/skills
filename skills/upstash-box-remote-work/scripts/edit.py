@@ -59,7 +59,7 @@ print('captions:', [(round(a, 2), l) for a, l, _ in caps])
 def esc(s): return s.replace('\\', '\\\\').replace("'", "\\'").replace(':', '\\:').replace('%', '%%')
 def dt(text, **kw): return 'drawtext=' + ':'.join([f"text='{esc(text)}'"] + [f'{k}={v}' for k, v in kw.items()])
 scale = f'scale={W}:{H}:force_original_aspect_ratio=decrease,pad={W}:{H}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p'
-badge = dt(f'{F}x', fontfile=MONO, fontsize=26, fontcolor='white', x='w-tw-28', y=24, box=1, boxcolor='0x0b0f14@0.6', boxborderw=8)
+badge = dt(f'{F}x', fontfile=MONO, fontsize=28, fontcolor='0x062b1f', x='w-tw-30', y=26, box=1, boxcolor='0x00d48a@0.95', boxborderw=10)
 cap_f = [dt(l, fontfile=SANS, fontsize=24, fontcolor='0xe6edf3', x=32, y='h-72', box=1, boxcolor='0x0b0f14@0.75', boxborderw=12, enable=f"'between(t\\,{a:.3f}\\,{b:.3f})'") for a, l, b in caps]
 
 url = oc['url']; tE = o(ev(oc['events'], 'loaded')) + 0.25; out_len = min(A.outcome, dur(f'full/{name}-outcome.mp4') - tE - 0.05)
