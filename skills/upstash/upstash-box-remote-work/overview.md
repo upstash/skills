@@ -171,7 +171,9 @@ pipes can truncate it.
 
 - Speed up long waits instead of cutting them out; a hard cut reads as a
   glitch. Use round factors (5, 10, 20, 50x), let the segment's length follow
-  from the factor, and show the factor on screen.
+  from the factor, and show the factor on screen as a solid green pill with
+  dark text in a corner (`box=1:boxcolor=0x00d48a`), not a translucent badge:
+  it has to read at a glance over any background.
 - Say what is happening in on-screen text: a short caption per step, held
   long enough to read (about 0.7 s or more), thinned out when steps come fast.
 - A headless recording has no pointer and no address bar. Draw a cursor and a
@@ -194,7 +196,7 @@ pipes can truncate it.
 
 ```text
 [0:v]trim=T0:T1,setpts=(PTS-STARTPTS)/20,fps=30,
-  drawtext=text='20x':x=w-tw-28:y=24,
+  drawtext=text='20x':fontcolor=0x062b1f:box=1:boxcolor=0x00d48a:boxborderw=10:x=w-tw-30:y=26,
   drawtext=text='<step>':enable='between(t,2.0,2.8)'[fast]
 [ripple]format=rgba,tpad=start_duration=<click t>:color=0x00000000[r]
 [v][r]overlay=x=<cx-36>:y=<cy-36>:eof_action=pass[v2]
