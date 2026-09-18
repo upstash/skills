@@ -71,6 +71,7 @@ const index = await redis.search.createIndex({
 - `"json"` - Index JSON documents stored with `redis.json.set()` or `redis.set()`. Supports nested schemas with `s.object()`
 - `"string"` - Index JSON strings stored with `redis.set()`. Supports nested schemas
 - `"hash"` - Index Redis hashes stored with `redis.hset()`. Flat schemas only (no nesting)
+- `"stream"` - Index entries added with `redis.xadd()`. Flat schemas only; use `stream` for the exact stream key instead of `prefix`
 
 ## Commands
 
