@@ -127,8 +127,9 @@ one, at a fixed resolution. Anything else has to be put into the browser. A
 terminal program goes through `ttyd` (static binary from its GitHub
 releases; Debian has no package) attached to a fixed-size `tmux` session;
 send input with `tmux send-keys -l` in small chunks, since TUIs collapse
-bracketed pastes. Stay in one tab where you can: a newly opened tab is not
-reliably followed.
+bracketed pastes; `tmux set -g status off`, or the status bar is in every
+frame. Stay in one tab where you can: a newly opened tab is not reliably
+followed.
 
 **Running an agent or CLI in the box.** A CLI agent started by hand needs its
 own model key; the box's managed key only reaches prompts the Box runner
@@ -168,9 +169,11 @@ plan to speed up; a gap cannot be edited back in.
 **Timing.** Cut from timestamps, not by eye. Log the wall-clock time of every
 action your script takes, take the recorded program's own timeline from
 structured output (a session export, logs, API responses) rather than from
-the screen, and convert both with the recording's `startedAt`. Text scraped
-from a terminal breaks at line wraps. Redirect large CLI output to a file;
-pipes can truncate it.
+the screen, and convert both to video time. Anchor on the end, not the start:
+capture begins about 2 s after `startedAt`, so the first frame is
+`endedAt - <file duration>` (ffprobe), and `startedAt` puts every cut early.
+Text scraped from a terminal breaks at line wraps. Redirect large CLI output
+to a file; pipes can truncate it.
 
 **Editing** (ffmpeg):
 
@@ -215,6 +218,12 @@ Review cuts on an `ffmpeg ... tile=3x3` contact sheet served with
 recording is running (it is the same browser). Publish the video with
 `blob_upload_url`.
 
+**Between takes.** An agent recorded with box tools lists what exists before
+it creates anything: a box left by the previous take makes it skip the clone
+and reuse that box. Delete leftovers first, or say "a fresh box" in the
+prompt. Boxes the recorded agent creates live in the account it consented
+to, which is not necessarily the one your own session can see.
+
 **Several recordings.** One box per recording, driven in parallel by
 subagents when the client has them. Never share a recording box between
 agents: the tmux server, the browser and the recording slot are per box, and
@@ -245,6 +254,10 @@ files.
   per-repo prefixes rather than creating one per run.
 - `box_browser` fails with "browser is not enabled for this box" unless the
   box was created with `browser: true`; there is no way to add it later.
+- A public Blob host caches objects for an hour (`cache-control` on the
+  upload). Re-uploading to the same path keeps serving the old bytes: publish
+  a replacement under a new name, and add a query string when you read back
+  something you just overwrote.
 - A `box_exec` request times out after 60 s. Detach long jobs with
   `setsid ... &`, poll in later calls, and check the process is still alive.
 - `pkill -f <pattern>` in `box_exec` also matches the calling shell's own
