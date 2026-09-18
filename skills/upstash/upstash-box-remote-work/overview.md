@@ -127,14 +127,32 @@ reliably followed.
 
 **Running an agent or CLI in the box.** A CLI agent started by hand needs its
 own model key; the box's managed key only reaches prompts the Box runner
-starts. Box SSH refuses `-L` forwarding, so a login that waits on a localhost
-OAuth callback cannot be tunneled: run the login in the box, let the user
-approve in their own browser, have them paste back the failed
-`http://127.0.0.1:<port>/...` callback URL, and `curl` it inside the box
-before the CLI stops waiting. The consent screen picks the account, so the
-resources the recording relies on must exist in that account. For unattended
-agent runs, workspace instructions that rule out clarifying questions keep a
-take from stalling.
+starts. Get a key into the box without pasting it in chat: serve a one-shot
+form from the box (`scripts/secret-form.py`), expose it with `box_preview`,
+send the user the link, and it appends the value to a file and exits. A login
+that waits on a localhost OAuth callback cannot be tunneled (Box SSH refuses
+`-L`). If the CLI lets you set the redirect URI (OpenCode: `oauth.redirect_uri`
+in `opencode.json`), point it at a Box preview URL: the callback server still
+binds 127.0.0.1 on the URI's port (443 for https, allowed unprivileged), and
+previews reach only 0.0.0.0, so relay the preview port to it for the duration
+of the grant. Otherwise run the login in the box, let the user approve in
+their own browser, and have them paste back the failed
+`http://127.0.0.1:<port>/...` URL to `curl` inside the box before the CLI
+stops waiting. The consent screen picks the account, so the resources the
+recording relies on must exist in that account. For unattended agent runs,
+workspace instructions that rule out clarifying questions keep a take from
+stalling.
+
+**Bundled scripts** (`scripts/`, arm64 Debian box with `ffmpeg tmux
+fonts-jetbrains-mono python3-pil`, `ttyd`, and `npm i @upstash/box
+playwright-core tsx`; a Box API key in `.env`):
+
+- `start-session.sh` — fixed-size tmux session running the agent TUI, served by ttyd on :7681.
+- `rec.mts <name>` — types `prompts/<name>.txt` into the TUI, records until the agent's session export settles, finds the link in the terminal buffer, saves `full/<name>.{mp4,json}` and the export.
+- `outcome.mts <name>` — warms the produced URL, then records it loading.
+- `take.sh <name>` — the two above after a fresh session; run detached and poll its log.
+- `sprites.py` — cursor, press and ripple PNGs. `sheet.py` — contact sheet at given seconds.
+- `edit.py <name> [--factor N]` — the cut described below in one ffmpeg run: prompt at 1x, work as a round-factor timelapse with badge and tool captions from the export, answer with the cursor click, outcome with a URL pill.
 
 **Limits.** A recording lasts at most 600 s and stops by itself after 3
 minutes without a pixel change. A box holds one active recording; a leftover
