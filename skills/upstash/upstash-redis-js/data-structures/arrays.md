@@ -51,6 +51,17 @@ await redis.arlastitems("recent", 10); // add { rev: true } for newest-first
 await redis.arcount("readings"); // 5
 await redis.arlen("readings"); // "201"
 
+// Move the append cursor past the positional writes before appending
+const nextIndex = await redis.arlen("readings");
+await redis.arseek("readings", nextIndex); // 1; returns 0 if the key does not exist
+await redis.arinsert("readings", 22.4); // "201", preserving the existing readings
+
+// Inspect size, storage layout, and the next append position
+const info = await redis.arinfo("readings");
+console.log(info.len, info.count, info.nextInsertIndex); // "202", 6, "202"
+const fullInfo = await redis.arinfo("readings", { full: true });
+console.log(fullInfo.denseSlices, fullInfo.sparseSlices); // Additional slice statistics
+
 // Delete (leaves holes)
 await redis.ardel("readings", 0, 1);
 await redis.ardelrange("readings", [100, 199], [200, 299]);
