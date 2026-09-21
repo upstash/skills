@@ -23,7 +23,9 @@ The build's pre-check also refuses to run while `skills/upstash/` has unstaged c
 The plugins now install the hosted MCP server alongside the skills, so for
 account and data operations the agent usually has authenticated tools already
 in the session — creating and inspecting databases, indexes and Blob buckets,
-running Redis commands, stats, logs, backups, QStash schedules and the DLQ. The CLI covers
+running Redis commands, stats, logs, backups, QStash schedules and the DLQ, plus Box
+(shell, browser, git, previews) and Blob upload URLs. `skills/upstash-box-remote-work/`
+is the one skill written for those remote Box and Blob tools. The CLI covers
 the same ground but needs a global npm install, a login and an API key.
 
 So `skills/upstash-cli/` opens by telling the agent to prefer the MCP when its
