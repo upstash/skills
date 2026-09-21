@@ -13,8 +13,9 @@ This skill combines documentation for all Upstash SDKs. Pick the relevant sub-sk
 
 If Upstash MCP tools are available in this session, prefer them for account and data operations —
 creating and inspecting databases, indexes and Blob buckets, running Redis commands, reading stats,
-logs and the DLQ. The sub-skills below are for writing application code; reach for `upstash-cli` only when there
-is no MCP or the work is inherently shell work.
+logs and the DLQ, and remote work in a Box (shell, browser, git, preview URLs, PRs, screenshots
+uploaded to Blob; see `upstash-box-remote-work`). The sub-skills below are for writing application code; reach for
+`upstash-cli` only when there is no MCP or the work is inherently shell work.
 
 ## [upstash-blob-js](upstash-blob-js/overview.md)
 
@@ -32,9 +33,13 @@ Work with the @upstash/box TypeScript/JavaScript SDK for sandboxed cloud contain
 
 Work with the upstash-box Python SDK for sandboxed cloud containers with AI agents, shell, filesystem, git, cron schedules, snapshots, and a headless browser. Use when building with Upstash Box in Python, creating a sandbox or isolated environment to run untrusted or agent-generated code, running AI coding agents in containers, giving an agent a cloud dev environment with a shell and repository, browser automation from a box, scheduling recurring jobs inside a box, saving and restoring snapshots, or orchestrating parallel boxes.
 
+## [upstash-box-remote-work](upstash-box-remote-work/overview.md)
+
+Do work in an Upstash Box, a sandboxed cloud container driven through the remote Upstash MCP server (mcp.upstash.com), instead of on the local machine. Use when the user asks to run, build, test, clone, or edit something remotely, in a sandbox, in the cloud, or in a box, when the deliverable is a pull request, a public preview URL, or a screenshot of a running app, when the local machine cannot deliver (no GitHub login for gh, no way to expose a port, a dirty or slow local checkout), when several independent tasks should run in parallel on separate machines, a code factory that turns a list of tasks into a list of pull requests, or when the deliverable is a video, screen recording, demo or timelapse of a browser, web app, terminal program or agent run. Applies whenever the session has the box_* and blob_* MCP tools, even when Upstash is not named.
+
 ## [upstash-cli](upstash-cli/overview.md)
 
-Run the Upstash CLI (`upstash`) against the Upstash Developer API for Redis, Vector, Search, QStash, Blob, and teams, with non-interactive commands and JSON output for scripts, CI, and agents. Use when creating, listing, renaming, or deleting Redis databases, changing plans, regions, TLS, eviction, auto-upgrade, or budgets, managing backups, running Redis commands with `upstash redis exec`, creating or inspecting Vector and Search indexes, managing QStash instances and tokens, creating Blob buckets or minting temporary S3 credentials for one, managing team members, reading usage stats, or automating any Upstash account operation from the terminal. Also use when the user asks how to provision or manage Upstash resources without the console. Prefer the Upstash MCP server when its tools are available in the session, and use this skill for terminal, CI, and scripting work.
+Run the Upstash CLI (`upstash`) from a terminal, shell script, or CI job when no Upstash MCP tools are in the session. Do not load this skill when Upstash MCP tools are available (the Upstash plugin registers mcp.upstash.com) - they already cover creating, listing, renaming, and deleting Redis databases, running Redis commands, usage stats, backups, Vector and Search indexes, QStash schedules and messages, Blob buckets, and Box, so call them directly. Use this skill for shell work the MCP does not do - a CI step or provisioning script that needs `upstash` commands with JSON output, piping results into other commands, `upstash auth login` and API-key setup, team and member management, changing plans, regions, TLS, eviction, auto-upgrade, or budgets, minting temporary S3 credentials for a Blob bucket, or when the user explicitly asks for the CLI or for managing Upstash without the console.
 
 ## [upstash-qstash-js](upstash-qstash-js/overview.md)
 
@@ -46,7 +51,7 @@ Rate limiting for serverless and edge apps with the @upstash/ratelimit TypeScrip
 
 ## [upstash-redis-js](upstash-redis-js/overview.md)
 
-Work with the @upstash/redis TypeScript/JavaScript SDK, a serverless HTTP-based Redis client for Next.js, Vercel, Cloudflare Workers, edge runtimes, and Node.js. Use when adding a cache (cache-aside, write-through, TTL and expiration strategies), session storage and user sessions, a key-value store, leaderboards and rankings with sorted sets, counters, distributed locks, queues with lists, streams and consumer groups, sparse index-addressed arrays and ring buffers (ARSET, ARINSERT, ARRING, ARGREP, AROP), JSON documents, pipelines and MULTI/EXEC transactions, Lua scripting, read replicas, or full-text search, typo-tolerant search, facets, and aggregations with Upstash Redis Search (different from regular FT.SEARCH; also available for TCP clients via @upstash/search-redis and @upstash/search-ioredis). Also use when migrating from ioredis or node-redis, when a Redis connection is needed from a serverless function without connection pooling, when integrating @upstash/ratelimit, or when the user says Redis cache, KV store, session store, serverless Redis, or Upstash Redis. Supports automatic serialization/deserialization of JavaScript types.
+Work with the @upstash/redis TypeScript/JavaScript SDK, a serverless HTTP-based Redis client for Next.js, Vercel, Cloudflare Workers, edge runtimes, and Node.js. Use when adding a cache (cache-aside, write-through, TTL and expiration strategies), session storage and user sessions, a key-value store, leaderboards and rankings with sorted sets, counters, distributed locks, queues with lists, streams and consumer groups, sparse index-addressed arrays and ring buffers (ARSET, ARINSERT, ARRING, ARGREP, AROP), JSON documents, pipelines and MULTI/EXEC transactions, Lua scripting, read replicas, or full-text search, typo-tolerant search, facets, aggregations, and search over Redis stream entries with Upstash Redis Search (different from regular FT.SEARCH; also available for TCP clients via @upstash/search-redis and @upstash/search-ioredis). Also use when migrating from ioredis or node-redis, when a Redis connection is needed from a serverless function without connection pooling, when integrating @upstash/ratelimit, or when the user says Redis cache, KV store, session store, serverless Redis, or Upstash Redis. Supports automatic serialization/deserialization of JavaScript types.
 
 ## [upstash-redis-start](upstash-redis-start/overview.md)
 

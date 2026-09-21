@@ -29,6 +29,7 @@ Connect your AI coding agent to Upstash. This repo ships **skills** (per-SDK ins
 | [upstash-box-cli](skills/upstash-box-cli/) | Drive a sandboxed cloud container from the terminal with the `box` CLI. |
 | [upstash-box-js](skills/upstash-box-js/) | Sandboxed cloud containers with AI agents, shell, filesystem, and git. |
 | [upstash-box-py](skills/upstash-box-py/) | The same sandboxed cloud containers, from the Python SDK. |
+| [upstash-box-remote-work](skills/upstash-box-remote-work/) | Do work in a sandboxed cloud Box over the remote MCP, with preview URLs, screenshots, and PRs. |
 | [upstash-cli](skills/upstash-cli/) | Drive the Upstash Developer API from the terminal with the `upstash` CLI. |
 | [upstash-qstash-js](skills/upstash-qstash-js/) | Serverless messaging and scheduling via HTTP endpoints. |
 | [upstash-ratelimit-js](skills/upstash-ratelimit-js/) | Rate limiting with the Redis Rate Limit TypeScript SDK. |
@@ -208,7 +209,7 @@ See the [OpenCode MCP docs](https://opencode.ai/docs/mcp-servers).
 </details>
 
 Scope which product tools the agent sees by appending `?features=` to the URL — comma-separated
-from `redis`, `qstash_workflow`, `vector`, `search` (omitted means all), e.g.
+from `redis`, `qstash_workflow`, `vector`, `search`, `box`, `blob` (omitted means all), e.g.
 `https://mcp.upstash.com/mcp?features=redis,qstash_workflow`.
 
 **Local (stdio)** — run [`@upstash/mcp-server`](https://www.npmjs.com/package/@upstash/mcp-server)
