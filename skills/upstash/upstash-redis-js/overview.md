@@ -49,6 +49,7 @@ Redis data types with auto-serialization examples:
 - **sorted-sets.md** - ZADD, ZRANGE, ZRANK, leaderboard patterns
 - **json.md** - JSON.SET, JSON.GET, JSONPath queries for nested objects
 - **streams.md** - XADD, XREAD, XGROUP, consumer groups
+- **arrays.md** - ARSET, ARINSERT, ARSCAN, ARGREP, AROP, ring buffers with ARRING on sparse index-addressed arrays
 
 ### Advanced Features (advanced-features/)
 
