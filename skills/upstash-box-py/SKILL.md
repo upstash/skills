@@ -83,9 +83,11 @@ box.set_init_command("npm run dev")
 script = box.get_init_command()
 box.delete_init_command()
 
-# Bulk delete (classmethods, by ID)
+# Bulk delete (classmethods, by ID). An empty or blank id list raises BoxError —
+# it is never read as "everything". Omit snapshot_ids entirely to delete all.
 Box.delete_boxes(box_ids=["box_1", "box_2"])  # JS static `delete` is `delete_boxes` here
-Box.delete_snapshots(snapshot_ids=["snap_1"])  # omit ids → delete all
+Box.delete_snapshots(snapshot_ids=["snap_1"])
+Box.delete_snapshots()  # delete all
 ```
 
 ### Account-level env vars
@@ -432,7 +434,21 @@ box.git.push(branch="feature/fix")
 
 box.git.checkout(branch="release/v2")
 pr = box.git.create_pr(title="Fix bug", body="...", base="main")
-# pr: PullRequest(url, number, title, base)
+# pr: PullRequest(url, number, title, base, warning)
+issue = box.git.create_issue(title="Flaky test in CI", body="...")
+# issue: Issue(url, number, title, warning)
+
+# Attach images or videos to a PR or issue. Paths are relative to the box's
+# working directory; alt text for an image is written as "shot.png#alt text"
+# (a video takes none). Reference an attachment from the body as
+# ![alt](./shot.png) and GitHub rewrites it to the uploaded asset.
+box.git.create_pr(
+    title="Fix the tower layout",
+    body="![before](./before.png)\n![after](./after.png)",
+    attach=["before.png#before", "after.png#after"],
+)
+# `warning` is set when `gh` exited non-zero but still returned a URL: the item
+# exists while an attachment failed to upload, or the PR was already open.
 
 # Update the box-wide git identity
 cfg = box.git.update_config(user_name="Bot", user_email="bot@example.com")
@@ -812,6 +828,7 @@ asyncio.run(main())
 - `tab.act(action)` (replaying an `observe()` result) costs no tokens and needs no model provider key; only `act(instruction)` with a string is metered.
 - `get_init_command` / `set_init_command` / `delete_init_command` raise unless the box was created with `keep_alive=True`.
 - The JS static `Box.delete({boxIds})` is `Box.delete_boxes(box_ids=...)` here, to avoid clashing with the instance `delete()`.
+- `Box.delete_boxes(box_ids=[])` and `Box.delete_snapshots(snapshot_ids=[])` raise `BoxError` — an empty list is never read as "delete everything". Call `Box.delete_snapshots()` with no ids for that.
 - `box.delete()` is irreversible — snapshot first if you need the state.
 - Git operations require `git.token` in the box config for private repos and PRs.
 - `Box.from_snapshot()` creates a new box — it does not modify the original. It reuses the full create body, so `browser` / `skills` / `mcp_servers` are forwarded (the JS `Box.fromSnapshot()` drops those).

@@ -71,9 +71,11 @@ await box.setInitCommand("npm run dev")
 const script = await box.getInitCommand()
 await box.deleteInitCommand()
 
-// Bulk delete (static, by ID)
+// Bulk delete (static, by ID). An empty or blank id list throws — it is never
+// read as "everything". Omit snapshotIds entirely to delete all snapshots.
 await Box.delete({ boxIds: ["box_1", "box_2"] })
-const { deleted } = await Box.deleteSnapshots({ snapshotIds: ["snap_1"] }) // omit ids → delete all
+const { deleted } = await Box.deleteSnapshots({ snapshotIds: ["snap_1"] })
+await Box.deleteSnapshots() // delete all
 ```
 
 ### Account-level env vars
@@ -265,7 +267,7 @@ run.stderr    // raw stderr (command/code runs)
 run.exitCode  // number | null (null for agent runs)
 run.cost      // { inputTokens, outputTokens, cachedInputTokens, computeMs, totalUsd }
 
-await run.cancel()          // cancel a running run
+await run.cancel()          // the pending run()/stream() rejects with the abort, and is not retried
 const logs = await run.logs() // [{ timestamp, level, message }]
 
 // Box-level history
@@ -398,7 +400,21 @@ await box.git.push({ branch: "feature/fix" })
 
 await box.git.checkout({ branch: "release/v2" })
 const pr = await box.git.createPR({ title: "Fix bug", body: "...", base: "main" })
-// pr: { url, number, title, base }
+// pr: { url, number, title, base, warning? }
+const issue = await box.git.createIssue({ title: "Flaky test in CI", body: "..." })
+// issue: { url, number, title, warning? }
+
+// Attach images or videos to a PR or issue. Paths are relative to the box's
+// working directory; alt text for an image is written as `shot.png#alt text`
+// (a video takes none). Reference an attachment from the body as
+// ![alt](./shot.png) and GitHub rewrites it to the uploaded asset.
+await box.git.createPR({
+  title: "Fix the tower layout",
+  body: "![before](./before.png)\n![after](./after.png)",
+  attach: ["before.png#before", "after.png#after"],
+})
+// `warning` is set when `gh` exited non-zero but still returned a URL: the item
+// exists while an attachment failed to upload, or the PR was already open.
 
 // Update the box-wide git identity
 const cfg = await box.git.updateConfig({ userName: "Bot", userEmail: "bot@example.com" })
@@ -730,6 +746,8 @@ ssh <box-id>@us-east-1.box.upstash.com
 - `EphemeralBox` does NOT support `agent`, `git`, `skills`, `browser`, or public URLs — use full `Box` for those (it does support `schedule` and snapshots)
 - `run.exitCode` is `null` for agent runs, only available for exec commands
 - `run.result` is stdout on success and stderr on failure — a command that exits 0 writing only to stderr yields `""`; read `run.stderr` for it
+- `maxRetries` covers transient failures only — a run aborted by `run.cancel()` or by its own `timeout` fails immediately instead of starting a second, still-billing run. A timeout raises `BoxError("Run timed out")` / `"Stream timed out"` carrying the abort as `cause`
+- `Box.delete({ boxIds: [] })` and `Box.deleteSnapshots({ snapshotIds: [] })` throw — an empty list is never read as "delete everything". Call `Box.deleteSnapshots()` with no ids for that
 - `files.download({ folder })` takes a path *inside the box*; output lands in `./<basename>` locally
 - `files.read()` slices only when `length` is present — `{ offset }` alone reads the whole file, and `{ length: 0 }` reads nothing
 - `files.stat()` is an lstat by default: a symlink reports `type: "symlink"` unless you pass `{ follow: true }`
