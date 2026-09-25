@@ -129,7 +129,7 @@ followed.
 **Running an agent or CLI in the box.** A CLI agent started by hand needs its
 own model key; the box's managed key only reaches prompts the Box runner
 starts. Get a key into the box without pasting it in chat: serve a one-shot
-form from the box (`scripts/secret-form.py`), expose it with `box_preview`,
+form from the box (a small HTTP server that accepts one POST), expose it with `box_preview`,
 send the user the link, and it appends the value to a file and exits. A login
 that waits on a localhost OAuth callback cannot be tunneled (Box SSH refuses
 `-L`). If the CLI lets you set the redirect URI (OpenCode: `oauth.redirect_uri`
@@ -143,29 +143,6 @@ stops waiting. The consent screen picks the account, so the resources the
 recording relies on must exist in that account. For unattended agent runs,
 workspace instructions that rule out clarifying questions keep a take from
 stalling.
-
-**Bundled scripts** (`scripts/`; generic building blocks, nothing in them
-knows what is being recorded). The box needs `ffmpeg tmux fonts-jetbrains-mono
-python3-pil` from apt, `ttyd`, `npm i @upstash/box playwright-core tsx`, and a
-Box API key in `.env`:
-
-- `lib/recorder.mts` — `connect()` gives a Playwright page on the box browser;
-  `record(box, take, body)` starts a recording, waits a pre-roll, runs your
-  steps, stops, downloads `full/<name>.mp4` and writes `full/<name>.json` with
-  every `take.log()` event in wall-clock ms; `findInTerminal(page, re)` gives
-  the pixel position of a line on a ttyd page.
-- `render.py <spec.json>` — one ffmpeg run from a cut spec: segments with a
-  speed factor (badge drawn for you), captions, a cursor with eased moves and
-  clicks, a URL pill. The docstring shows the spec.
-- `tty-session.sh '<command>'` — the command in a fixed-size tmux session
-  served by ttyd, status bar off.
-- `sprites.py` (cursor, press, ripple PNGs), `sheet.py` (contact sheet),
-  `secret-form.py` (one-shot form that appends a secret to `.env`).
-
-A take script composes them: connect, `record` around your input steps, build
-a spec from the logged events plus the program's own timeline, `render.py`.
-The `opencode` skill in upstash/dev-skills has a complete example for an
-agent TUI.
 
 **Limits.** A recording lasts at most 600 s and stops by itself after 3
 minutes without a pixel change. A box holds one active recording; a leftover

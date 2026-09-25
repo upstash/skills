@@ -3,7 +3,7 @@
   "name": "upstash",
   "displayName": "Upstash Redis",
   "description": "The Upstash MCP server plus agent skills for every Upstash SDK and CLI — Redis, QStash, Workflow, Box, Blob, Ratelimit, Vector, and Search.",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "skills": "./skills/",
   "mcpServers": {
     "upstash": {
@@ -18,6 +18,8 @@
   },
   "homepage": "https://upstash.com",
   "repository": "https://github.com/upstash/skills",
+  "icon": "./assets/upstash-icon.svg",
+  "privacyPolicyUrl": "https://upstash.com/trust/privacy.pdf",
   "license": "MIT",
   "keywords": ["upstash", "mcp", "redis", "cache", "qstash", "queue", "vector", "search", "workflow", "ratelimit", "box", "sandbox", "blob", "storage", "serverless"]
 }

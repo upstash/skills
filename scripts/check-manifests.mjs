@@ -202,6 +202,19 @@ if (typeof cursor.logo !== "string" || !cursor.logo) {
   fail(`.cursor-plugin/plugin.json logo references a missing file: ${cursor.logo}`);
 }
 
+// The Claude plugin directory flags a plugin with no icon, and one that ships a
+// remote MCP server with no privacy policy link.
+if (typeof claude.icon !== "string" || !claude.icon.startsWith("./")) {
+  fail('.claude-plugin/plugin.json icon is required and must start with "./".');
+} else if (!/\.(svg|png)$/.test(claude.icon)) {
+  fail(".claude-plugin/plugin.json icon must be an SVG or a 512x512 PNG.");
+} else if (!existsSync(resolve(ROOT, claude.icon))) {
+  fail(`.claude-plugin/plugin.json icon references a missing file: ${claude.icon}`);
+}
+if (typeof claude.privacyPolicyUrl !== "string" || !claude.privacyPolicyUrl.startsWith("https://")) {
+  fail(".claude-plugin/plugin.json privacyPolicyUrl is required because the plugin ships a remote MCP server.");
+}
+
 // Skills are the payload — every client that can be pointed at them should be.
 for (const [name, manifest] of [[".claude-plugin/plugin.json", claude], [".codex-plugin/plugin.json", codex], [".cursor-plugin/plugin.json", cursor]]) {
   if (manifest.skills !== "./skills/") fail(`${name} skills must be "./skills/".`);
