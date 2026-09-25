@@ -130,6 +130,6 @@ found.
 Branding assets live in `assets/`. Codex and Cursor render the PNG. The Claude
 plugin directory reads `icon` (an SVG or 512×512 PNG inside the plugin) and
 `privacyPolicyUrl` from `.claude-plugin/plugin.json`, and flags both when they
-are missing, so the Claude manifest points at `assets/upstash-icon.svg`, the
-same file upstash.com serves at `/logo/upstash-icon-white-bg.svg`. Gemini CLI
-and the Agent Plugins schema have no icon field.
+are missing, so the Claude manifest points at `assets/upstash-icon.svg`:
+`upstash-web`'s `public/logo/upstash-icon-white-bg.svg` with its viewBox
+widened for padding. Gemini CLI and the Agent Plugins schema have no icon field.
