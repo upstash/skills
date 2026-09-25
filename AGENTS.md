@@ -108,7 +108,7 @@ where a stray field is a hard validation failure rather than harmless noise.
 | Client | Schema | Strict? | Icon field | `$schema` key |
 |---|---|---|---|---|
 | Agent Plugins | `agent-plugins.org/schemas/1.0.0/` (serves JSON) | yes | none | yes, and it resolves |
-| Claude Code | `code.claude.com/schemas/` (serves the docs page, not JSON) | no | none | accepted by `claude plugin validate` |
+| Claude Code | `code.claude.com/schemas/` (serves the docs page, not JSON) | no | `icon` | accepted by `claude plugin validate` |
 | Cursor | `github.com/cursor/plugins/schemas/` | yes | `logo` | **no** — the key itself is rejected |
 | Codex | `plugin-json-spec.md` in `openai/codex`, no URL | — | `interface.logo`, `interface.composerIcon` | none published |
 | Gemini CLI | none published | — | none | none published |
@@ -127,6 +127,9 @@ Claude manifests, and Cursor's schemas can be diffed against ours from a clone
 of `github.com/cursor/plugins`. `scripts/check-manifests.mjs` encodes what both
 found.
 
-Branding assets live in `assets/`. Codex and Cursor both render them; Claude
-Code, Gemini CLI and the Agent Plugins schema have no icon field, so the icon
-cannot be wired up for those clients.
+Branding assets live in `assets/`. Codex and Cursor render the PNG. The Claude
+plugin directory reads `icon` (an SVG or 512×512 PNG inside the plugin) and
+`privacyPolicyUrl` from `.claude-plugin/plugin.json`, and flags both when they
+are missing, so the Claude manifest points at `assets/upstash-icon.svg`, the
+same file upstash.com serves at `/logo/upstash-icon-white-bg.svg`. Gemini CLI
+and the Agent Plugins schema have no icon field.
