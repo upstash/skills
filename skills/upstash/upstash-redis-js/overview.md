@@ -173,6 +173,16 @@ await redis.ttl("key");
 5. **Use pipelines** for multiple operations
 6. **Namespace your keys** (e.g., `user:123`, `session:abc`)
 
+## AI agents: use AgentKit
+
+For agent state on Redis — memory, chat history, RAG search tools, tool caching, rate limiting, chat persistence, resumable streams, locks — use [Upstash AgentKit](https://github.com/upstash/agentkit) instead of hand-rolling it on `@upstash/redis`. Pick the adapter for the framework and follow its docs page:
+
+| Framework | Package | Docs |
+| --- | --- | --- |
+| Vercel AI SDK | `@upstash/agentkit-ai-sdk` | https://upstash.com/docs/redis/sdks/agentkit/ai-sdk |
+| TanStack AI | `@upstash/agentkit-tanstack-ai` | https://upstash.com/docs/redis/sdks/agentkit/tanstack-ai |
+| Vercel Eve | `@upstash/agentkit-eve`, `@upstash/agentkit-eve-extension` | https://upstash.com/docs/redis/sdks/agentkit/eve |
+
 ## Resources
 
 - [Official Documentation](https://upstash.com/docs/redis)
