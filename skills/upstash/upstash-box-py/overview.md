@@ -33,7 +33,7 @@ box = Box.create(
     size="small",  # "small" (2 CPU/4GB) | "medium" (4/8) | "large" (8/16)
     labels=["beta", "x-team"],  # max 5, <=20 chars each
     keep_alive=True,  # don't idle-pause the box
-    init_command="npm install && npm run dev",  # keep-alive boxes only
+    init_command="npm install && npm run dev",  # runs on create and on every resume
     browser=True,  # provision headless Chromium for box.browser
     agent={
         "harness": Agent.CLAUDE_CODE,  # Agent.CODEX | Agent.OPEN_CODE | Agent.CURSOR | Agent.CUSTOM
@@ -69,7 +69,8 @@ status = box.get_status()["status"]
 
 box.id, box.size, box.keep_alive, box.cwd, box.network_policy
 
-# Init command (keep-alive boxes only — raises otherwise)
+# Init command — any box. On a paused box the change is stored and applied on
+# the next resume. A box restored from a snapshot does not inherit it.
 box.set_init_command("npm run dev")
 script = box.get_init_command()
 box.delete_init_command()
@@ -207,14 +208,17 @@ Unlike the JS generic `AgentOptions<TProvider>`, Python does not narrow
 from upstash_box import ClaudeCode, OpenAICodex, OpenCodeModel, CursorModel, OpenRouterModel, VercelModel
 
 ClaudeCode.FABLE_5_1  # "anthropic/claude-fable-5-1"
+ClaudeCode.OPUS_5_5  # "anthropic/claude-opus-5-5"
 ClaudeCode.OPUS_5  # "anthropic/claude-opus-5"
 ClaudeCode.SONNET_5  # "anthropic/claude-sonnet-5"
 OpenAICodex.GPT_6_ASTRA  # "openai/gpt-6-astra"
+OpenAICodex.GPT_6_SOL  # "openai/gpt-6-sol" (also GPT_6_LUNA)
 OpenAICodex.GPT_5_6  # "openai/gpt-5.6"
-OpenCodeModel.CLAUDE_OPUS_5  # "opencode/claude-opus-5"
+OpenCodeModel.CLAUDE_OPUS_5_5  # "opencode/claude-opus-5-5"
 CursorModel.COMPOSER_2_5  # "cursor/composer-2.5"
-OpenRouterModel.CLAUDE_OPUS_5  # "openrouter/anthropic/claude-opus-5"
+OpenRouterModel.CLAUDE_OPUS_5_5  # "openrouter/anthropic/claude-opus-5.5" (dotted on OpenRouter/Vercel)
 VercelModel.GPT_5_5  # "vercel/openai/gpt-5.5"
+VercelModel.GROK_4_7  # "vercel/spacexai/grok-4.7" (xAI ids live under spacexai/)
 
 # Read / change the box's harness + model at runtime
 box.model_config  # {"harness": ..., "model": ...}
@@ -675,7 +679,9 @@ ebox2 = EphemeralBox.from_snapshot(snap.id, ttl=7200)
 
 ## Public URLs
 
-Expose box ports as public URLs with optional auth.
+Expose box ports as public URLs with optional auth. A request to the URL resumes a
+paused box and is held (up to 30s) until the port is listening — set an
+`init_command` so the app restarts on resume.
 
 ```python
 public_url = box.get_public_url(3000)
@@ -688,6 +694,9 @@ basic = box.get_public_url(3000, basic_auth=True)
 # basic: PublicURL(url, port, username, password)
 
 result = box.list_public_urls()  # {"public_urls": [PublicURL, ...]}
+# List entries carry no token/username/password (only returned at creation); the
+# extra id, created_at, basic_auth, bearer_token fields arrive untyped (JS types
+# them as PublicURLListItem).
 box.delete_public_url(3000)
 ```
 
@@ -817,7 +826,7 @@ asyncio.run(main())
 - `box.browser` requires a box created with `browser=True`.
 - There is **no** `tab.run()` — the autonomous browser agent was removed. Loop `observe` + `act(action)` + `extract` yourself, hand the goal to the in-box agent, or drive Playwright over `cdp_url()`.
 - `tab.act(action)` (replaying an `observe()` result) costs no tokens and needs no model provider key; only `act(instruction)` with a string is metered.
-- `get_init_command` / `set_init_command` / `delete_init_command` raise unless the box was created with `keep_alive=True`.
+- Init commands work on any box (no `keep_alive` needed), but `Box.from_snapshot()` does not inherit one — pass `init_command` again.
 - The JS static `Box.delete({boxIds})` is `Box.delete_boxes(box_ids=...)` here, to avoid clashing with the instance `delete()`.
 - `Box.delete_boxes(box_ids=[])` and `Box.delete_snapshots(snapshot_ids=[])` raise `BoxError` — an empty list is never read as "delete everything". Call `Box.delete_snapshots()` with no ids for that.
 - `box.delete()` is irreversible — snapshot first if you need the state.

@@ -39,7 +39,7 @@ const box = await Box.create({
   size: "small",   // "small" (2 CPU/4GB) | "medium" (4/8) | "large" (8/16)
   labels: ["beta", "x-team"], // max 5, ≤20 chars each
   keepAlive: true,            // don't idle-pause the box
-  initCommand: "npm install && npm run dev", // keep-alive boxes only
+  initCommand: "npm install && npm run dev", // runs on create and on every resume
   browser: true,              // provision headless Chromium for box.browser
   agent: {
     harness: Agent.ClaudeCode, // Agent.Codex | Agent.OpenCode | Agent.Cursor | Agent.Custom
@@ -75,7 +75,8 @@ const { status } = await box.getStatus()
 
 box.id; box.size; box.keepAlive; box.cwd; box.networkPolicy
 
-// Init command (keep-alive boxes only — throws otherwise)
+// Init command — any box. On a paused box the change is stored and applied on
+// the next resume. A box restored from a snapshot does not inherit it.
 await box.setInitCommand("npm run dev")
 const script = await box.getInitCommand()
 await box.deleteInitCommand()
@@ -206,14 +207,17 @@ enums: `ClaudeCode`, `OpenAICodex`, `OpenCodeModel`, `CursorModel`,
 import { ClaudeCode, OpenAICodex, OpenCodeModel, CursorModel, OpenRouterModel, VercelModel } from "@upstash/box"
 
 ClaudeCode.Fable_5_1     // "anthropic/claude-fable-5-1"
+ClaudeCode.Opus_5_5      // "anthropic/claude-opus-5-5"
 ClaudeCode.Opus_5        // "anthropic/claude-opus-5"
 ClaudeCode.Sonnet_5      // "anthropic/claude-sonnet-5"
 OpenAICodex.GPT_6_Astra  // "openai/gpt-6-astra"
+OpenAICodex.GPT_6_Sol    // "openai/gpt-6-sol" (also GPT_6_Luna)
 OpenAICodex.GPT_5_6      // "openai/gpt-5.6"
-OpenCodeModel.Claude_Opus_5   // "opencode/claude-opus-5"
+OpenCodeModel.Claude_Opus_5_5 // "opencode/claude-opus-5-5"
 CursorModel.Composer_2_5 // "cursor/composer-2.5"
-OpenRouterModel.Claude_Opus_5 // "openrouter/anthropic/claude-opus-5"
+OpenRouterModel.Claude_Opus_5_5 // "openrouter/anthropic/claude-opus-5.5" (dotted on OpenRouter/Vercel)
 VercelModel.GPT_5_5      // "vercel/openai/gpt-5.5"
+VercelModel.Grok_4_7     // "vercel/spacexai/grok-4.7" (xAI ids live under spacexai/)
 
 // Read / change the box's harness + model at runtime
 const { harness, model } = box.modelConfig
@@ -647,7 +651,9 @@ const ebox2 = await EphemeralBox.fromSnapshot(snap.id, { ttl: 7200 })
 
 ## Public URLs
 
-Expose box ports as public URLs with optional auth.
+Expose box ports as public URLs with optional auth. A request to the URL resumes a
+paused box and is held (up to 30s) until the port is listening — set an
+`initCommand` so the app restarts on resume.
 
 ```ts
 const publicURL = await box.getPublicURL(3000)
@@ -660,6 +666,8 @@ const basic = await box.getPublicURL(3000, { basicAuth: true })
 // basic: { url, port, username, password }
 
 const { publicURLs } = await box.listPublicURLs()
+// PublicURLListItem[]: { id, port, url, created_at, basic_auth, bearer_token }
+// token/username/password are only returned once, by getPublicURL
 await box.deletePublicURL(3000)
 ```
 
@@ -766,7 +774,7 @@ ssh <box-id>@us-east-1.box.upstash.com
 - `box.browser` requires a box created with `browser: true`
 - There is **no** `tab.run()` — the autonomous browser agent was removed in 0.7.0. Loop `observe` + `act(action)` + `extract` yourself, hand the goal to the in-box agent, or drive Playwright over `cdpUrl()`
 - `tab.act(action)` (replaying an `observe()` result) costs no tokens and needs no model provider key; only `act(instruction)` with a string is metered
-- `getInitCommand` / `setInitCommand` / `deleteInitCommand` throw unless the box was created with `keepAlive: true`
+- Init commands work on any box (no `keepAlive` needed), but `Box.fromSnapshot()` does not inherit one — pass `initCommand` again
 - `box.delete()` is irreversible — snapshot first if you need the state
 - Git operations require `git.token` in `BoxConfig` for private repos and PRs
 - `Box.fromSnapshot()` creates a new box — it does not modify the original, and it does not forward `browser`, `skills`, or `mcpServers` from the config you pass
