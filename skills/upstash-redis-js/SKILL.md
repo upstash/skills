@@ -1,6 +1,6 @@
 ---
 name: upstash-redis-js
-description: Work with the @upstash/redis TypeScript/JavaScript SDK, a serverless HTTP-based Redis client for Next.js, Vercel, Cloudflare Workers, edge runtimes, and Node.js. Use when adding a cache (cache-aside, write-through, TTL and expiration strategies), session storage and user sessions, a key-value store, leaderboards and rankings with sorted sets, counters, distributed locks, queues with lists, streams and consumer groups, sparse index-addressed arrays and ring buffers (ARSET, ARINSERT, ARRING, ARGREP, AROP), embeddings and nearest-neighbour vector search stored inside Redis (VECTOR commands via redis.vector, separate from @upstash/vector), JSON documents, pipelines and MULTI/EXEC transactions, Lua scripting, read replicas, or full-text search, typo-tolerant search, facets, aggregations, and search over Redis stream entries with Upstash Redis Search (different from regular FT.SEARCH; also available for TCP clients via @upstash/search-redis and @upstash/search-ioredis). Also use when migrating from ioredis or node-redis, when a Redis connection is needed from a serverless function without connection pooling, when integrating @upstash/ratelimit, or when the user says Redis cache, KV store, session store, serverless Redis, or Upstash Redis. Supports automatic serialization/deserialization of JavaScript types.
+description: Work with the @upstash/redis TypeScript/JavaScript SDK, a serverless HTTP-based Redis client for Next.js, Vercel, Cloudflare Workers, edge runtimes, and Node.js. Use when adding a cache (cache-aside, write-through, TTL and expiration strategies), session storage and user sessions, a key-value store, leaderboards and rankings with sorted sets, counters, distributed locks, queues with lists, streams and consumer groups, sparse index-addressed arrays and ring buffers (ARSET, ARINSERT, ARRING, ARGREP, AROP), embeddings and nearest-neighbour vector search stored inside Redis (VECTOR commands via redis.vector, separate from @upstash/vector), JSON documents, pipelines and MULTI/EXEC transactions, Lua scripting, read replicas, or full-text search, typo-tolerant search, facets, aggregations, and search over Redis stream entries with Upstash Redis Search (different from regular FT.SEARCH; also available for TCP clients via @upstash/search-redis and @upstash/search-ioredis). Also use when migrating from ioredis or node-redis, when a Redis connection is needed from a serverless function without connection pooling, when integrating @upstash/ratelimit, or when the user says Redis cache, KV store, session store, serverless Redis, or Upstash Redis. Also use when building AI agents on Redis with Upstash AgentKit (agent memory, chat history, RAG tools, tool caching, chat persistence, resumable streams, distributed locks) for the Vercel AI SDK, TanStack AI, or Vercel Eve. Supports automatic serialization/deserialization of JavaScript types.
 license: MIT
 metadata:
   author: Upstash
@@ -181,6 +181,16 @@ await redis.ttl("key");
 4. **Set appropriate TTLs** to manage memory
 5. **Use pipelines** for multiple operations
 6. **Namespace your keys** (e.g., `user:123`, `session:abc`)
+
+## AI agents: use AgentKit
+
+For agent state on Redis — memory, chat history, RAG search tools, tool caching, rate limiting, chat persistence, resumable streams, locks — use [Upstash AgentKit](https://github.com/upstash/agentkit) instead of hand-rolling it on `@upstash/redis`. Pick the adapter for the framework and follow its docs page:
+
+| Framework | Package | Docs |
+| --- | --- | --- |
+| Vercel AI SDK | `@upstash/agentkit-ai-sdk` | https://upstash.com/docs/redis/sdks/agentkit/ai-sdk |
+| TanStack AI | `@upstash/agentkit-tanstack-ai` | https://upstash.com/docs/redis/sdks/agentkit/tanstack-ai |
+| Vercel Eve | `@upstash/agentkit-eve`, `@upstash/agentkit-eve-extension` | https://upstash.com/docs/redis/sdks/agentkit/eve |
 
 ## Resources
 
