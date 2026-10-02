@@ -5,6 +5,10 @@ Sandboxed cloud containers with built-in AI agents, shell, filesystem, git, cron
 The Python SDK (`upstash-box`) mirrors this API with snake_case names — see the
 `upstash-box-py` skill for the Python spelling of everything below.
 
+## Bundled docs and source
+
+Before writing or debugging SDK code, check `node_modules/@upstash/box/docs/` for bundled docs and `node_modules/@upstash/box/src/` for readable TypeScript source. Read and search the relevant files when present; otherwise use the references in this skill.
+
 ## Install & Setup
 
 ```bash

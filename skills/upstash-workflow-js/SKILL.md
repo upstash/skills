@@ -9,6 +9,10 @@ metadata:
 
 # Upstash Workflow SDK
 
+## Bundled docs and source
+
+Before writing or debugging SDK code, check `node_modules/@upstash/workflow/docs/` for bundled docs and `node_modules/@upstash/workflow/src/` for readable TypeScript source. Read and search the relevant files when present; otherwise use the references in this skill.
+
 ## Quick Start
 
 The Upstash Workflow SDK lets you expose serverless workflow endpoints and run them reliably using QStash under the hood.
