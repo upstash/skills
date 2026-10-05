@@ -45,6 +45,14 @@ Installing through a **plugin** (Claude Code, Codex, Cursor, Gemini CLI) sets up
 
 For the full, up-to-date per-client instructions, see [Install by agent](https://upstash.com/docs/agent-resources/clients).
 
+### One command (Claude Code, Codex, Cursor, Gemini CLI, VS Code, Copilot CLI, OpenCode)
+
+```bash
+npx upstash setup
+```
+
+The [Upstash CLI](https://github.com/upstash/cli) detects your agents and installs the plugin where the agent supports one, otherwise the remote MCP server plus the `upstash` skill. The per-agent steps below do the same by hand.
+
 ### Claude Code (skills + MCP)
 
 ```bash

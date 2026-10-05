@@ -23,8 +23,10 @@ The Upstash CLI (`upstash`) manages Upstash services via the Upstash Developer A
 ## Install
 
 ```bash
-npm i -g @upstash/cli
+npm i -g upstash
 ```
+
+Or run a single command without installing: `npx upstash <command>`.
 
 ## Authentication
 
