@@ -14,8 +14,25 @@ The Upstash CLI (`upstash`) manages Upstash services via the Upstash Developer A
 ## Install
 
 ```bash
-npm i -g @upstash/cli
+npm i -g upstash
 ```
+
+Or run a single command without installing: `npx upstash <command>`.
+
+## Connect coding agents to Upstash
+
+`upstash setup` connects coding agents to Upstash in one step. Claude Code, Codex, Cursor, and Gemini CLI get the Upstash plugin (the Upstash skills plus the remote MCP server). VS Code, GitHub Copilot CLI, and OpenCode get the remote MCP server (`https://mcp.upstash.com/mcp`) in their config plus the `upstash` skill. The MCP server signs in with OAuth on first use, so setup never writes an API key into an agent's config.
+
+A person at a terminal can run `npx upstash`: with no arguments in a terminal it starts `upstash setup` and asks which agents to set up. Outside a terminal a bare `upstash` only prints the help, so from an agent or a script call `upstash setup` with `--yes` and the agent flags:
+
+```bash
+npx -y upstash setup --yes --claude             # or --codex, --cursor, --gemini, --vscode, --copilot, --opencode
+npx -y upstash setup --yes --cursor --mode mcp  # remote MCP server + skill instead of the plugin
+npx -y upstash setup --yes --claude --project   # this project instead of the user config
+npx -y upstash setup --yes --dry-run            # show what would change; without agent flags, --yes covers every detected agent
+```
+
+With `--project`, Claude Code installs the plugin at project scope; Codex, Cursor, and Gemini CLI plugins install per user only, so they get project-level MCP config plus the skill instead. Rerunning `setup` updates what it installed. Afterwards the agent needs a restart or reload (in Claude Code, `/reload-plugins`; in Cursor, Developer: Reload Window).
 
 ## Authentication
 

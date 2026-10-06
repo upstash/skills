@@ -41,9 +41,24 @@ Connect your AI coding agent to Upstash. This repo ships **skills** (per-SDK ins
 
 ## Install
 
-Installing through a **plugin** (Claude Code, Codex, Cursor, Gemini CLI) sets up both the skills and the remote MCP server — approve the MCP's OAuth consent on first use. The skills-only installers (Agent Skills CLI, OpenCode, Zed) install skills; add the [MCP server](#mcp-server) separately if you want live account access.
+Installing through a **plugin** (Claude Code, Codex, Cursor, Gemini CLI) sets up both the skills and the remote MCP server — approve the MCP's OAuth consent on first use. The skills-only installers (Agent Skills CLI, OpenCode, Zed) install skills; add the [MCP server](#mcp-server) separately if you want live account access, or use [`npx upstash`](#one-command-claude-code-codex-cursor-gemini-cli-vs-code-copilot-cli-opencode), which sets up both.
 
 For the full, up-to-date per-client instructions, see [Install by agent](https://upstash.com/docs/agent-resources/clients).
+
+### One command (Claude Code, Codex, Cursor, Gemini CLI, VS Code, Copilot CLI, OpenCode)
+
+```bash
+npx upstash
+```
+
+Run in a terminal, the [Upstash CLI](https://github.com/upstash/cli) detects your agents and installs the plugin where the agent supports one (Claude Code, Codex, Cursor, Gemini CLI), otherwise the remote MCP server plus the `upstash` skill (VS Code, Copilot CLI, OpenCode). Either way the agent gets both the skills and the MCP server, which signs in with OAuth on first use. The per-agent steps below do the same by hand.
+
+From an agent or a script, name the agent and skip the prompts:
+
+```bash
+npx -y upstash setup --yes --claude        # or --codex, --cursor, --gemini, --vscode, --copilot, --opencode
+npx -y upstash setup --yes --mode mcp      # MCP server + skill everywhere, no plugins
+```
 
 ### Claude Code (skills + MCP)
 
@@ -70,6 +85,7 @@ codex plugin add upstash@upstash
 We are waiting for this plugin to be accepted to the official
 [Cursor Marketplace](https://cursor.com/marketplace). Once listed, it can be installed
 from **Customize** in the Cursor sidebar, and it brings both the skills and the MCP server.
+Until then, `npx upstash setup --cursor` installs the same plugin locally (reload the Cursor window afterwards).
 
 ### Gemini CLI (skills + MCP)
 
@@ -95,7 +111,8 @@ npx skills add upstash/skills --agent opencode
 
 OpenCode exposes the installed skills to the agent through its native `skill` tool, so the
 agent loads only the sub-skill relevant to the task at hand. For live access to your account
-(create databases, inspect QStash logs, and so on), add the [MCP server](#mcp-server) as well.
+(create databases, inspect QStash logs, and so on), add the [MCP server](#mcp-server) as well, or run
+`npx upstash setup --opencode`, which installs the skill and adds the MCP server in one step.
 
 ### Zed
 
