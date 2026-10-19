@@ -132,12 +132,6 @@ The skills then show up in Zed's Agent Panel, and the agent can load them on its
 servers, but has no channel for skills, so the CLI is the only way to install them. The Zed
 extension in `zed-extension/` covers the [MCP server](#mcp-server) instead.
 
-### Context7 CLI
-
-```bash
-npx ctx7 skills install upstash/skills
-```
-
 ### Agent Skills CLI
 
 ```bash
