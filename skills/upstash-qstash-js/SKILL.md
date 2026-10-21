@@ -11,6 +11,10 @@ metadata:
 
 QStash is an HTTP-based messaging and scheduling solution for serverless and edge runtimes. This skill helps you use the QStash JS SDK effectively.
 
+## Bundled docs and source
+
+Before writing or debugging SDK code, check `node_modules/@upstash/qstash/docs/` for bundled docs and `node_modules/@upstash/qstash/src/` for readable TypeScript source. Read and search the relevant files when present; otherwise use the references in this skill.
+
 ## When to use this skill
 
 Use this skill when:
