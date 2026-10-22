@@ -27,7 +27,7 @@ import { Box, Agent, ClaudeCode, BoxApiKey } from "@upstash/box"
 const box = await Box.create({
   name: "my-box",
   runtime: "node", // "node" | "python" | "golang" | "ruby" | "rust" (+ "-alpine" variants)
-  size: "small",   // "small" (2 CPU/4GB) | "medium" (4/8) | "large" (8/16)
+  size: "small",   // "small" (2 CPU/4GB RAM/10GB disk) | "medium" (4/8/20) | "large" (8/16/30)
   labels: ["beta", "x-team"], // max 5, ≤20 chars each
   keepAlive: true,            // don't idle-pause the box
   initCommand: "npm install && npm run dev", // keep-alive boxes only
