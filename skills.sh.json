@@ -16,7 +16,7 @@
       "description": "Serverless Redis for caching, session storage, leaderboards, and rate limiting from edge and serverless functions.",
       "skills": [
         "upstash-redis-js",
-        "upstash-redis-best-practices",
+        "redis-best-practices",
         "upstash-ratelimit-js"
       ]
     },

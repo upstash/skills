@@ -76,7 +76,7 @@ Common use cases and architectural patterns:
 
 ### Performance (performance/)
 
-Optimization techniques and best practices. For rules on batching, big keys, TTLs, scripts and connections at scale, see the `upstash-redis-best-practices` skill.
+Optimization techniques and best practices. For rules on batching, big keys, TTLs, scripts and connections at scale, see the `redis-best-practices` skill.
 
 - **batching-operations.md** - MGET, MSET, batch operations
 - **pipeline-optimization.md** - When to use pipelines, performance tips
