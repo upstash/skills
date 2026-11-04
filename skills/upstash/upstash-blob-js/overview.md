@@ -47,15 +47,15 @@ Bodies: `Request`, `Blob`/`File`, `ArrayBuffer`, typed array, `string`, `Readabl
 | `ifUnchanged` | none | An etag; fails with `conflict` if it changed |
 | `multipart` | `'16mb'` | Threshold for going up in parts; `true`/`false` force it |
 
-Sizes are **decimal**: `'20mb'` is 20,000,000 bytes. `'5mib'` throws.
+Sizes are always bytes. `MB` is decimal (`'20mb'` is 20,000,000 bytes); `MiB` is binary (`'32MiB'` is 33,554,432 bytes). Units ignore case.
 
 ```ts
 import { uniquePath } from "@upstash/blob"
 
-uniquePath`${user.id}/${file.name}`   // 'u7/holiday-pic-3xK9mBqR.png'
+uniquePath(`${user.id}/${file.name}`)   // 'u7/Holiday Pic-3xK9mBqR.png'
 ```
 
-Use `uniquePath` for any value you don't control. Each `${}` becomes one slugged filename that can never add a directory, and the finished path gets a random suffix — so two uploads of `photo.png` never collide. The literal parts of the template are passed through as written, so keep `.` and `..` out of them yourself: a path with those segments is refused later, by the call that uses it, with a `TypeError` rather than a `BlobError`.
+`uniquePath` adds a random suffix to the final filename, so two uploads of `photo.png` never collide. Everything else stays as given: case, spaces, Unicode, and slashes, so a prefix goes in as is. A path with `.` or `..` segments is refused by the call that uses it.
 
 `bucket.copy(from, to, { contentType, cache, metadata })` and `bucket.move(from, to, options)` preserve source properties you omit. `bucket.updateJson(path, fn, { maxAttempts: 6 })` retries a read-modify-write on conflict with backoff.
 
@@ -112,7 +112,7 @@ export const uploads = uploadHandler({
   onBeforeUpload: async ({ request, file }) => {
     const user = await getUser(request)
     if (!user) throw new BlobError("unauthorized")     // nothing is signed
-    return { path: uniquePath`${user.id}/${file.name}`, metadata: { owner: user.id } }
+    return { path: uniquePath(`${user.id}/${file.name}`), metadata: { owner: user.id } }
   },
 
   onUploadComplete: async ({ uploadId, path, url, metadata }) => {
@@ -197,7 +197,7 @@ if (BlobError.is(e) && e.code === "not_found") return null
 
 Use `BlobError.is()`, never `instanceof` — an ESM and a CJS copy are different classes. Codes: `not_found`, `already_exists`, `conflict`, `content_type_not_allowed`, `invalid_input`, `too_large`, `empty_body`, `length_required`, `signature_mismatch`, `unauthorized`, `forbidden`, `rate_limited`, `not_ready`, `partial_delete`, `move_left_a_copy`, `invalid_content_type_pattern`, `mint_backoff`, `request_failed`.
 
-A refusal keeps its code all the way to the browser, so hooks switch on `error.code` rather than status numbers. Bad option values (`'5mib'`, a missing token) throw a `TypeError` where they are written, not a `BlobError` per request.
+A refusal keeps its code all the way to the browser, so hooks switch on `error.code` rather than status numbers. Bad option values (`'5mbit'`, a missing token) throw a `TypeError` where they are written, not a `BlobError` per request.
 
 ## S3 clients
 
