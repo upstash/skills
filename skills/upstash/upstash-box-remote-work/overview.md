@@ -127,7 +127,7 @@ frame. Stay in one tab where you can: a newly opened tab is not reliably
 followed.
 
 **Running an agent or CLI in the box.** A CLI agent started by hand needs its
-own model key; the box's managed key only reaches prompts the Box runner
+own model key; the box's agent key only reaches prompts the Box runner
 starts. Get a key into the box without pasting it in chat: serve a one-shot
 form from the box (a small HTTP server that accepts one POST), expose it with `box_preview`,
 send the user the link, and it appends the value to a file and exits. A login

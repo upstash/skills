@@ -39,11 +39,11 @@ box = Box.create(
         "harness": Agent.CLAUDE_CODE,  # Agent.CODEX | Agent.OPEN_CODE | Agent.CURSOR | Agent.CUSTOM
         "model": ClaudeCode.SONNET_4_5,  # or a plain string "anthropic/claude-sonnet-4-5"
         # api_key options:
-        #   omit                    → server decides which key to use
-        #   BoxApiKey.UPSTASH_KEY   → use Upstash-provided LLM key
-        #   BoxApiKey.STORED_KEY    → use key previously stored via Upstash Console
-        #   "sk-..."                → direct API key string
-        "api_key": BoxApiKey.UPSTASH_KEY,
+        #   omit                   → key saved in the Upstash Console, if any
+        #   BoxApiKey.STORED_KEY   → same, but create fails if no key is saved
+        #   "sk-..."               → direct API key string
+        # Agent runs fail until the box or the account has a key.
+        "api_key": BoxApiKey.STORED_KEY,
     },
     git={  # all fields optional
         "token": os.environ["GITHUB_TOKEN"],  # or link your GitHub account via Upstash Console
