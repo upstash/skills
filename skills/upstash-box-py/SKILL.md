@@ -48,8 +48,9 @@ box = Box.create(
         "harness": Agent.CLAUDE_CODE,  # Agent.CODEX | Agent.OPEN_CODE | Agent.CURSOR | Agent.CUSTOM
         "model": ClaudeCode.SONNET_4_5,  # or a plain string "anthropic/claude-sonnet-4-5"
         # api_key options:
-        #   omit / BoxApiKey.STORED_KEY → use the key saved in the Upstash Console
-        #   "sk-..."                    → direct API key string
+        #   omit                   → key saved in the Upstash Console, if any
+        #   BoxApiKey.STORED_KEY   → same, but create fails if no key is saved
+        #   "sk-..."               → direct API key string
         # Agent runs fail until the box or the account has a key.
         "api_key": BoxApiKey.STORED_KEY,
     },
