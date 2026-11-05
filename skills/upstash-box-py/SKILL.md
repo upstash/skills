@@ -39,7 +39,7 @@ from upstash_box import Box, Agent, ClaudeCode, BoxApiKey
 box = Box.create(
     name="my-box",
     runtime="node",  # "node" | "python" | "golang" | "ruby" | "rust" (+ "-alpine" variants)
-    size="small",  # "small" (2 CPU/4GB) | "medium" (4/8) | "large" (8/16)
+    size="small",  # "small" (2 CPU/4GB RAM/10GB disk) | "medium" (4/8/20) | "large" (8/16/30)
     labels=["beta", "x-team"],  # max 5, <=20 chars each
     keep_alive=True,  # don't idle-pause the box
     init_command="npm install && npm run dev",  # keep-alive boxes only
