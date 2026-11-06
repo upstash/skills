@@ -17,6 +17,12 @@ https://console.upstash.com/box.
 export UPSTASH_BOX_API_KEY=box_...
 ```
 
+A read-only key (created with **Read Only** in the console) can list and inspect boxes,
+read logs and files, and run `box exec` as a restricted user that can't write to the
+workspace; the output then prints when the command finishes instead of streaming.
+Everything else fails with 403 "This API key is read-only", and anything that would wake
+a paused box fails with 409. Ask for a full-access key instead of retrying.
+
 ## Selecting a box
 
 Resolution order is `--box <id>`, then `$BOX_ID`, then the nearest `.box` file

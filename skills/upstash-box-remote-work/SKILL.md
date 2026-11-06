@@ -54,7 +54,7 @@ grant.
 | `box_browser` | goto, content, screenshot, tabs, tab_new, tab_close, live_view |
 | `box_snapshots` | create, list, list_all, delete, restore (a new box from a snapshot) |
 | `box_logs`, `box_runs` | what happened inside a box, and its run history |
-| `box_apikey` | list, create, delete Box API keys for a deployed app or CI (the key outlives the OAuth grant, so tell the user to revoke it when done) |
+| `box_apikey` | list, create, delete Box API keys for a deployed app or CI (the key outlives the OAuth grant, so tell the user to revoke it when done); `read_only: true` makes a key that can only read and run exec, for monitoring or debugging |
 | `blob_bucket` | list, create (create defaults to `visibility: public`) |
 | `blob_upload_url` | presigned PUT URLs for paths in a bucket, plus `public_url` on public buckets |
 
