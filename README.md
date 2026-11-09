@@ -24,6 +24,7 @@ Connect your AI coding agent to Upstash. This repo ships **skills** (per-SDK ins
 
 | Skill | Description |
 |-------|-------------|
+| [redis-best-practices](skills/redis-best-practices/) | Performance rules for any Redis, measured on real databases: batching, big keys, TTLs, scripts, connections. |
 | [upstash](skills/upstash/) | Combined skill covering all Upstash SDKs and CLIs. |
 | [upstash-blob-js](skills/upstash-blob-js/) | S3-compatible object storage with direct browser uploads and signed URLs. |
 | [upstash-box-cli](skills/upstash-box-cli/) | Drive a sandboxed cloud container from the terminal with the `box` CLI. |

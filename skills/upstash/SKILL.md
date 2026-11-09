@@ -17,6 +17,10 @@ logs and the DLQ, and remote work in a Box (shell, browser, git, preview URLs, P
 uploaded to Blob; see `upstash-box-remote-work`). The sub-skills below are for writing application code; reach for
 `upstash-cli` only when there is no MCP or the work is inherently shell work.
 
+## [redis-best-practices](redis-best-practices/overview.md)
+
+Redis best practices and performance rules for production, for any Redis deployment including open source Redis, Valkey, Redis Cloud, AWS ElastiCache, Google Memorystore, Azure Cache, and Upstash. Based on real support cases and measured on real databases. Use when writing, reviewing, or debugging Redis code for performance or scale, when choosing between pipeline and MGET, KEYS and SCAN, or WATCH and Lua, or when the user mentions Redis best practices, Redis performance, slow Redis, Redis latency, high memory use, a high Redis bill, big keys, hot keys, large hashes, HGETALL, cache hit rate, TTL jitter, key expiration, cache stampede, maxmemory and eviction policies, unbounded lists or streams, XACK and consumer groups, pub/sub vs streams, Lua script blocking, key-based locking for Lua scripts, connection pooling, serverless connections, retries and timeouts, replication lag, ACL users, credential rotation, or Redis monitoring. Also explains errors such as OOM command not allowed, BUSY Redis is busy running a script, NOSCRIPT, CROSSSLOT, and Upstash limit errors.
+
 ## [upstash-blob-js](upstash-blob-js/overview.md)
 
 Work with the @upstash/blob TypeScript/JavaScript SDK for S3-compatible object storage with direct browser uploads, presigned URLs, multipart, and signed reads. Use when storing files or blobs, uploading avatars, images, videos, attachments or user documents, letting a browser upload straight to storage without proxying bytes through a server, generating public or time-limited signed URLs, serving private files, streaming large files with pause and resume, setting cache headers on stored objects, or reaching an S3-compatible bucket from the AWS SDK.
