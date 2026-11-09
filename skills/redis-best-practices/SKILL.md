@@ -1,6 +1,6 @@
 ---
 name: redis-best-practices
-description: Redis best practices and performance rules for production, for any Redis deployment including open source Redis, Valkey, Redis Cloud, AWS ElastiCache, Google Memorystore, Azure Cache, and Upstash. Based on real support cases and measured on real databases. Use when writing, reviewing, or debugging Redis code for performance or scale, when choosing between pipeline and MGET, KEYS and SCAN, or WATCH and Lua, or when the user mentions Redis best practices, Redis performance, slow Redis, Redis latency, high memory use, a high Redis bill, big keys, hot keys, large hashes, HGETALL, cache hit rate, TTL jitter, key expiration, cache stampede, maxmemory and eviction policies, unbounded lists or streams, XACK and consumer groups, pub/sub vs streams, Lua script blocking, connection pooling, serverless connections, retries and timeouts, replication lag, ACL users, credential rotation, or Redis monitoring. Also explains errors such as OOM command not allowed, BUSY Redis is busy running a script, NOSCRIPT, CROSSSLOT, and Upstash limit errors.
+description: Redis best practices and performance rules for production, for any Redis deployment including open source Redis, Valkey, Redis Cloud, AWS ElastiCache, Google Memorystore, Azure Cache, and Upstash. Based on real support cases and measured on real databases. Use when writing, reviewing, or debugging Redis code for performance or scale, when choosing between pipeline and MGET, KEYS and SCAN, or WATCH and Lua, or when the user mentions Redis best practices, Redis performance, slow Redis, Redis latency, high memory use, a high Redis bill, big keys, hot keys, large hashes, HGETALL, cache hit rate, TTL jitter, key expiration, cache stampede, maxmemory and eviction policies, unbounded lists or streams, XACK and consumer groups, pub/sub vs streams, Lua script blocking, key-based locking for Lua scripts, connection pooling, serverless connections, retries and timeouts, replication lag, ACL users, credential rotation, or Redis monitoring. Also explains errors such as OOM command not allowed, BUSY Redis is busy running a script, NOSCRIPT, CROSSSLOT, and Upstash limit errors.
 license: MIT
 metadata:
   author: Upstash
@@ -12,7 +12,7 @@ metadata:
 Rules for code that talks to Redis, on any deployment. They come from real support cases and from tests on two engines:
 
 - **Stock Redis:** Redis 8 with default settings and the client on the same machine, so no network cost.
-- **Upstash Redis:** a Pay as You Go database with the client in the same region, about 1 ms away.
+- **Upstash Redis:** with the client in the same region, about 1 ms away.
 
 Engines differ. Stock Redis runs commands on one main thread, so one slow command stalls every client. Valkey, managed services and Upstash change some defaults and limits. Rules below apply everywhere unless they name an engine, and [On Upstash](#on-upstash) collects what differs there.
 
@@ -113,6 +113,7 @@ Use the built-in command first (`INCR`, `SET NX`), then a short Lua script, and 
 `WATCH` gets worse with distance, because an attempt takes three round trips. From 116 ms away, 200 updates with 25 clients took 55 s, against 1 s for Lua.
 
 - A script blocks other commands for its whole run. On stock Redis, a 1 second script stalled another client for 1,033 ms.
+- On Upstash, start scripts with `#!lua flags=allow-key-locking` so they [lock only their own keys](#on-upstash). Open source Redis and Valkey have no such flag and reject the script, so leave it off there.
 - `busy-reply-threshold` (5 s by default) doesn't stop a script. Past it, other clients get `BUSY` errors, 1,124 of them during one 8 second script. After a script writes, the only way to stop it is `SHUTDOWN NOSAVE`.
 - Scripts don't roll back. If one fails partway, its earlier writes stay. Check inputs first, write last, and make scripts safe to run twice.
 - Never loop over an unbounded collection, and never call `KEYS` or `SCAN` or read a whole collection in a script. Don't build big tables or strings in Lua. Page with arguments from the client, and serialize on the client.
@@ -163,6 +164,7 @@ Watch five numbers. Every incident behind these rules was visible in one of them
 | `BUSY Redis is busy running a script` | A script ran past `busy-reply-threshold` | `SCRIPT KILL` if it hasn't written, then shorten the script |
 | `NOSCRIPT No matching script` | The script isn't in the server's cache | Fall back to `EVAL` |
 | `CROSSSLOT Keys in request don't hash to the same slot` | A multi-key command spans cluster slots | Use hash tags, or split the call |
+| `ERR Unexpected flag in script shebang: allow-key-locking` | The flag only exists on Upstash, and this is open source Redis or Valkey | Remove the flag on this server |
 | `EXECABORT` | A queued command was invalid, so the transaction was discarded | Fix the command and retry |
 
 ## On Upstash
@@ -178,7 +180,7 @@ Upstash runs its own engine: disk-backed, with per-key locks. A slow command usu
 - **`XRANGE key - +`:** returns at most 1,000 entries with no error.
 - **Streams:** a consumer that never acknowledged stopped at 900 pending entries, with a limit of 1,000.
 - **Big keys:** a plain `HLEN` on a 1 million field hash took 566 ms once on Pay as You Go, and 9.4 s repeatedly on a free database with 64 MB of memory. Clients of that key wait, while unrelated keys stay at about 1 ms. One `HSCAN` page cost 276 ms at that size, so split instead of paging. `DEL` and `UNLINK` both returned in 0.9 ms.
-- **Scripts:** a global lock by default, so back-to-back scripts of 50 ms cut an unrelated client's throughput by 87%. Starting a script with `#!lua flags=allow-key-locking` locks only its declared keys, and the same client lost 13%. It made no difference on a free database. Inside `MULTI`, a script always takes the global lock.
+- **Scripts:** a script takes a global lock by default, so scripts can't scale: back-to-back scripts of 50 ms cut an unrelated client's throughput by 87%. Write every script for key-based locking whenever you can, by starting it with `#!lua flags=allow-key-locking` and passing every key through `KEYS`. It then locks only those keys, and the same client lost 13%. `@upstash/ratelimit` runs its scripts this way since 2.1. It made no difference on a free database. Inside `MULTI`, a script always takes the global lock.
 - **Script limit:** scripts were killed at about 250 ms, with or without the flag, and writes made before the kill stay. `createScript` in `@upstash/redis` handles the `EVALSHA` fallback.
 - **`WATCH`:** needs TCP, since the REST API doesn't support it.
 - **SDK:** `@upstash/redis` uses HTTP, so it needs no pool. Use 1.38.4 or later for `readYourWrites`.
