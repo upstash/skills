@@ -18,6 +18,12 @@ npm install zod   # peer dependency, only needed for responseSchema / browser sc
 
 Set `UPSTASH_BOX_API_KEY` env var or pass `apiKey` to constructors.
 
+A read-only key (created with **Read Only** in the console) can get and list boxes, read
+logs, files and git status, and run `box.exec.command()` as a restricted user that can't
+write to the workspace. Every write, `exec.stream()` and any call that would wake a paused
+box throw `BoxError` with `statusCode` 403 ("This API key is read-only") or 409 for a paused
+box; ask for a full-access key instead of retrying.
+
 Anonymous telemetry headers are sent by default. Opt out with the
 `UPSTASH_DISABLE_TELEMETRY` env var, or `enableTelemetry: false` in the config
 (the only option on runtimes without `process.env`, e.g. Cloudflare Workers).
