@@ -40,7 +40,7 @@ the MCP does not do.
 
 ## Skill descriptions are the search index
 
-skills.sh matches multi-word searches against each skill's `description` (single-word searches match the name). Keep descriptions long and intent-rich: what the SDK is, a "Use when…" list of concrete tasks, and the words users actually type (rate limiting, message queue, background jobs, vector database, session storage…). Never rename a skill to improve ranking — change the description instead. `description` must stay on one line and must not contain `: ` (the build script parses it with a regex, and YAML would otherwise need quoting).
+skills.sh matches multi-word searches against each skill's `description` (single-word searches match the name). Keep descriptions long and intent-rich: what the SDK is, a "Use when…" list of concrete tasks, and the words users actually type (rate limiting, message queue, background jobs, vector database, session storage…). Never rename a skill to improve ranking — change the description instead. `description` must stay on one line and must not contain `: ` and must be at most 1024 characters — Claude rejects longer ones (the build script enforces the limit, parses it with a regex, and YAML would otherwise need quoting).
 
 ## Gemini CLI extension
 
