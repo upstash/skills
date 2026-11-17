@@ -60,6 +60,19 @@ for (const folder of skillFolders) {
   entries.push({ folder, description });
 }
 
+// Claude rejects skills whose description is longer than 1024 characters.
+const MAX_DESCRIPTION = 1024;
+const headerDesc = readFileSync(join(import.meta.dirname, "header.md"), "utf-8").match(/^description:\s*(.+)$/m)?.[1].trim() ?? "";
+const tooLong = [...entries, { folder: "upstash", description: headerDesc }].filter(
+  ({ description }) => description.length > MAX_DESCRIPTION,
+);
+if (tooLong.length) {
+  console.error(`\n >> Error: skill descriptions must be at most ${MAX_DESCRIPTION} characters.\n`);
+  for (const { folder, description } of tooLong) console.error(`  ${folder}: ${description.length}`);
+  console.error();
+  process.exit(1);
+}
+
 // Step 5: Write the new SKILL.md using header template + generated entries
 const header = readFileSync(join(import.meta.dirname, "header.md"), "utf-8");
 const entryLines = entries
