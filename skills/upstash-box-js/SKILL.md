@@ -46,10 +46,10 @@ import { Box, Agent, ClaudeCode, BoxApiKey } from "@upstash/box"
 const box = await Box.create({
   name: "my-box",
   runtime: "node", // "node" | "python" | "golang" | "ruby" | "rust" (+ "-alpine" variants)
-  size: "small",   // "small" (2 CPU/4GB) | "medium" (4/8) | "large" (8/16)
+  size: "small",   // "small" (2 CPU/4GB/10GB disk) | "medium" (4/8/20) | "large" (8/16/30)
   labels: ["beta", "x-team"], // max 5, ≤20 chars each
   keepAlive: true,            // don't idle-pause the box
-  initCommand: "npm install && npm run dev", // keep-alive boxes only
+  initCommand: "npm install && npm run dev", // runs after create and on every resume
   browser: true,              // provision headless Chromium for box.browser
   agent: {
     harness: Agent.ClaudeCode, // Agent.Codex | Agent.OpenCode | Agent.Cursor | Agent.Custom
@@ -85,7 +85,7 @@ const { status } = await box.getStatus()
 
 box.id; box.size; box.keepAlive; box.cwd; box.networkPolicy
 
-// Init command (keep-alive boxes only — throws otherwise)
+// Init command: works on any box. On a paused box the change applies on the next resume.
 await box.setInitCommand("npm run dev")
 const script = await box.getInitCommand()
 await box.deleteInitCommand()
@@ -210,20 +210,24 @@ Codex keys are converted to the backend's snake_case for you — always write th
 
 `harness` is required (`provider` / `runner` are deprecated aliases). Model
 enums: `ClaudeCode`, `OpenAICodex`, `OpenCodeModel`, `CursorModel`,
-`OpenRouterModel`, `VercelModel` — or any plain provider-prefixed string.
+`OpenRouterModel`, `VercelModel`, `NeonModel` — or any plain provider-prefixed string.
 
 ```ts
-import { ClaudeCode, OpenAICodex, OpenCodeModel, CursorModel, OpenRouterModel, VercelModel } from "@upstash/box"
+import { ClaudeCode, OpenAICodex, OpenCodeModel, CursorModel, OpenRouterModel, VercelModel, NeonModel } from "@upstash/box"
 
+ClaudeCode.Fable_5_2     // "anthropic/claude-fable-5-2"
+ClaudeCode.Opus_5_5      // "anthropic/claude-opus-5-5" (also Sonnet_5_5, Haiku_5_5)
 ClaudeCode.Fable_5_1     // "anthropic/claude-fable-5-1"
 ClaudeCode.Opus_5        // "anthropic/claude-opus-5"
 ClaudeCode.Sonnet_5      // "anthropic/claude-sonnet-5"
+OpenAICodex.GPT_6_1_Sol  // "openai/gpt-6.1-sol"
 OpenAICodex.GPT_6_Astra  // "openai/gpt-6-astra"
 OpenAICodex.GPT_5_6      // "openai/gpt-5.6"
 OpenCodeModel.Claude_Opus_5   // "opencode/claude-opus-5"
 CursorModel.Composer_2_5 // "cursor/composer-2.5"
 OpenRouterModel.Claude_Opus_5 // "openrouter/anthropic/claude-opus-5"
 VercelModel.GPT_5_5      // "vercel/openai/gpt-5.5"
+NeonModel.GPT_5_5        // "neon/gpt-5-5" (Neon AI Gateway)
 
 // Read / change the box's harness + model at runtime
 const { harness, model } = box.modelConfig
@@ -233,7 +237,13 @@ await box.configureModel("anthropic/claude-opus-4-8")
 import { inferDefaultProvider } from "@upstash/box"
 inferDefaultProvider("openai/gpt-5.6")   // Agent.Codex
 inferDefaultProvider("cursor/default")   // Agent.Cursor
+inferDefaultProvider("neon/gpt-5-5")     // Agent.Codex (neon/gpt-oss-* and every other neon/ model: Agent.OpenCode)
 ```
+
+Neon AI Gateway runs use the Neon credential saved in the Upstash Console, so pair
+`NeonModel` with `BoxApiKey.StoredKey`. Neon GPT-5.4 and newer run on Codex only.
+The Claude models (`NeonModel.Claude_*`) run on OpenCode by default and on Claude
+Code when you set `harness: Agent.ClaudeCode`, never on Codex.
 
 ### Custom harness
 
@@ -670,8 +680,13 @@ const basic = await box.getPublicURL(3000, { basicAuth: true })
 // basic: { url, port, username, password }
 
 const { publicURLs } = await box.listPublicURLs()
+// each: { id, port, url, created_at, basic_auth, bearer_token }. The booleans say which
+// auth is on; token, username and password are returned only once, by getPublicURL().
 await box.deletePublicURL(3000)
 ```
+
+A request to a public URL resumes a paused box and is held until the port is listening.
+Set an `initCommand` that starts the app, so it comes back up on that resume.
 
 ## Skills
 
@@ -776,7 +791,7 @@ ssh <box-id>@us-east-1.box.upstash.com
 - `box.browser` requires a box created with `browser: true`
 - There is **no** `tab.run()` — the autonomous browser agent was removed in 0.7.0. Loop `observe` + `act(action)` + `extract` yourself, hand the goal to the in-box agent, or drive Playwright over `cdpUrl()`
 - `tab.act(action)` (replaying an `observe()` result) costs no tokens and needs no model provider key; only `act(instruction)` with a string is metered
-- `getInitCommand` / `setInitCommand` / `deleteInitCommand` throw unless the box was created with `keepAlive: true`
+- `initCommand` no longer needs `keepAlive: true`. A box restored with `Box.fromSnapshot()` does not inherit it, pass `initCommand` again there
 - `box.delete()` is irreversible — snapshot first if you need the state
 - Git operations require `git.token` in `BoxConfig` for private repos and PRs
 - `Box.fromSnapshot()` creates a new box — it does not modify the original, and it does not forward `browser`, `skills`, or `mcpServers` from the config you pass

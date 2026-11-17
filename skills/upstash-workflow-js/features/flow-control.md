@@ -99,15 +99,25 @@ Useful for diagnosing bottlenecks, long queues, or misconfigured limits.
 
 If you deploy new limits, previously published steps keep their original configuration.
 
-### No per‑step config (mostly)
+### Per‑step flow control
 
-All steps inherit the workflow‑run’s flowControl block.
-Exceptions:
+Steps inherit the flowControl the run was triggered with. To give one step its own limits, pass step-level settings as the third argument of `context.run`:
 
-- `context.call` – may define a separate key to isolate API throttling.
-- `context.invoke` – spawns a new workflow run with its own flowControl.
+```ts
+await context.run("resize image", () => resize(image), {
+  flowControl: { key: "image-resize", parallelism: 1 },
+});
+```
 
-To isolate heavy or sensitive steps, move them into a separate workflow and invoke them.
+- The settings apply to that step only. They can also carry `retries` and `retryDelay`.
+- A step with settings can cost one extra QStash message and one extra invocation of your endpoint.
+- `context.call` takes its own `flowControl` to throttle the called API.
+- `context.invoke` takes a `flowControl` for the invoked workflow run.
+- Inside the workflow, `context.flowControl` returns the flow control applied to the current request.
+
+### Key format
+
+A flow control key may only contain letters, digits, `-`, `_` and `.`. The SDK throws `WorkflowNonRetryableError` for any other key in `client.trigger`, `context.run`, `context.call` and `context.invoke`.
 
 ### Waitlist order is not guaranteed
 

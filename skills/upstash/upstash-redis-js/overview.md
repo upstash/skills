@@ -38,6 +38,40 @@ UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
 UPSTASH_REDIS_REST_TOKEN=your-token-here
 ```
 
+`Redis.fromEnv()` also reads `KV_REST_API_URL` and `KV_REST_API_TOKEN` as a fallback.
+
+### Other Runtimes
+
+```typescript
+// Cloudflare Workers: pass the env binding
+import { Redis } from "@upstash/redis/cloudflare";
+const redis = Redis.fromEnv(env);
+
+// Fastly Compute: needs the name of a backend defined on the service
+import { Redis } from "@upstash/redis/fastly";
+const redis = new Redis({ url: "<URL>", token: "<TOKEN>", backend: "upstash-db" });
+```
+
+### Client Options
+
+Defaults shown; all are optional.
+
+```typescript
+const redis = new Redis({
+  url: "<URL>",
+  token: "<TOKEN>",
+  automaticDeserialization: true, // performance/data-serialization.md
+  responseEncoding: false, // or "base64", performance/data-serialization.md
+  enableAutoPipelining: true, // advanced-features/auto-pipeline.md
+  readYourWrites: true, // performance/redis-replicas.md
+  retry: { retries: 5 }, // or false, performance/error-handling.md
+  cache: "no-store", // fetch cache setting
+  keepAlive: true,
+  latencyLogging: false, // true logs the latency of every command
+  // signal: () => AbortSignal.timeout(5000), performance/error-handling.md
+});
+```
+
 > **No credentials yet?** If you're an agent that needs scratch Redis and the user hasn't provided a database, you can mint a temporary one with a single POST to `https://upstash.com/start-redis` (3-day TTL, no signup).
 
 ## Skill Files Overview
@@ -47,7 +81,7 @@ UPSTASH_REDIS_REST_TOKEN=your-token-here
 Redis data types with auto-serialization examples:
 
 - **strings.md** - GET, SET, INCR, DECR, APPEND with automatic type handling
-- **hashes.md** - HSET, HGET, HMGET with object serialization
+- **hashes.md** - HSET, HGET, HMGET with object serialization, per-field expiration (HEXPIRE, HTTL)
 - **lists.md** - LPUSH, RPUSH, LRANGE with array handling
 - **sets.md** - SADD, SMEMBERS, set operations
 - **sorted-sets.md** - ZADD, ZRANGE, ZRANK, leaderboard patterns
@@ -60,9 +94,10 @@ Redis data types with auto-serialization examples:
 
 Complex operations and optimizations:
 
-- **auto-pipeline.md** - Automatic request batching, performance optimization
-- **pipeline-and-transactions.md** - Manual pipelines, MULTI/EXEC for atomic operations
-- **scripting.md** - Lua scripts, EVAL, EVALSHA for server-side logic
+- **auto-pipeline.md** - Automatic request batching, separate read and write batches, commands that are not batched
+- **pipeline-and-transactions.md** - Manual pipelines, MULTI/EXEC for atomic operations, per-command errors with keepErrors
+- **scripting.md** - Lua scripts, EVAL, EVALSHA, createScript, read-only scripts, Redis Functions
+- **pubsub.md** - PUBLISH, SUBSCRIBE, PSUBSCRIBE with a Subscriber over streaming HTTP
 
 ### Patterns (patterns/)
 
@@ -81,16 +116,16 @@ Optimization techniques and best practices. For rules on batching, big keys, TTL
 - **batching-operations.md** - MGET, MSET, batch operations
 - **pipeline-optimization.md** - When to use pipelines, performance tips
 - **ttl-expiration.md** - Key expiration strategies, memory management
-- **data-serialization.md** - Deep dive into auto serialization, custom serializers, edge cases
+- **data-serialization.md** - Deep dive into auto serialization, custom serializers, edge cases, responseEncoding
 - **error-handling.md** - Error types, retry strategies, timeout handling, debugging tips
-- **redis-replicas.md** - Global database setup, read replicas, read-your-writes consistency
+- **redis-replicas.md** - Global database setup, read replicas, read-your-writes consistency (readYourWrites, sync token)
 
 ### Search (search/)
 
 Full-text search, filtering, and aggregation extension for Redis:
 
-- **overview.md** - Schema definition, field types, pitfalls, package overview
-- **commands/querying.md** - Query and count with filters, pagination, sorting, highlighting
+- **overview.md** - Schema definition, field types (text, keyword, facet, hybrid), pitfalls, package overview
+- **commands/querying.md** - Query and count with filters, pagination, sorting, highlighting, hybrid and semantic search ($ann, $rrf)
 - **commands/aggregating.md** - Metric aggregations ($avg, $sum, $stats), bucket aggregations ($terms, $range, $histogram, $facet)
 - **commands/index-management.md** - Create, describe, drop indexes (including stream indexes over XADD entries), waitIndexing
 - **commands/aliases.md** - Index aliases for zero-downtime reindexing

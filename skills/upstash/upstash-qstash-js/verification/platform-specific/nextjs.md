@@ -98,7 +98,7 @@ export default verifySignature(handler, {
 
 ## Manual Verification with Receiver
 
-For more control, use the `Receiver` class directly:
+The wrappers above do not check the destination URL (their `url` option is ignored). For that, or for more control, use the `Receiver` class directly:
 
 ### Manual Verification
 
@@ -124,7 +124,8 @@ export async function POST(req: NextRequest) {
     await receiver.verify({
       signature,
       body,
-      url: req.url,
+      // The URL the message was published to. Not req.url, which differs behind a proxy.
+      url: `${process.env.APP_URL}/api/webhook`,
     });
 
     // Verified - parse and process

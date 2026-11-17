@@ -39,15 +39,18 @@ const result = await client.publishJSON({
 });
 ```
 
+`Client.fromEnv()` creates the same client from `QSTASH_TOKEN` / `QSTASH_URL` and throws if the token is missing.
+
 ## Core Concepts
 
 For fundamental QStash operations, see:
 
 - [Publishing Messages](fundamentals/publishing-messages.md)
+- [Messages and Logs](fundamentals/messages-and-logs.md) - get, cancel (by id or filter) and `runNow` a message, query logs, errors and client retries
 - [Schedules](fundamentals/schedules.md)
 - [Queues and Flow Control](fundamentals/queues-and-flow-control.md)
 - [URL Groups](fundamentals/url-groups.md)
-- [Local Development](fundamentals/local-development.md) — automatic dev server via `devMode: true`
+- [Local Development](fundamentals/local-development.md) - automatic dev server via `devMode: true` or `QSTASH_DEV=true`, `startDevServer()`
 
 For verifying incoming messages:
 

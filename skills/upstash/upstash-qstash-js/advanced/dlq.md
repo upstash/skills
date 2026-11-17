@@ -77,6 +77,16 @@ const result = await client.dlq.listMessages({
 });
 ```
 
+Every filter except `messageId`, `fromDate` and `toDate` also accepts an array. Values inside one array are ORed, separate filters are ANDed:
+
+```typescript
+await client.dlq.listMessages({
+  filter: { responseStatus: [500, 502, 503], label: ["payments", "billing"] },
+});
+```
+
+To fetch specific entries, pass `dlqIds` instead of `filter`: `listMessages({ dlqIds: ["1725323658779-0"] })`.
+
 ## Message Details
 
 Each DLQ message includes:
@@ -94,7 +104,8 @@ type DlqMessage = {
   scheduleId?: string; // Schedule ID
   createdAt: number; // Creation timestamp (ms)
   notBefore?: number; // Scheduled delivery time (ms)
-  label?: string; // Message label
+  label?: string; // First label (deprecated, use labels)
+  labels?: string[]; // All labels of the message
 
   // Failure details
   responseStatus?: number; // HTTP status from destination
@@ -104,14 +115,32 @@ type DlqMessage = {
 };
 ```
 
-## Deleting Messages
+## Retrying and Deleting Messages
+
+`retry` republishes DLQ messages and `delete` removes them. Both accept a single `dlqId`, an array of ids, a filter, or `{ all: true }`.
 
 ```typescript
-await client.dlq.delete("1725323658779-0");
-await client.dlq.deleteMany({
-  dlqIds: ["1725323658779-0", "1725323658780-1", "1725323658781-2"],
+await client.dlq.retry("1725323658779-0");
+await client.dlq.delete(["1725323658779-0", "1725323658780-1"]);
+
+// Same filter fields as listMessages, arrays included
+const { responses } = await client.dlq.retry({
+  filter: { url: "https://api.example.com/webhook", responseStatus: [500, 503] },
 });
+console.log(responses.map((r) => r.messageId)); // ids of the new messages
 ```
+
+A filter or `all` call processes at most `count` messages (default 100) and returns a `cursor` while more remain. Loop until it is `undefined`:
+
+```typescript
+let cursor: string | undefined;
+do {
+  const result = await client.dlq.delete({ all: true, count: 100, cursor });
+  cursor = result.cursor;
+} while (cursor);
+```
+
+`delete` returns `{ deleted, cursor? }` and `retry` returns `{ responses, cursor? }`. `deleteMany` is deprecated, use `delete`. An empty array inside a filter, or `dlqIds: []`, throws instead of matching everything.
 
 ## Understanding Failures
 

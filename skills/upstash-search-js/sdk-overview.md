@@ -18,10 +18,23 @@ const client = new Search({
 });
 const index = client.index("movies");
 
-// Option 2: using fromEnv (Node.js platform only)
-// The constructor will automatically read from process.env if url/token not provided
-const client2 = new Search({}); // reads UPSTASH_SEARCH_REST_URL and UPSTASH_SEARCH_REST_TOKEN
+// Option 2: from process.env (UPSTASH_SEARCH_REST_URL and UPSTASH_SEARCH_REST_TOKEN)
+const client2 = Search.fromEnv(); // same as new Search({})
 const index2 = client2.index("movies");
+
+// Cloudflare Workers: import from "@upstash/search/cloudflare" and pass the env binding
+// const client3 = Search.fromEnv(env);
+```
+
+Optional config, on the constructor or as the second argument of `fromEnv`:
+```ts
+const client4 = new Search({
+  url,
+  token,
+  retry: { retries: 3, backoff: (retryCount) => retryCount * 100 }, // default 5 retries; false disables
+  cache: "no-store",      // fetch cache setting, default "no-store"
+  enableTelemetry: false, // or set UPSTASH_DISABLE_TELEMETRY
+});
 ```
 
 Type-safe usage:
@@ -114,9 +127,17 @@ await index.search({ query: "space opera", limit: 3, reranking: true });
 // With filter
 await index.search({ query: "space", filter: "category = 'classic'" });
 
-// Adjust semantic vs keyword weighting
+// Adjust semantic vs keyword weighting (0 to 1, default 0.75)
 await index.search({ query: "robots", semanticWeight: 0.2 });
+
+// Input enrichment rewrites the query before searching and is on by default
+await index.search({ query: "robots", inputEnrichment: false });
+
+// Keep enrichment but also search with the original query (default false)
+await index.search({ query: "robots", keepOriginalQueryAfterEnrichment: true });
 ```
+
+Each result is `{ id, content, metadata, score }`.
 
 ---
 
@@ -141,6 +162,17 @@ while (cursor !== "") {
 
 ```ts
 await index.reset(); // "Success"
+```
+
+---
+
+## List and delete indexes
+
+`reset` empties an index; `deleteIndex` removes the index itself and cannot be undone.
+
+```ts
+const names = await client.listIndexes(); // ["movies", ...]
+await index.deleteIndex();
 ```
 
 ---

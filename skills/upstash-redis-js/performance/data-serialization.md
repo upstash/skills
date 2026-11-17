@@ -132,3 +132,17 @@ const raw = await redis.get("key");
 console.log(typeof raw); // "string"
 const parsed = JSON.parse(raw as string);
 ```
+
+### Response Encoding
+
+Since 1.40.0 the server returns string values as plain JSON (`responseEncoding: false` is the default), which makes responses up to 25% smaller. Setting `responseEncoding: false` yourself is no longer needed. Pass `"base64"` only to get the pre-1.40 behaviour back:
+
+```typescript
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  responseEncoding: "base64",
+});
+```
+
+Binary values are not preserved in either mode: invalid UTF-8 bytes come back as `U+FFFD`. Encode binary data (for example as base64) before storing it.

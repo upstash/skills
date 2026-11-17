@@ -69,3 +69,22 @@ await redis.hdel("user:1", "loginCount", "balance"); // Delete multiple fields
 // Delete entire hash
 await redis.del("user:1");
 ```
+
+### Field Expiration
+
+Fields can expire on their own. Pass one field or an array; each command returns one value per field.
+
+```typescript
+await redis.hset("session:1", { token: "abc", theme: "dark" });
+
+await redis.hexpire("session:1", "token", 60); // [1], or [-2] if the field does not exist
+await redis.httl("session:1", ["token", "theme"]); // [60, -1], -1 means no expiry
+await redis.hpersist("session:1", "token"); // [1], expiry removed
+
+// Set fields together with a TTL
+await redis.hsetex("session:1", { expiration: { ex: 60 } }, { token: "xyz" });
+// Read fields and refresh their TTL
+await redis.hgetex("session:1", { ex: 60 }, "token"); // { token: "xyz" }
+```
+
+Also available: `hpexpire`, `hexpireat`, `hpexpireat`, `hexpiretime`, `hpexpiretime`, `hpttl`, `hgetdel`.

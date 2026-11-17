@@ -303,6 +303,48 @@ Boost the score of specific conditions:
 }
 ```
 
+## Hybrid Search
+
+`s.hybrid()` fields are full-text searchable like `s.string()` fields and are also embedded for semantic search. Retrievers go at the root of `filter`:
+
+```typescript
+const index = await redis.search.createIndex({
+  name: "products",
+  prefix: "product:",
+  dataType: "json",
+  schema: s.object({ description: s.hybrid(), category: s.keyword() }),
+});
+
+// Search by meaning
+await index.query({
+  filter: {
+    $ann: {
+      field: "description",
+      query: "block noise on a flight",
+      filter: { category: "travel" },
+    },
+  },
+});
+
+// Merge full-text and semantic results with Reciprocal Rank Fusion
+await index.query({
+  filter: {
+    $rrf: {
+      retrievers: [
+        { $standard: { query: { description: "noise cancelling" }, weight: 2 } },
+        { $ann: { field: "description", query: "noise cancelling" } },
+      ],
+    },
+  },
+  limit: 10,
+});
+```
+
+- `$ann` only takes a `HYBRID` field. Optional `profile` is `"fast"`, `"balanced"` (default) or `"precise"`.
+- `$rrf` merges 2 to 10 retrievers: plain filters, `$standard` or `$ann`. Optional `rankConstant` (default 60) and `window` (results taken from each retriever, defaults to `limit`). `weight` is only valid inside `$rrf`.
+- A retriever cannot be nested inside `$must`, `$should` or `$mustNot`.
+- `count()` and `aggregate()` accept `$standard` and `$rrf`, but not `$ann`.
+
 ## Counting
 
 Count matching documents without returning them:

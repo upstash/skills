@@ -9,6 +9,8 @@ metadata:
 
 # Upstash Search Documentation
 
+This skill covers **Upstash Search** (`@upstash/search`), a standalone managed search product. It is not **Upstash Redis Search**, the search extension that runs inside an Upstash Redis database (`redis.search` in `@upstash/redis`); use the `upstash-redis-js` skill for that.
+
 ## Bundled docs and source
 
 Before writing or debugging SDK code, check `node_modules/@upstash/search/docs/` for bundled docs and `node_modules/@upstash/search/src/` for readable TypeScript source. Read and search the relevant files when present; otherwise use the references in this skill.
@@ -45,6 +47,7 @@ Provides detailed documentation for all TypeScript SDK commands. Includes:
 - delete: Deleting documents
 - fetch: Retrieving a document
 - info: Index info
+- listIndexes / deleteIndex: Listing and removing indexes
 - range: Range queries
 - reset: Clearing an index
 - search: Search queries

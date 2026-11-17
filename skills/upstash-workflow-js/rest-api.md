@@ -30,6 +30,9 @@ Below is a complete summary of the API endpoints supported by this skill.
 • `POST /v2/workflows/dlq/restart` — Bulk restart (up to 50).  
 • `POST /v2/workflows/dlq/resume` — Bulk resume (up to 50).  
 • `POST /v2/workflows/dlq/callback/{dlqId}` — Rerun a failed failure-callback.  
+• `DELETE /v2/workflows/dlq/callback/{dlqId}`: Cancel an in-progress failure-callback.  
+• `DELETE /v2/workflows/dlq`: Bulk delete by `dlqIds` or filters.  
+• `DELETE /v2/workflows/runs`: Bulk cancel runs by `workflowRunIds` or filters (`workflowUrl` is a prefix unless `workflowUrlExactMatch=true`).  
 • `GET /v2/flowControl` and `/v2/flowControl/{key}` — Flow-control inspection.
 
 ---
@@ -111,7 +114,8 @@ async function example() {
 • **workflowCreatedAt: number** — Timestamp filter for creation time.  
 • **responseStatus: number** — Filter by HTTP status of failed run.  
 • **callerIP: string** — Filter by origin IP.  
-• **failureCallbackState: string** — Filter runs whose failure callback succeeded or failed.  
+• **failureFunctionState: string**: Filter by failure callback state: `CALLBACK_INPROGRESS`, `CALLBACK_SUCCESS`, `CALLBACK_FAIL` or `CALLBACK_CANCELED`.  
+• **label, flowControlKey: string**: Filter by run label or flow-control key.  
 • **cursor: string** — Pagination cursor; returned by list & bulk ops.  
 • **count: number** — Limit for listing DLQ entries (default/max 100).
 

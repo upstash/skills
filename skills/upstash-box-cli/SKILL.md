@@ -60,11 +60,19 @@ box create --no-repl --size medium         # small (default), medium, large
 Add `--keep-alive` only when something has to survive an idle gap: a detached
 server you are about to reach over a preview URL, or a job that keeps running
 between commands. It stops the box pausing, so the box keeps costing money until
-you pause or delete it. `--init-command` is rejected without it:
+you pause or delete it:
 
 ```bash
 box create --no-repl --keep-alive                            # stays up when idle
-box create --no-repl --keep-alive --init-command "npm ci"    # startup script
+```
+
+`--init-command` is a startup script that runs each time the box starts: after
+create and on every resume. It works on any box, with or without `--keep-alive`,
+and `box config init-command set` changes it later:
+
+```bash
+box create --no-repl --init-command "npm ci"
+box create --no-repl --label beta                            # repeatable; box list --label beta
 ```
 
 The rest of the create-time options, all equally unchangeable afterwards:
@@ -209,9 +217,16 @@ rather than curling localhost, which passes in exactly the case that fails.
 Most dev servers need telling: `--host 0.0.0.0` for Vite and many others,
 `-H 0.0.0.0` for some, and a few cannot be moved off loopback at all.
 
-`--keep-alive` is what keeps the link working. Without it the box pauses when
-idle, the detached server dies with it, and the URL you handed over starts
-answering errors some minutes later.
+`--keep-alive` is what keeps the server running. Without it the box pauses when
+idle and the detached server dies with it. A request to the public URL resumes a
+paused box and waits for the port to listen, but nothing restarts the server
+unless the box has an init command that does. So a link that should outlive the
+idle gap needs one of the two: `--keep-alive`, or an init command that starts the
+server in the background:
+
+```bash
+box config init-command set 'cd /workspace/home && node server.js > server.log 2>&1 &'
+```
 
 Reply with the URL itself, not just "it is running". Say that the box keeps costing
 money until `box delete --yes`, and that the URL is public to anyone who has it —
@@ -310,7 +325,13 @@ If the box was created with an agent, hand it a task:
 box create --no-repl --agent-harness claude-code --agent-model anthropic/claude-sonnet-5
 box run "Fix the failing test in src/auth.test.ts"
 box run - < prompt.txt
+box run "Review the diff" --effort low
 ```
+
+`--effort` takes the levels of the box's harness: `low`, `medium`, `high`, `max` for
+Claude Code; `none`, `minimal`, `low`, `medium`, `high`, `xhigh` for Codex; `low`,
+`medium`, `high` for OpenCode. Cursor and custom harnesses reject it. `box schedule
+agent` and `box schedule update` take the same flag.
 
 Text goes to stdout, tool calls to stderr. Prefer doing the work yourself with the
 commands above; `box run` is for delegating a whole task to the box's own agent.
@@ -468,7 +489,7 @@ box skills add upstash-redis-js        # skills available to the box's agent
 box skills list
 box skills remove upstash-redis-js
 box config model anthropic/claude-sonnet-5
-box config init-command set "npm ci"   # keep-alive boxes only; runs on start
+box config init-command set "npm ci"   # any box; runs on every start and resume (- reads stdin)
 box config init-command get
 box config init-command delete
 box config network deny-all            # or allow-all, or custom
@@ -484,9 +505,15 @@ box env set KEY VAL                    # applies to boxes created after this
 box env list
 box env delete KEY
 box env set-all A=1 B=2                # replaces every var, does not merge
-box labels add staging                 # then: box list --label staging
-box labels list
-box labels remove staging
+```
+
+Labels belong to one box and take its id as the first argument. They do not read
+`--box` or `.box`:
+
+```bash
+box labels add <box-id> staging        # then: box list --label staging
+box labels list <box-id>
+box labels remove <box-id> staging
 ```
 
 Both `box env set` and `box create --env` take the value as an argument, so a
@@ -524,8 +551,9 @@ box git push --branch feature/x                    # names the branch to push
 box public-url 3000 --bearer-token       # or --basic-auth; both generate credentials
 box use --unset                          # drop this directory's .box, never a parent's
 
-box schedule agent --cron "0 9 * * *" --model <m> --timeout 300 --webhook-url <url> "..."
+box schedule agent --cron "0 9 * * *" --model <m> --effort high --timeout 300 --webhook-url <url> "..."
 box schedule update <id> --timeout 0     # 0 clears the timeout; --prompt, --cron, --model too
+box schedule update <id> --effort low    # keeps the schedule's other agent options
 
 box config network custom --allow-domain a.test --allow-cidr 10.0.0.0/8 --deny-cidr 10.1.0.0/16
 box config harness --command my-agent --arg --verbose   # --arg repeatable, sent before the prompt

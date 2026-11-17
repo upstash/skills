@@ -11,7 +11,7 @@ import { Client } from "@upstash/qstash";
 
 const client = new Client({ token: process.env.QSTASH_TOKEN! });
 
-await client.urlGroups().addEndpoints({
+await client.urlGroups.addEndpoints({
   name: "payment-webhooks",
   endpoints: [
     { url: "https://api1.example.com/webhook" },
@@ -51,13 +51,13 @@ Remove by URL or name:
 
 ```typescript
 // Remove by URL
-await client.urlGroups().removeEndpoints({
+await client.urlGroups.removeEndpoints({
   name: "payment-webhooks",
   endpoints: [{ url: "https://api2.example.com/webhook" }],
 });
 
 // Remove by endpoint name
-await client.urlGroups().removeEndpoints({
+await client.urlGroups.removeEndpoints({
   name: "payment-webhooks",
   endpoints: [{ name: "primary" }],
 });
@@ -66,7 +66,7 @@ await client.urlGroups().removeEndpoints({
 ### List URL Groups
 
 ```typescript
-const groups = await client.urlGroups().list();
+const groups = await client.urlGroups.list();
 
 groups.forEach((group) => {
   console.log(`${group.name}: ${group.endpoints.length} endpoints`);
@@ -79,7 +79,7 @@ groups.forEach((group) => {
 ### Get Specific URL Group
 
 ```typescript
-const group = await client.urlGroups().get("payment-webhooks");
+const group = await client.urlGroups.get("payment-webhooks");
 
 console.log(`Created: ${new Date(group.createdAt)}`);
 console.log(`Updated: ${new Date(group.updatedAt)}`);
@@ -89,7 +89,7 @@ console.log(`Endpoints: ${group.endpoints.length}`);
 ### Delete URL Group
 
 ```typescript
-await client.urlGroups().delete("payment-webhooks");
+await client.urlGroups.delete("payment-webhooks");
 ```
 
 Deleting a URL group does not affect in-flight messages.

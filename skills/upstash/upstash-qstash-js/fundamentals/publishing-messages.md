@@ -19,6 +19,14 @@ const result = await client.publishJSON({
 console.log(result.messageId); // "msg_123..."
 ```
 
+`Client.fromEnv()` builds the client from `QSTASH_TOKEN` and `QSTASH_URL` (or their region-prefixed variants) and throws a `QstashError` when no token is set, where `new Client()` only warns. It reads `process.env`, so on Cloudflare Workers pass the token to `new Client({ token })` instead.
+
+```typescript
+const client = Client.fromEnv(); // accepts every Client option except token and baseUrl
+```
+
+To read, cancel or run a published message, see [Messages and Logs](messages-and-logs.md).
+
 ## Destination Options
 
 Specify where to send the message using one of these mutually exclusive options:
@@ -80,8 +88,10 @@ await client.publishJSON({
   deduplicationId: "custom-id-123",
   // enable content-based deduplication
   contentBasedDeduplication: true,
-  // label for filtering logs, dlq, cancellation
-  label: "order-webhook",
+  // label for filtering logs, dlq, cancellation. A string or an array of labels:
+  label: ["order-webhook", "tenant-42"],
+  // hide fields in logs. header: true redacts all headers, an array redacts only those:
+  redact: { body: true, header: ["Authorization"] },
 });
 ```
 

@@ -20,6 +20,13 @@ curl -X POST -H "Idempotency-Key: <uuidv4>" https://upstash.com/start-redis
 - Re-POST with the same `Idempotency-Key` to **re-fetch credentials** for an existing database.
 - The header is optional. Omit it to mint a new database with a server-generated id (returned in the response — re-fetch later by passing that id back as `Idempotency-Key`). Only UUIDv4 is accepted.
 
+With Node available, the Upstash CLI makes the same request and prints the same markdown, with no login. Pass your own agent name:
+
+```bash
+npx -y upstash start-redis --user-agent claude-code   # or cursor, codex, opencode
+npx -y upstash start-redis --id <database-id>         # re-fetch credentials
+```
+
 The response is markdown containing:
 - `Database ID`, `Endpoint`, `Token`
 - `Metrics` URL (JSON: uptime, commands, keys, throughput, memory, bandwidth)

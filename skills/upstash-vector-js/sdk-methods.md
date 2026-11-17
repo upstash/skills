@@ -31,6 +31,20 @@ await index.upsert({ id: "4", data: "A fantasy movie" });
 
 ---
 
+## Update
+
+Change one field group of an existing vector without re-sending the rest. Pass `id` plus one of metadata, vector (`vector` and/or `sparseVector`), or `data`. Returns `{ updated: number }`.
+
+```ts
+// Merge into existing metadata; "OVERWRITE" replaces it
+await index.update({ id: "1", metadata: { tag: "b" }, metadataUpdateMode: "PATCH" });
+
+await index.update({ id: "1", vector: [0.5, 0.6] });
+await index.update({ id: "4", data: "A sci-fi movie" }, { namespace: "ns" });
+```
+
+---
+
 ## Fetch
 
 Retrieve vectors by exact ID or prefix.
@@ -91,6 +105,20 @@ const results = await index.query({
 await index.query({ data: "epic fantasy adventure", topK: 2 });
 ```
 
+### Query Many
+
+Run several queries in one request. The result is one array per query, in order, also when a single query is passed.
+
+```ts
+const [first, second] = await index.queryMany(
+  [
+    { vector: [0.1, 0.2], topK: 3, includeMetadata: true },
+    { vector: [0.3, 0.4], topK: 1, filter: "genre = 'fantasy'" },
+  ],
+  { namespace: "ns" } // optional
+);
+```
+
 ---
 
 ## Resumable Query
@@ -123,17 +151,21 @@ Paginated, stateless scanning of vectors; recommended for large prefix fetches.
 
 **Pitfalls**
 
-- Always pass `cursor`; set to `0` initially.
+- Always pass `cursor`; set to `"0"` initially.
+- `nextCursor` is an empty string on the last page, never `null`.
 
 **Example**
 
 ```ts
-let cursor = 0;
-while (cursor !== null) {
+let cursor = "0";
+do {
   const page = await index.range({ cursor, limit: 100, includeMetadata: true });
   console.log(page.vectors);
   cursor = page.nextCursor;
-}
+} while (cursor !== "");
+
+// Only ids starting with a prefix
+await index.range({ cursor: "0", limit: 100, prefix: "user-" });
 ```
 
 ---
@@ -191,6 +223,19 @@ await index.reset({ all: true });
 
 ## Advanced
 
+### Client Options
+
+`new Index()` with no arguments reads `UPSTASH_VECTOR_REST_URL` and `UPSTASH_VECTOR_REST_TOKEN`. On Cloudflare Workers use `Index.fromEnv(env)` from `@upstash/vector/cloudflare`.
+
+```ts
+const index = new Index<{ genre: string }>({ // default metadata type for all commands
+  url,
+  token,
+  retry: { retries: 3, backoff: (retryCount) => retryCount * 100 }, // default 5 retries; false disables
+  cache: "no-store", // fetch cache setting, default "no-store"
+});
+```
+
 ### Request Timeout
 
 ```ts
@@ -203,7 +248,7 @@ const index = new Index({
 
 ### Telemetry
 
-Disable with env variable:
+Disable with `enableTelemetry: false` in the `Index` config, or with an env variable:
 
 ```sh
 UPSTASH_DISABLE_TELEMETRY=1

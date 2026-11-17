@@ -46,7 +46,7 @@ For full usage, refer to the linked skill files below.
 
 ### TS SDK Reference
 
-- `sdk-methods`: Explains SDK commands: delete, fetch, info, query, range, reset, resumable-query, upsert
+- `sdk-methods`: Explains SDK commands: delete, fetch, info, query, queryMany, range, reset, resumable-query, update, upsert, plus client options
 
 ### Features
 

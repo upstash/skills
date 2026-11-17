@@ -2,6 +2,18 @@
 
 This documentation explains the three algorithms supported by the ratelimit‑ts SDK: Fixed Window, Sliding Window, and Token Bucket. It focuses on practical usage, pitfalls, and choosing the right algorithm.
 
+## Durations
+
+Every window or interval is a `Duration` string: a number plus a unit (`ms`, `s`, `m`, `h`, `d`, `w`), with an optional space. Decimals are allowed.
+
+```ts
+Ratelimit.fixedWindow(1000, "1 w");     // one week
+Ratelimit.slidingWindow(10, "1.5s");    // 1500 ms
+Ratelimit.tokenBucket(5, "0.5 h", 10);  // 30 minutes
+```
+
+The value is rounded to whole milliseconds, and a duration that rounds below 1 ms throws.
+
 ## Fixed Window
 
 Divides time into fixed periods (for example, 10‑second windows). Requests increment a counter for the current window and are rejected once the limit is exceeded.
@@ -69,6 +81,7 @@ Maintains a bucket of tokens that refill at a defined rate. Each request consume
 **Pitfalls**
 - Higher computational cost.
 - Not yet supported for multi‑region.
+- A request whose `rate` is larger than the tokens left is rejected and consumes nothing, so the remaining tokens stay spendable. Fixed and sliding windows still count a rejected request.
 
 **When to use**
 - When smoothing request traffic and allowing controlled bursts is important.

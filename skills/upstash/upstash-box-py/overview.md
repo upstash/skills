@@ -36,10 +36,10 @@ from upstash_box import Box, Agent, ClaudeCode, BoxApiKey
 box = Box.create(
     name="my-box",
     runtime="node",  # "node" | "python" | "golang" | "ruby" | "rust" (+ "-alpine" variants)
-    size="small",  # "small" (2 CPU/4GB) | "medium" (4/8) | "large" (8/16)
+    size="small",  # "small" (2 CPU/4GB/10GB disk) | "medium" (4/8/20) | "large" (8/16/30)
     labels=["beta", "x-team"],  # max 5, <=20 chars each
     keep_alive=True,  # don't idle-pause the box
-    init_command="npm install && npm run dev",  # keep-alive boxes only
+    init_command="npm install && npm run dev",  # runs after create and on every resume
     browser=True,  # provision headless Chromium for box.browser
     agent={
         "harness": Agent.CLAUDE_CODE,  # Agent.CODEX | Agent.OPEN_CODE | Agent.CURSOR | Agent.CUSTOM
@@ -75,7 +75,7 @@ status = box.get_status()["status"]
 
 box.id, box.size, box.keep_alive, box.cwd, box.network_policy
 
-# Init command (keep-alive boxes only — raises otherwise)
+# Init command: works on any box. On a paused box the change applies on the next resume.
 box.set_init_command("npm run dev")
 script = box.get_init_command()
 box.delete_init_command()
@@ -207,20 +207,24 @@ Unlike the JS generic `AgentOptions<TProvider>`, Python does not narrow
 ### Harness & model
 
 `harness` is required. Model enums: `ClaudeCode`, `OpenAICodex`, `OpenCodeModel`,
-`CursorModel`, `OpenRouterModel`, `VercelModel` — or any provider-prefixed string.
+`CursorModel`, `OpenRouterModel`, `VercelModel`, `NeonModel` — or any provider-prefixed string.
 
 ```python
-from upstash_box import ClaudeCode, OpenAICodex, OpenCodeModel, CursorModel, OpenRouterModel, VercelModel
+from upstash_box import ClaudeCode, OpenAICodex, OpenCodeModel, CursorModel, OpenRouterModel, VercelModel, NeonModel
 
+ClaudeCode.FABLE_5_2  # "anthropic/claude-fable-5-2"
+ClaudeCode.OPUS_5_5  # "anthropic/claude-opus-5-5" (also SONNET_5_5, HAIKU_5_5)
 ClaudeCode.FABLE_5_1  # "anthropic/claude-fable-5-1"
 ClaudeCode.OPUS_5  # "anthropic/claude-opus-5"
 ClaudeCode.SONNET_5  # "anthropic/claude-sonnet-5"
+OpenAICodex.GPT_6_1_SOL  # "openai/gpt-6.1-sol"
 OpenAICodex.GPT_6_ASTRA  # "openai/gpt-6-astra"
 OpenAICodex.GPT_5_6  # "openai/gpt-5.6"
 OpenCodeModel.CLAUDE_OPUS_5  # "opencode/claude-opus-5"
 CursorModel.COMPOSER_2_5  # "cursor/composer-2.5"
 OpenRouterModel.CLAUDE_OPUS_5  # "openrouter/anthropic/claude-opus-5"
 VercelModel.GPT_5_5  # "vercel/openai/gpt-5.5"
+NeonModel.GPT_5_5  # "neon/gpt-5-5" (Neon AI Gateway)
 
 # Read / change the box's harness + model at runtime
 box.model_config  # {"harness": ..., "model": ...}
@@ -231,7 +235,13 @@ from upstash_box import infer_default_provider
 
 infer_default_provider("openai/gpt-5.6")  # Agent.CODEX
 infer_default_provider("cursor/default")  # Agent.CURSOR
+infer_default_provider("neon/gpt-5-5")  # Agent.CODEX (neon/gpt-oss-* and every other neon/ model: Agent.OPEN_CODE)
 ```
+
+Neon AI Gateway runs use the Neon credential saved in the Upstash Console, so pair
+`NeonModel` with `BoxApiKey.STORED_KEY`. Neon GPT-5.4 and newer run on Codex only.
+The Claude models (`NeonModel.CLAUDE_*`) run on OpenCode by default and on Claude
+Code when you set `"harness": Agent.CLAUDE_CODE`, never on Codex.
 
 ### Custom harness
 
@@ -451,10 +461,10 @@ box.git.create_pr(
 cfg = box.git.update_config(user_name="Bot", user_email="bot@example.com")
 # cfg: GitConfigResult(git_user_name, git_user_email)
 
-# Arbitrary git commands — returns the output string only. Unlike the JS SDK, which
-# returns { output, exit_code }, Python drops the status, so a failure (exit 128 when
-# the cwd is not a repository) is indistinguishable from success — check the output.
-output = box.git.exec(args=["log", "--oneline", "-5"])
+# Arbitrary git commands. Returns GitExecResult(output, exit_code), not a string
+# (changed in 0.4.0). Check exit_code: 128 means the cwd is not a repository.
+result = box.git.exec(args=["log", "--oneline", "-5"])
+result.output, result.exit_code
 ```
 
 ## Schedules
@@ -560,7 +570,7 @@ acted = tab.act("Click the first headline")
 #                  input_tokens, output_tokens)
 
 # Replay a pre-resolved action — no LLM call, no tokens, no model provider key.
-# Pass a BrowserObserveElement or BrowserActAction instead of a string; `model` is
+# Pass a BrowserObserveElement, a BrowserActAction or a plain dict instead of a string; `model` is
 # ignored in this form, and an action without a `selector` raises BoxError.
 tab.act(elements[0])
 tab.act(acted.actions[0])
@@ -693,9 +703,14 @@ authed = box.get_public_url(3000, bearer_token=True)
 basic = box.get_public_url(3000, basic_auth=True)
 # basic: PublicURL(url, port, username, password)
 
-result = box.list_public_urls()  # {"public_urls": [PublicURL, ...]}
+result = box.list_public_urls()  # {"public_urls": [PublicURLListItem, ...]}
+# each: PublicURLListItem(id, port, url, created_at, basic_auth, bearer_token). The booleans
+# say which auth is on; token, username and password are returned only once, by get_public_url().
 box.delete_public_url(3000)
 ```
+
+A request to a public URL resumes a paused box and is held until the port is listening.
+Set an `init_command` that starts the app, so it comes back up on that resume.
 
 ## Skills
 
@@ -823,7 +838,9 @@ asyncio.run(main())
 - `box.browser` requires a box created with `browser=True`.
 - There is **no** `tab.run()` — the autonomous browser agent was removed. Loop `observe` + `act(action)` + `extract` yourself, hand the goal to the in-box agent, or drive Playwright over `cdp_url()`.
 - `tab.act(action)` (replaying an `observe()` result) costs no tokens and needs no model provider key; only `act(instruction)` with a string is metered.
-- `get_init_command` / `set_init_command` / `delete_init_command` raise unless the box was created with `keep_alive=True`.
+- `init_command` no longer needs `keep_alive=True`.
+- A run `timeout` is a total limit for the run, not per socket read. Past it `agent.run()` raises `BoxError("Run timed out")` and `agent.stream()` raises `BoxError("Stream timed out")`, with the run's status `cancelled`. `timeout=0` means no timeout. `max_retries` never retries a timed-out or cancelled run.
+- `stream.cancel()` closes the stream locally: the next iteration raises `BoxError("Run cancelled")` and the status stays `cancelled`.
 - The JS static `Box.delete({boxIds})` is `Box.delete_boxes(box_ids=...)` here, to avoid clashing with the instance `delete()`.
 - `Box.delete_boxes(box_ids=[])` and `Box.delete_snapshots(snapshot_ids=[])` raise `BoxError` — an empty list is never read as "delete everything". Call `Box.delete_snapshots()` with no ids for that.
 - `box.delete()` is irreversible — snapshot first if you need the state.

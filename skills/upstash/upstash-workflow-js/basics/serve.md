@@ -41,7 +41,8 @@ export const { POST } = serve<InitialPayload>(
     // Override only the base portion of the inferred URL (keeps the route path)
     baseUrl: "https://proxy-url.com",
 
-    // Provide a custom QStash client
+    // Provide a custom QStash client. A config object without baseUrl and token also works
+    // (those are read from env), e.g. qstashClient: { headers: { "x-my-header": "value" } }
     qstashClient: new Client({ token: process.env.QSTASH_TOKEN! }),
 
     // Provide a custom QStash Receiver for verifying that requests come from QStash

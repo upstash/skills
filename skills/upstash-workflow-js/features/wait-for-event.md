@@ -20,6 +20,8 @@ Use this feature to pause workflow execution until an external event arrives. It
 
 Use unique event IDs to avoid heavy fan‑out notifications.
 
+Event IDs may only contain letters, digits, `-`, `_` and `.`. QStash rejects other characters such as `:`.
+
 Example patterns:
 • `order-123-processing-complete`
 • `user-42-email-verified`
@@ -28,7 +30,14 @@ Example patterns:
 
 A notify call sent _before_ the workflow begins waiting is lost.
 
-To avoid this:
+To avoid this, pass the run id of the waiting workflow. The event is then kept for that run until it reaches `waitForEvent` (lookback):
+
+```ts
+await client.notify({ eventId, eventData, workflowRunId }); // from outside
+await context.notify("notify", eventId, eventData, workflowRunId); // from a workflow
+```
+
+Without a run id:
 • Always inspect the notify response.
 • Retry if no waiters were found.
 
@@ -79,7 +88,7 @@ async function notifyProcessingComplete(orderId: string, payload: any) {
   // First attempt - returns array of NotifyResponse
   const waiters = await client.notify({ eventId, eventData: payload });
 
-  if (waiters > 0) return waiters;
+  if (waiters.length > 0) return waiters;
 
   // Retry if no workflows were waiting
   await new Promise((r) => setTimeout(r, 3000));

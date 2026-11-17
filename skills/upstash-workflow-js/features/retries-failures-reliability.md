@@ -27,6 +27,20 @@ Workflow steps automatically retry when they fail, using configurable retry coun
 - `retries`: How many times the step will retry
 - `retryDelay`: A math expression (string) returning delay in milliseconds; can use `retried` variable
 
+### Per-step retries
+
+`client.trigger` sets the retries of every step. Override them for one step with the third argument of `context.run`. `context.retried` is the number of retries of the current request so far (0 on the first delivery).
+
+```ts
+const result = await context.run(
+  "flaky api",
+  () => (context.retried < 3 ? callPrimary() : callFallback()),
+  { retries: 5, retryDelay: "1000 * (1 + retried)" }
+);
+```
+
+`client.logs` shows the name of the step being retried: the `type: "next"` step group has `stepName` and `errors`.
+
 ### Common Pitfalls
 
 - The delay expression must be a _string_; raw numbers disable dynamic calculation.
@@ -70,6 +84,12 @@ Use these when failure is expected or should halt execution immediately:
 - `context.cancel()` → Stop workflow intentionally, no DLQ, no failure function
 - Conditional returns → Graceful early exit without error
 
+To retry later instead, for example when an API is rate limited, throw `WorkflowRetryAfterError` (exported from `@upstash/workflow`). The endpoint answers 429 with a `Retry-After` header:
+
+```ts
+throw new WorkflowRetryAfterError("rate limited", "30s"); // seconds or a duration string
+```
+
 ### Pitfalls
 
 - `context.cancel()` marks the run as **canceled**, not failed — no failure handling executes.
@@ -101,9 +121,11 @@ Only **one** can be configured — they are mutually exclusive.
 - `context.requestPayload`
 - `context.headers`
 - `context.env`
+- `context.labels`, `context.retried`, `context.workflowRunCreatedAt`
 - `failStatus`
 - `failResponse`
 - `failHeaders`
+- `failStack`
 
 ### Example: Workflow + Failure Function + Prevent‑Retry Logic
 
@@ -175,14 +197,19 @@ Retry the failure handler **only if it previously failed**.
 import { Client } from "@upstash/workflow";
 const client = new Client({ token: process.env.WORKFLOW_TOKEN! });
 
-await client.dlq.resume({ dlqId: "dlq-1", retries: 3 }); // Continue run
-await client.dlq.restart({ dlqId: "dlq-2", retries: 3 }); // Restart
-await client.dlq.retryFailureFunction({ dlqId: "dlq-3" }); // Retry failure handler
+await client.dlq.resume("dlq-1", { retries: 3 }); // Continue run
+await client.dlq.restart(["dlq-2", "dlq-3"], { retries: 3 }); // Restart
+await client.dlq.retryFailureFunction({ dlqId: "dlq-4" }); // Retry failure handler
+await client.dlq.cancelFailureFunction({ dlqId: "dlq-5" }); // Stop an in-progress failure handler
+await client.dlq.delete({ filter: { label: "tenant-42" } }); // Remove entries
 ```
+
+`resume`, `restart` and `delete` accept an id, an array of ids, `{ filter }` or `{ all: true }`. See basics/client for filters and cursor handling.
 
 ### Pitfalls
 
 - `retryFailureFunction` is only allowed when the failure function failed.
+- `cancelFailureFunction` is only allowed while the failure function call is in progress.
 - `resume` cannot be used if workflow code changed before the failure point.
 - `restart` re-executes everything, including expensive steps.
 
@@ -197,18 +224,15 @@ Use when failure must be handled by a separate service.
 - Use **either** `failureFunction` **or** `failureUrl`.
 - Recommended only when your primary app might be offline.
 - Failure URL receives a structured JSON payload about the failed request.
+- `failureUrl` is an option of `client.trigger`, not of `serve`.
 
 ### Example
 
 ```ts
-export const { POST } = serve(
-  async (context) => {
-    await context.run("work", () => doWork());
-  },
-  {
-    failureUrl: "https://example.com/failure-handler",
-  }
-);
+await client.trigger({
+  url: "https://example.com/workflow",
+  failureUrl: "https://example.com/failure-handler",
+});
 ```
 
 ---

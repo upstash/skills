@@ -24,20 +24,20 @@ Pipelines batch multiple Redis commands into one HTTP request. Use automatic pip
 ```typescript
 import { Redis } from "@upstash/redis";
 
-// Auto-pipeline: enable globally
+// Auto-pipeline is on by default (enableAutoPipelining: false turns it off)
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-  enableAutoPipelining: true,
 });
 
 // With auto-pipeline: Promise.all batches automatically
-const [user, posts, comments] = await Promise.all([
+const [user, postCount, commentCount] = await Promise.all([
   redis.get("user:1"),
-  redis.lrange("posts:1", 0, 9),
-  redis.lrange("comments:1", 0, 9),
+  redis.llen("posts:1"),
+  redis.llen("comments:1"),
 ]);
-// Single HTTP request!
+// Single HTTP request. Reads and writes go in separate requests, and range/scan
+// commands such as lrange, zrange and hgetall are not batched (see auto-pipeline.md).
 ```
 
 ### Manual Pipeline

@@ -28,7 +28,7 @@ If you _must_ handle errors, move the `try/catch` into the function passed to `c
 
 ## requestPayload Becoming Undefined
 
-During `context.call`, the workflow endpoint is invoked multiple times internally. Before the first step executes, `context.requestPayload` may appear `undefined`.
+When a `context.call` response comes back, the endpoint runs up to its first step with `context.requestPayload` set to the call result instead of your payload, and with a random `context.workflowRunId`. The `schema` and `initialPayloadParser` options are skipped for that request. Code before the first step must not dereference, validate or return early on the payload.
 
 **Fix:** capture the payload via a step:
 
@@ -94,7 +94,7 @@ Retries come from two locations:
 
 - Workflow start (`client.trigger`): default **3**, applies to workflow steps
 - `context.call`: default **0**
-- `context.invoke`: default **0**
+- `context.run` third argument (`{ retries, retryDelay }`): overrides the workflow start value for that step
 
 Use these in combination to tune behavior correctly.
 
