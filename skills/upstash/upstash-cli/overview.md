@@ -93,7 +93,7 @@ upstash redis move-to-team --db-id <id> --team-id <id>
 
 Regions — AWS: `us-east-1`, `us-east-2`, `us-west-1`, `us-west-2`, `ca-central-1`, `eu-central-1`, `eu-west-1`, `eu-west-2`, `sa-east-1`, `ap-south-1`, `ap-northeast-1`, `ap-southeast-1`, `ap-southeast-2`, `af-south-1`. GCP: `us-central1`, `us-east4`, `europe-west1`, `asia-northeast1`.
 
-`create-branch` makes a branch: a point-in-time copy of a database (or of another branch) with its own endpoint and password, billed as pay-as-you-go. It returns in state `creating`; poll `upstash redis get --db-id <database_id of the branch>` until `state` is `active`. The other `redis` commands take a branch's id like any database's.
+`create-branch` makes a branch: a point-in-time copy of a database (or of another branch) with its own endpoint and password, billed as pay-as-you-go. It returns in state `creating`; poll `upstash redis get --db-id <database_id of the branch>` until `state` is `active`. The other `redis` commands take a branch's id like any database's. A branch cannot be merged back. To use it from application code, read `endpoint` and `rest_token` from `redis get` and set them as `UPSTASH_REDIS_REST_URL` (`https://<endpoint>`) and `UPSTASH_REDIS_REST_TOKEN`; the CLI does not write them.
 
 ### Redis backups
 

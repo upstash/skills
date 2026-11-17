@@ -83,6 +83,24 @@ const redis = new Redis({
 
 > **No credentials yet?** If you're an agent that needs scratch Redis and the user hasn't provided a database, you can mint a temporary one with a single POST to `https://upstash.com/start-redis` (3-day TTL, no signup).
 
+## Branches: test against a copy of real data
+
+A branch is a point-in-time copy of a database with its own endpoint and token. Later changes on either side stay separate, and a branch cannot be merged back. The SDK has no call that creates one: a branch is created on the account, then used like any other database.
+
+- **MCP** (when Upstash MCP tools are in the session): call `redis_create_branch` with `databaseId` and `name`, then poll `redis_get_database` with the returned `database_id` until `state` is `active`. Pass `include_credentials: true` to get the endpoint and REST token.
+- **CLI** (no MCP): `upstash redis create-branch --db-id <id> --name <branch-name>`, then `upstash redis get --db-id <branch database_id>` until `state` is `active`. The output has `endpoint` and `rest_token`.
+
+Neither writes the credentials anywhere, so point the client at the branch yourself, either by setting `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` to the branch's values or explicitly:
+
+```typescript
+const redis = new Redis({
+  url: "https://<branch endpoint>",
+  token: "<branch rest_token>",
+});
+```
+
+A branch is billed as pay-as-you-go whatever the source's plan, so tell the user before copying a large database. The account needs a payment method and the source must be a global database on a pay-as-you-go, fixed or enterprise plan (free databases are refused). Delete a branch like a database: `redis_delete_database`, or `upstash redis delete --db-id <id>`.
+
 ## Skill Files Overview
 
 ### Data Structures (data-structures/)
