@@ -72,8 +72,6 @@ const redis = new Redis({
 });
 ```
 
-> **No credentials yet?** If you're an agent that needs scratch Redis and the user hasn't provided a database, you can mint a temporary one with a single POST to `https://upstash.com/start-redis` (3-day TTL, no signup).
-
 ## Branches: test against a copy of real data
 
 A branch is a point-in-time copy of a database with its own endpoint and token. Later changes on either side stay separate, and a branch cannot be merged back. The SDK has no call that creates one: a branch is created on the account, then used like any other database.

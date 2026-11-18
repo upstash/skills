@@ -18,7 +18,7 @@ the Upstash plugin registers the hosted server at `https://mcp.upstash.com/mcp`.
 Use the CLI when there is no MCP in the session, or when the work is inherently shell work — a CI
 step, a provisioning script, or piping JSON into other commands.
 
-The Upstash CLI (`upstash`) manages Upstash services via the Upstash Developer API. All commands are non-interactive and emit JSON on stdout (`start-redis` prints markdown). Errors go to stderr as `{ "error": "..." }` with exit code `1`.
+The Upstash CLI (`upstash`) manages Upstash services via the Upstash Developer API. All commands are non-interactive and emit JSON on stdout. Errors go to stderr as `{ "error": "..." }` with exit code `1`.
 
 ## Install
 
@@ -59,15 +59,6 @@ export UPSTASH_API_KEY=your_api_key
 ```
 
 Precedence: flags > env vars > `.env` > saved config. Prefer a **read-only** API key for agents when possible — mutations fail at the API, the same way they would in the console.
-
-## Redis without an account
-
-`upstash start-redis` needs no login. It prints markdown (not JSON) with the credentials of a free temporary database, which expires in 72 hours unless the user claims it. An agent passes its own name in `--user-agent`. See `upstash-redis-start` for using the database.
-
-```bash
-upstash start-redis --user-agent claude-code   # or cursor, codex, opencode
-upstash start-redis --id <database-id>         # re-fetch the credentials of an earlier one
-```
 
 ## Resource ID flags
 

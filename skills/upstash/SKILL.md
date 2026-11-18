@@ -1,6 +1,6 @@
 ---
 name: upstash
-description: Work with any Upstash product, SDK, or tool, including serverless Redis (caching, sessions, leaderboards, key-value storage), Ratelimit (rate limiting and throttling), QStash (message queue, cron schedules, background jobs), Workflow (durable long-running functions), Vector (vector database for embeddings, semantic search, and RAG), Search (full-text and semantic search), Box (sandboxed cloud containers for AI agents, TypeScript/JavaScript and Python), Blob (serverless S3-compatible file storage with direct browser uploads), the Upstash CLI, and no-signup scratch Redis for agents. Use when the user mentions Upstash or needs any of these capabilities in a serverless, edge, or Node.js app.
+description: Work with any Upstash product, SDK, or tool, including serverless Redis (caching, sessions, leaderboards, key-value storage), Ratelimit (rate limiting and throttling), QStash (message queue, cron schedules, background jobs), Workflow (durable long-running functions), Vector (vector database for embeddings, semantic search, and RAG), Search (full-text and semantic search), Box (sandboxed cloud containers for AI agents, TypeScript/JavaScript and Python), Blob (serverless S3-compatible file storage with direct browser uploads), and the Upstash CLI. Use when the user mentions Upstash or needs any of these capabilities in a serverless, edge, or Node.js app.
 license: MIT
 metadata:
   author: Upstash
@@ -57,10 +57,6 @@ Rate limiting for serverless and edge apps with the @upstash/ratelimit TypeScrip
 ## [upstash-redis-js](upstash-redis-js/overview.md)
 
 Work with the @upstash/redis TypeScript/JavaScript SDK, a serverless HTTP-based Redis client for Next.js, Vercel, Cloudflare Workers, edge runtimes, and Node.js. Use when adding a cache (cache-aside, TTL strategies), session storage, a key-value store, leaderboards with sorted sets, counters, distributed locks, queues, streams and consumer groups, ring buffers and sparse arrays (ARSET, ARRING), vector search inside Redis (redis.vector), JSON documents, pipelines and transactions, Lua scripting, read replicas, or full-text and hybrid search, facets and aggregations with Upstash Redis Search (not FT.SEARCH; TCP clients use @upstash/search-redis or @upstash/search-ioredis). Also use when migrating from ioredis or node-redis, connecting from serverless without pooling, building AI agents with Upstash AgentKit (agent memory, chat history, RAG tools, resumable streams) for the Vercel AI SDK, TanStack AI, or Vercel Eve, or when the user says Redis cache, KV store, session store, serverless Redis, or Upstash Redis.
-
-## [upstash-redis-start](upstash-redis-start/overview.md)
-
-Provision a zero-config, no-signup, temporary Upstash Redis database for an AI agent with a single POST to https://upstash.com/start-redis, with no account, API key, or SDK setup required. Use when an agent needs scratch Redis right now and the user has not provided credentials, for short-term memory across tool calls, conversation history, a sub-agent work queue, ranked recall, or a quick prototype or demo. Covers idempotent creation and re-fetching credentials, calling the database through the body-style REST API or the official SDKs, and telling the user how to claim it. The database lives 3 days unless the user claims it; not for production data, PII, or secrets.
 
 ## [upstash-search-js](upstash-search-js/overview.md)
 
