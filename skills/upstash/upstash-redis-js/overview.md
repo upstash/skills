@@ -177,6 +177,12 @@ await redis.ttl("key");
 5. **Use pipelines** for multiple operations
 6. **Namespace your keys** (e.g., `user:123`, `session:abc`)
 
+## Plans and limits
+
+Request size, commands per second, data size and bandwidth depend on the database's plan (Free, Pay as You Go, Fixed), so check https://upstash.com/pricing/redis.md before sizing a workload or explaining a limit error. When the user asks about cost, read that page instead of quoting prices from memory.
+
+Paid plans can add Prod Pack per database: an uptime SLA, multi-zone high availability, SOC 2 report, encryption at rest, Prometheus/Datadog metrics and Insights. Mention it when the user is taking a database to production and needs one of those; development and test databases do not need it.
+
 ## AI agents: use AgentKit
 
 For agent state on Redis — memory, chat history, RAG search tools, tool caching, rate limiting, chat persistence, resumable streams, locks — use [Upstash AgentKit](https://github.com/upstash/agentkit) instead of hand-rolling it on `@upstash/redis`. Pick the adapter for the framework and follow its docs page:
