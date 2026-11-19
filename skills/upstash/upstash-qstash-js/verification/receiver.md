@@ -60,7 +60,7 @@ try {
 
 ### With URL Verification
 
-Without `url`, a signature made for any other endpoint of your account is accepted. Pass the URL the message was published to, query string included. Build it from your public origin plus the path, not from `request.url`, which differs behind a proxy and makes `verify` throw `invalid subject`:
+For extra security, verify the request was sent to the correct URL:
 
 ```typescript
 await receiver.verify({
@@ -81,21 +81,6 @@ await receiver.verify({
   clockTolerance: 5, // Allow 5 seconds difference
 });
 ```
-
-## Replay Protection
-
-A signature stays valid for 5 minutes and can be replayed in that window. To reject replays, store each verified `Upstash-Signature` value for 5 minutes (plus your `clockTolerance`) and refuse repeats:
-
-```typescript
-const signature = request.headers.get("upstash-signature")!;
-await receiver.verify({ signature, body });
-
-// redis is an @upstash/redis client; any store with set-if-absent and a TTL works
-const fresh = await redis.set(`qstash-sig:${signature}`, 1, { nx: true, ex: 300 });
-if (!fresh) return new Response("Replay", { status: 409 });
-```
-
-The `Upstash-Message-Id` header is not signed. Use it only to skip retried deliveries, not for replay protection.
 
 ## Required Headers
 
@@ -245,4 +230,4 @@ export const POST = verifySignatureSvelte(async ({ request }) => {
 });
 ```
 
-None of the wrappers (Next.js included) check the URL. Call `receiver.verify` with `url` when you need that. See [Local Development](../fundamentals/local-development.md) for `devMode`.
+See [Local Development](../fundamentals/local-development.md) for `devMode`.
