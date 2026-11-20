@@ -1,10 +1,10 @@
 ## Prefer the MCP server when it is available
 
 If Upstash MCP tools are in the session, call them instead of shelling out to the CLI. They are
-already authenticated and cover the same ground — creating and inspecting Redis databases, running
-Redis commands, usage stats, backups, Vector and Search indexes, Blob buckets, QStash schedules and
-messages, the DLQ, and logs. Installing the Upstash plugin registers the hosted server at
-`https://mcp.upstash.com/mcp`.
+already authenticated and cover the same ground — creating, branching and inspecting Redis databases,
+running Redis commands, usage stats and insights, backups, plans and budgets, Vector and Search
+indexes, Blob buckets and objects, QStash schedules and messages, the DLQ, logs, and Box. Installing
+the Upstash plugin registers the hosted server at `https://mcp.upstash.com/mcp`.
 
 Use the CLI when there is no MCP in the session, or when the work is inherently shell work — a CI
 step, a provisioning script, or piping JSON into other commands.
@@ -58,7 +58,7 @@ Precedence: flags > env vars > `.env` > saved config. Prefer a **read-only** API
 | `--db-id <id>` | Redis |
 | `--index-id <id>` | Vector, Search |
 | `--qstash-id <id>` | QStash |
-| `--bucket-id <id>` | Blob |
+| `<bucket>` (positional, name or id) | Blob |
 | `--team-id <id>` | Team |
 
 ## Redis
@@ -67,6 +67,7 @@ Precedence: flags > env vars > `.env` > saved config. Prefer a **read-only** API
 upstash redis list
 upstash redis get --db-id <id> [--hide-credentials]
 upstash redis create --name <name> --region <region> [--read-regions <r1> <r2>]
+upstash redis create-branch --db-id <id> --name <branch-name>
 upstash redis delete --db-id <id> [--dry-run]
 upstash redis rename --db-id <id> --name <new-name>
 upstash redis reset-password --db-id <id>
@@ -82,6 +83,8 @@ upstash redis move-to-team --db-id <id> --team-id <id>
 ```
 
 Regions — AWS: `us-east-1`, `us-east-2`, `us-west-1`, `us-west-2`, `ca-central-1`, `eu-central-1`, `eu-west-1`, `eu-west-2`, `sa-east-1`, `ap-south-1`, `ap-northeast-1`, `ap-southeast-1`, `ap-southeast-2`, `af-south-1`. GCP: `us-central1`, `us-east4`, `europe-west1`, `asia-northeast1`.
+
+`create-branch` makes a branch: a point-in-time copy of a database (or of another branch) with its own endpoint and password, billed as pay-as-you-go. It returns in state `creating`; poll `upstash redis get --db-id <database_id of the branch>` until `state` is `active`. The other `redis` commands take a branch's id like any database's. A branch cannot be merged back. To use it from application code, read `endpoint` and `rest_token` from `redis get` and set them as `UPSTASH_REDIS_REST_URL` (`https://<endpoint>`) and `UPSTASH_REDIS_REST_TOKEN`; the CLI does not write them.
 
 ### Redis backups
 
@@ -162,22 +165,25 @@ upstash qstash {enable,disable}-prodpack --qstash-id <id>
 
 ## Blob
 
-Run `upstash blob --help` to check that the installed CLI includes Blob support. If the command is unavailable, use the console for bucket management and `upstash-blob-js` for application code until a CLI release includes it.
+The object commands, bucket names in place of ids, and `--write-env` need a recent CLI. If `upstash blob cp --help` fails, run the command with `npx -y upstash@latest`.
 
 ```bash
-upstash blob list
-upstash blob get --bucket-id <id> [--hide-credentials]
-upstash blob create --name <name> [--visibility <private|public>] [--cors <origin> <origin>]
-upstash blob delete --bucket-id <id> [--dry-run]
-upstash blob credentials [--bucket-id <id>]
+upstash blob ls                                  # buckets; `blob list` is the same
+upstash blob get <bucket> [--hide-credentials] [--write-env <path>]
+upstash blob create --name <name> [--visibility <private|public>] [--cors <origin> <origin>] [--write-env <path>]
+upstash blob delete <bucket> [--dry-run]         # empty buckets only
+upstash blob rb <bucket> --force                 # delete every object, then the bucket
+upstash blob credentials [<bucket>] [--token <token>]
 ```
 
-Buckets are `private` by default. `blob get` returns the bucket token, which is a bearer secret for the whole bucket — pass `--hide-credentials` when you only need the metadata.
+`<bucket>` is a bucket name or id. Buckets are `private` by default. `blob get` returns the bucket token, which is a bearer secret for the whole bucket: pass `--hide-credentials` when you only need the metadata, or `--write-env .env.local` to put it where `@upstash/blob` reads it. `--write-env` writes the token to that file as `UPSTASH_BLOB_TOKEN` (file created if missing, other lines kept, mode 600) and prints the bucket without its tokens. It is not the global `--env-path`, which reads credentials.
 
-`blob credentials` exchanges a bucket token for temporary, bucket-scoped S3 credentials to use with the AWS CLI, rclone, or any S3 SDK. With `--bucket-id` it reads the token through the Developer API; with no flag it uses `UPSTASH_BLOB_TOKEN` and needs no account auth at all. `expiresAt` is the expiry as a **unix timestamp in seconds** (multiply by 1000 before comparing with `Date.now()`) — re-mint before it passes rather than caching.
+Each `--cors` origin is `http(s)://host[:port]` with no path or trailing slash (`https://*.example.com` works), passed as its own argument; anything else is rejected. Omit `--cors` to allow all origins.
+
+`blob credentials` exchanges a bucket token for temporary, bucket-scoped S3 credentials to use with the AWS CLI, rclone, or any S3 SDK. With a bucket it reads the token through the Developer API (and waits for a bucket that was just created to finish provisioning); with `--token`, or with neither and `UPSTASH_BLOB_TOKEN` set, it needs no account auth at all. `expiresAt` is the expiry as a **unix timestamp in seconds** (multiply by 1000 before comparing with `Date.now()`) — re-mint before it passes rather than caching.
 
 ```bash
-CREDS=$(upstash blob credentials --bucket-id <id>)
+CREDS=$(upstash blob credentials <bucket>)
 export AWS_ACCESS_KEY_ID=$(echo "$CREDS" | jq -r .accessKeyId)
 export AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | jq -r .secretAccessKey)
 export AWS_SESSION_TOKEN=$(echo "$CREDS" | jq -r .sessionToken)
@@ -186,10 +192,29 @@ aws s3 cp image.png "s3://$(echo "$CREDS" | jq -r .bucket)/image.png" \
   --endpoint-url "$(echo "$CREDS" | jq -r .endpoint)" --region auto
 ```
 
-Object operations are not CLI commands — the bucket is S3-compatible, so use the credentials above with an S3 tool, or the `upstash-blob-js` skill for the TypeScript SDK.
+### Blob objects
+
+The object commands mirror `aws s3`, with `blob://<bucket>/<key>` in place of `s3://`. For application code use the `upstash-blob-js` skill.
+
+```bash
+upstash blob ls <bucket>/images/ [-r] [--summarize]
+upstash blob cp ./photo.png blob://<bucket>/images/
+upstash blob cp ./assets blob://<bucket>/assets -r [--exclude "*.tmp"]
+upstash blob cp blob://<bucket>/images ./images -r          # download
+upstash blob cp blob://<bucket>/config.json - | jq .        # to stdout
+upstash blob mv blob://<bucket>/a.txt blob://<other-bucket>/a.txt
+upstash blob sync ./site blob://<bucket>/site [-d] [--size-only]
+upstash blob rm <bucket>/tmp -r [-n]
+upstash blob presign <bucket>/report.pdf [--expires-in <seconds>]   # download URL, at most 600 s (the default)
+```
+
+`cp`, `mv` and `sync` need `blob://` to tell bucket paths from local ones; `ls`, `rm` and `presign` take `<bucket>/<key>` without it. Shared flags: `-r/--recursive`, `--exclude` / `--include` (the last match wins), `-n/--dryrun`, `-q/--quiet`, `--concurrency <1-16>`, and for written objects `--content-type`, `--cache-control` and `--metadata key=value`. `sync -d` deletes destination files that are not in the source. Local symlinks are followed unless `--no-follow-symlinks` is given. Progress goes to stderr and a JSON summary to stdout; a failed file does not stop the transfer but makes the command exit with an error.
+
+With a bucket token (`--token`, or `UPSTASH_BLOB_TOKEN`) these commands need no login, but only reach that token's bucket, addressed by id: `upstash blob cp ./assets blob://<bucket-id>/assets -r --token "$BLOB_TOKEN"`.
 
 ## Conventions
 
 - Pipe any output to `jq` for field extraction, e.g. `upstash redis list | jq '.[].database_id'`.
 - Use `--dry-run` first on any `delete` or `remove-member`.
 - Use `--hide-credentials` on `redis get` and `blob get` when the secret isn't needed.
+- The CLI sends three `Upstash-Telemetry-*` headers (CLI version, runtime, platform). `upstash telemetry disable` or `UPSTASH_DISABLE_TELEMETRY=1` turns them off; `upstash telemetry status` shows the setting.

@@ -41,6 +41,7 @@ await client.trigger({
 
 When `QSTASH_DEV=true`:
 
+- Calling `serve()` (any platform adapter) starts the dev server right away, so it is up before the first trigger.
 - The underlying `@upstash/qstash` client downloads the QStash CLI binary on first use, spawns the dev server on port `8080` (override via `QSTASH_DEV_PORT`), and reuses an already-running server on that port instead of spawning a duplicate.
 - `serve()` builds a dev-mode `Receiver` internally, so signature verification works against the dev server's deterministic signing keys with no real credentials.
 - It's a no-op in production (`NODE_ENV=production`), during `next build`, and in browser/edge runtimes.
@@ -106,7 +107,7 @@ A common pattern is determining the base URL dynamically based on environment va
 ```ts
 import { Client } from "@upstash/workflow";
 
-const client = Client();
+const client = new Client({ token: process.env.QSTASH_TOKEN! });
 
 // In production, Vercel sets VERCEL_URL. Otherwise use localhost.
 const BASE_URL = process.env.VERCEL_URL

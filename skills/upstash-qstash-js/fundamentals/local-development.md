@@ -24,7 +24,10 @@ When `devMode` is on:
 - Reuses an already-running server on the configured port instead of spawning a duplicate.
 - Injects deterministic dev `baseUrl`, `token`, and signing keys. **Any explicit `token` / `baseUrl` / signing keys you pass are ignored** (a warning is printed). To use real credentials, set `devMode: false`.
 - Forwards dev server logs to stdout/stderr with a dim `[QStash CLI]` prefix.
-- No-ops in production (`NODE_ENV=production`), during `next build`, and in browser/edge runtimes.
+- No-ops in production (`NODE_ENV=production`) and during `next build`. Browser, edge and Cloudflare Workers runtimes cannot spawn the server; they only check that it is reachable.
+- Binaries exist for macOS, Linux and Windows.
+
+When credentials are missing on Node.js or Bun outside production, the SDK's warnings and errors (`new Client()`, `Client.fromEnv()`, `Receiver.verify`, the `verifySignature*` wrappers) point to dev mode. Setting `QSTASH_DEV=true` is enough to get past them locally.
 
 ### Environment variable
 
@@ -52,7 +55,7 @@ await receiver.verify({
 });
 ```
 
-For Next.js, the wrappers accept the same flag:
+The framework wrappers accept the same flag: `verifySignature`, `verifySignatureEdge` and `verifySignatureAppRouter` (`@upstash/qstash/nextjs`), `verifySignatureH3` (`/h3`), `verifySignatureNuxt` (`/nuxt`), `verifySignatureSvelte` (`/svelte`) and `verifySignatureSolidjs` (`/solidjs`). With `QSTASH_DEV=true` they need neither the flag nor signing keys.
 
 ```typescript
 // app/api/webhook/route.ts
@@ -64,27 +67,29 @@ export const POST = verifySignatureAppRouter(
 );
 ```
 
-### Next.js: starting the server before edge routes
+### Starting the server up front
 
-Edge runtimes cannot spawn child processes. If a route in the Edge Runtime is the first thing to use QStash, the SDK can only check whether the server is reachable — it cannot start it. Call `registerQStashDev()` from `instrumentation.ts` to spawn the server during Next.js startup, before any request hits:
+The server normally starts when a `Client` is constructed or sends a request. To start it earlier (a script, a test setup, or Next.js startup), call `startDevServer()`. It only acts when `QSTASH_DEV` is `true` or `1`, is a no-op in production and during `next build`, and never throws (it logs a `[QStash Dev]` warning if the server cannot start).
+
+Edge runtimes cannot spawn child processes. If a route in the Edge Runtime is the first thing to use QStash, the SDK can only check whether the server is reachable. Start it from `instrumentation.ts` so it is up before any request:
 
 ```typescript
 // instrumentation.ts
-import { registerQStashDev } from "@upstash/qstash/nextjs";
+import { startDevServer } from "@upstash/qstash";
 
-export function register() {
-  registerQStashDev();
+export async function register() {
+  await startDevServer();
 }
 ```
 
-`registerQStashDev` is itself a no-op in production and during `next build`.
+`registerQStashDev` from `@upstash/qstash/nextjs` is a deprecated alias of `startDevServer`. It no longer forces dev mode on, so it also needs `QSTASH_DEV=true`.
 
 ### Common pitfalls
 
 - **Passing `token` alongside `devMode: true`** — the explicit token is ignored and you get a console warning. Drop the `token` field, or set `devMode: false` to use it.
 - **Hitting build-time errors in `next build`** — if a route module is evaluated at build time and instantiates the `Client`, mark the route `export const dynamic = "force-dynamic"` so it isn't pre-rendered.
 - **Port 8080 already in use** — the SDK errors with a clear message; either stop the other process or set `QSTASH_DEV_PORT` to a free port (matched on both client and receiver sides).
-- **Calling QStash from an edge route without `instrumentation.ts`** — the edge runtime can't spawn the binary. Either move the call to a Node-runtime route or wire `registerQStashDev()` as shown above.
+- **Calling QStash from an edge route without `instrumentation.ts`** — the edge runtime can't spawn the binary. Either move the call to a Node-runtime route or call `startDevServer()` as shown above.
 
 ## Manual dev server
 

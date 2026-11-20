@@ -32,7 +32,10 @@ export const bucket = Bucket.fromEnv()                          // reads UPSTASH
 Bucket.fromEnv({ cache: "immutable" })                        // default variable, plus options
 Bucket.fromEnv("MEDIA_TOKEN", { cache: "immutable" })           // another variable, plus options
 new Bucket({ token: env.UPSTASH_BLOB_TOKEN })                   // Workers: no process.env
+Bucket.fromEnv({ retry: { retries: 4, backoff: (n) => 250 * 2 ** n } })   // or retry: false
 ```
+
+Failed requests (5xx, 429, dropped connection) are retried twice by default with jittered backoff. `retry` changes the count and the wait in ms (`n` counts from 0; a `Retry-After` from the service wins), and `retry: false` sends each request once.
 
 ## Writing
 
@@ -51,20 +54,20 @@ Bodies: `Request`, `Blob`/`File`, `ArrayBuffer`, typed array, `string`, `Readabl
 | `contentTypes` | any | Allow list, e.g. `["image/*", "application/pdf"]` |
 | `maxSize` | none | Refuse a bigger body with `too_large` |
 | `cache` | bucket default | `Cache-Control` stored with the object |
-| `metadata` | none | `x-amz-meta-*`; lowercase keys, printable ASCII values |
+| `metadata` | none | `x-amz-meta-*`; printable ASCII values, keys are read back lowercased |
 | `allowOverwrite` | `true` | `false` refuses if something is there (`already_exists`) |
 | `ifUnchanged` | none | An etag; fails with `conflict` if it changed |
 | `multipart` | `'16mb'` | Threshold for going up in parts; `true`/`false` force it |
 
-Sizes are **decimal**: `'20mb'` is 20,000,000 bytes. `'5mib'` throws.
+Sizes are **decimal**: `'20mb'` is 20,000,000 bytes, too small for a 20 MiB file. Binary units are explicit: `'20mib'` is 20 * 1024 * 1024. Unit names ignore case.
 
 ```ts
 import { uniquePath } from "@upstash/blob"
 
-uniquePath`${user.id}/${file.name}`   // 'u7/holiday-pic-3xK9mBqR.png'
+uniquePath(`${user.id}/${file.name}`)   // 'u7/Holiday Pic-3xK9mBqR.png'
 ```
 
-Use `uniquePath` for any value you don't control. Each `${}` becomes one slugged filename that can never add a directory, and the finished path gets a random suffix — so two uploads of `photo.png` never collide. The literal parts of the template are passed through as written, so keep `.` and `..` out of them yourself: a path with those segments is refused later, by the call that uses it, with a `TypeError` rather than a `BlobError`.
+`uniquePath` adds a random suffix to the final filename, before its extension, so two uploads of `photo.png` never collide. Everything else is kept as given (case, spaces, Unicode, slashes), so a value can add directories. Nothing is validated here: a path with `.` or `..` segments is refused by the call that uses it (`invalid_input` from an upload route). Store the returned path and authorize reads and deletes against the stored owner and exact path.
 
 `bucket.copy(from, to, { contentType, cache, metadata })` and `bucket.move(from, to, options)` preserve source properties you omit. `bucket.updateJson(path, fn, { maxAttempts: 6 })` retries a read-modify-write on conflict with backoff.
 
@@ -92,7 +95,16 @@ const { url, expiresAt } = await bucket.signedReadUrl("private/report.pdf", {
 })
 ```
 
-Cache the link until `expiresAt`, never a deadline you compute — a link cannot outlive the credential that signed it, so you may get less than you asked for. `await bucket.publicUrl(path)` returns the public URL, `undefined` on a private bucket.
+A signed link lives at most 10 minutes (default 5 for a read); a longer `expiresIn` gets 10. Cache the link until `expiresAt`, never a deadline you compute. `await bucket.publicUrl(path)` returns the public URL, `undefined` on a private bucket.
+
+`signedUploadUrl` is the write counterpart, for one PUT from a client that is not using the upload handler. Send `headers` exactly as returned: they are part of the signature.
+
+```ts
+const upload = await bucket.signedUploadUrl("u/7/report.pdf", { contentType: "application/pdf", size })
+await fetch(upload.url, { method: "PUT", headers: upload.headers, body })
+```
+
+It also takes `expiresIn` (default and maximum `'10m'`), `cache`, `metadata` and `allowOverwrite`. A path with an empty segment (`dir/`, `a//b`) cannot be signed.
 
 ## Deleting
 
@@ -121,7 +133,7 @@ export const uploads = uploadHandler({
   onBeforeUpload: async ({ request, file }) => {
     const user = await getUser(request)
     if (!user) throw new BlobError("unauthorized")     // nothing is signed
-    return { path: uniquePath`${user.id}/${file.name}`, metadata: { owner: user.id } }
+    return { path: uniquePath(`${user.id}/${file.name}`), metadata: { owner: user.id } }
   },
 
   onUploadComplete: async ({ uploadId, path, url, metadata }) => {
@@ -168,12 +180,32 @@ export function UploadForm() {
 
 This example assumes a **public** bucket. On a private one `url` is `undefined`, so store `path` instead and hand the client a `bucket.signedReadUrl(path)` when it needs to read.
 
+`onBeforeUpload` runs only on the first request of an upload. To check the session on every request, add `context`: it runs on each POST before any body is read, and its value is `ctx` in every callback. `state` returned from `onBeforeUpload` reaches `onUploadComplete` typed, with no annotation (on a handler without `routes`; a named route gets a typed `state` through `uploadRoute()`).
+
+```ts
+export const uploads = uploadHandler({
+  context: async (request: Request) => {              // write it above the callbacks that read ctx
+    const user = await getUser(request)
+    if (!user) throw new BlobError("unauthorized")
+    return user
+  },
+  onBeforeUpload: ({ ctx, file }) => ({ path: uniquePath(`${ctx.id}/${file.name}`), state: { ownerId: ctx.id } }),
+  onUploadComplete: async ({ state, path }) => {
+    await db.files.upsert({ path, ownerId: state.ownerId })
+  },
+})
+```
+
 Two rules that bite:
 
 - **`onUploadComplete` can run more than once.** The browser retries it, so upsert on `uploadId` rather than inserting.
 - **A throw out of `onUploadComplete` deletes the object.** That is right for a refusal and wrong for a transient database error — catch your own storage errors.
 
-Files over 16 MB go up in parts, which is what gives `pause()`, `resume()`, per-part retry, and resume-after-reload when the user picks the same file again. `percent` caps at 99 until `status` is `done`; drive UI off `upload.pending`.
+Files over 16 MB go up in parts, four at a time, which is what gives `pause()`, `resume()`, per-part retry, and resume-after-reload when the user picks the same file again. `percent` caps at 99 until `status` is `done`; drive UI off `upload.pending`.
+
+An error whose hint says the browser blocked the request before sending any bytes is CORS: add the page's origin to the bucket's CORS origins in the Upstash Console. The route logs a `[upstash-blob]` warning for such an origin too.
+
+Without React, `upload(file, { route: "/api/upload" })` from `@upstash/blob/browser` returns the same task (`await task.done`). It needs `XMLHttpRequest`: in Node or any server runtime it throws `invalid_input`, so use `bucket.put` there.
 
 Use `multipart: true` on the handler to make every upload multipart. Then a closed tab leaves incomplete parts rather than a stored object nobody recorded, and one cron cleans up:
 

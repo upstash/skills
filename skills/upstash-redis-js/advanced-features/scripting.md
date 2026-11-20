@@ -122,3 +122,32 @@ const updated = await redis.eval<number>(setIfHigherScript, ["high_score:user:12
 
 console.log(updated === 1 ? "New high score!" : "Score not higher");
 ```
+
+### Reusable Scripts (`createScript`)
+
+`createScript` hashes the script once. `exec` tries `EVALSHA` first and falls back to `EVAL` when the script is not cached, so there is no `scriptLoad` step. Keys and args are string arrays.
+
+```typescript
+const incrBy = redis.createScript<number>("return redis.call('INCRBY', KEYS[1], ARGV[1])");
+const total = await incrBy.exec(["counter"], ["5"]);
+
+// Read-only script: runs with EVAL_RO / EVALSHA_RO and cannot write
+const getValue = redis.createScript<string>("return redis.call('GET', KEYS[1])", { readonly: true });
+const value = await getValue.exec(["key"], []);
+```
+
+One-off read-only scripts: `redis.evalRo(script, keys, args)` and `redis.evalshaRo(sha, keys, args)`.
+
+### Redis Functions
+
+```typescript
+const code = `#!lua name=mylib
+redis.register_function('set_value', function(keys, args)
+  return redis.call('SET', keys[1], args[1])
+end)`;
+
+await redis.functions.load({ code, replace: true }); // "mylib"
+await redis.functions.call("set_value", ["key"], ["value"]); // "OK"
+// redis.functions.callRo(name, keys, args) for functions that only read
+// also: redis.functions.list(), .stats(), .delete("mylib"), .flush()
+```

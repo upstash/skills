@@ -97,3 +97,5 @@ All three packages expose identical search APIs:
 - `index.addAlias()`
 
 The only difference is initialization. The `s` schema builder is re-exported from all packages.
+
+Hybrid fields (`s.hybrid()`) and the `$ann`, `$rrf` and `$standard` retrievers work through both adapters from version 5.0.0, which needs `@upstash/redis` 1.41.0 or later.

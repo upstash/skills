@@ -57,12 +57,13 @@ const index = await redis.search.createIndex({
 | `s.date()`     | DATE        | `string`   | Date range queries               |
 | `s.keyword()`  | KEYWORD     | `string`   | Exact match, lexicographic range |
 | `s.facet()`    | FACET       | `string`   | Faceted aggregations             |
+| `s.hybrid()`   | HYBRID      | `string`   | Full-text and semantic search    |
 | `s.object({})` | (nested)    | `object`   | Nested field groups              |
 
 ### Field Options
 
 - `.noTokenize()` - (TEXT only) Don't split on whitespace/punctuation. Use for SKUs, URLs, emails
-- `.noStem()` - (TEXT only) Don't reduce words to stems. Use for brand names, proper nouns
+- `.noStem()` - (TEXT, HYBRID) Don't reduce words to stems. Use for brand names, proper nouns
 - `.fast()` - (BOOL, DATE) Enable fast filtering
 - `.from("fieldName")` - Map index field to a different field name in the stored data
 
@@ -77,7 +78,7 @@ const index = await redis.search.createIndex({
 
 For detailed usage of each command category, see:
 
-- [commands/querying.md](./commands/querying.md) - Query and count documents with filters, pagination, sorting, highlighting
+- [commands/querying.md](./commands/querying.md) - Query and count documents with filters, pagination, sorting, highlighting, hybrid search (`$ann`, `$rrf`)
 - [commands/aggregating.md](./commands/aggregating.md) - Aggregations: metrics ($avg, $sum, $min, $max), buckets ($terms, $range, $histogram), facets
 - [commands/index-management.md](./commands/index-management.md) - Create, describe, drop indexes; wait for indexing
 - [commands/aliases.md](./commands/aliases.md) - Manage index aliases for zero-downtime reindexing

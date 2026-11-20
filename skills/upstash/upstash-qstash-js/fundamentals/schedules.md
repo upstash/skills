@@ -9,7 +9,7 @@ import { Client } from "@upstash/qstash";
 
 const client = new Client({ token: process.env.QSTASH_TOKEN! });
 
-const result = await client.schedules().create({
+const result = await client.schedules.create({
   destination: "https://api.example.com/daily-report",
   cron: "0 9 * * *", // Daily at 9 AM UTC
   body: JSON.stringify({ report: "daily" }),
@@ -20,7 +20,7 @@ console.log(result.scheduleId);
 ```
 
 - `destination`: URL or URL group name
-- `cron`: Cron expression (required)
+- `cron`: Cron expression (required). Evaluated in UTC; prefix `CRON_TZ=<IANA zone> ` to run in a timezone, e.g. `"CRON_TZ=America/New_York 0 9 * * *"`
 - `body`: Message payload
 - All publish options supported (retries, timeout, callback, etc.)
 
@@ -49,7 +49,7 @@ Format: `minute hour day month weekday`
 ### List All Schedules
 
 ```typescript
-const schedules = await client.schedules().list();
+const schedules = await client.schedules.list();
 
 schedules.forEach((s) => {
   console.log(`${s.scheduleId}: ${s.cron} -> ${s.destination}`);
@@ -61,7 +61,7 @@ schedules.forEach((s) => {
 ### Get Schedule Details
 
 ```typescript
-const schedule = await client.schedules().get("scd_123...");
+const schedule = await client.schedules.get("scd_123...");
 
 console.log(schedule.cron);
 console.log(schedule.destination);
@@ -72,17 +72,17 @@ console.log(schedule.body); // Base64 encoded
 ### Delete Schedule
 
 ```typescript
-await client.schedules().delete("scd_123...");
+await client.schedules.delete("scd_123...");
 ```
 
 ### Pause and Resume
 
 ```typescript
 // Pause - stops scheduling new messages
-await client.schedules().pause({ scheduleId: "scd_123..." });
+await client.schedules.pause({ schedule: "scd_123..." });
 
 // Resume - restarts scheduling
-await client.schedules().resume({ scheduleId: "scd_123..." });
+await client.schedules.resume({ schedule: "scd_123..." });
 ```
 
 In-flight messages continue when paused.
@@ -90,7 +90,7 @@ In-flight messages continue when paused.
 ## Schedule with Options
 
 ```typescript
-await client.schedules().create({
+await client.schedules.create({
   destination: "https://api.example.com/cleanup",
   cron: "0 2 * * *", // Daily at 2 AM
   body: JSON.stringify({ task: "cleanup" }),
@@ -99,14 +99,17 @@ await client.schedules().create({
   timeout: 120,
   callback: "https://api.example.com/schedule-callback",
   failureCallback: "https://api.example.com/schedule-failure",
-  label: "nightly-cleanup",
+  label: ["nightly", "cleanup"], // a string or an array of labels
+  redact: { body: true, header: ["Authorization"] }, // hide these fields in logs
 });
 ```
+
+`schedules.get()` and `list()` return the labels as `labels: string[]`. The older `label` field holds only the first one.
 
 ## Schedule to URL Group
 
 ```typescript
-await client.schedules().create({
+await client.schedules.create({
   destination: "status-checkers", // URL group name
   cron: "*/5 * * * *", // Every 5 minutes
   body: JSON.stringify({ check: "health" }),
@@ -118,7 +121,7 @@ Schedule creates one message per endpoint in the group on each trigger.
 ## Schedule to Queue
 
 ```typescript
-await client.schedules().create({
+await client.schedules.create({
   destination: "https://api.example.com/process",
   cron: "0 * * * *",
   queueName: "hourly-tasks",
@@ -133,7 +136,7 @@ Messages are enqueued for ordered FIFO delivery. See [Queues](queues-and-flow-co
 To update, provide the existing `scheduleId`:
 
 ```typescript
-await client.schedules().create({
+await client.schedules.create({
   scheduleId: "scd_123...", // Existing schedule ID
   destination: "https://api.example.com/updated-endpoint",
   cron: "0 10 * * *", // New time
@@ -148,7 +151,7 @@ All fields are replaced with new values.
 Prevent duplicate schedules:
 
 ```typescript
-await client.schedules().create({
+await client.schedules.create({
   destination: "https://api.example.com/daily",
   cron: "0 9 * * *",
   deduplicationId: "daily-report-schedule",
@@ -163,7 +166,7 @@ Deduplication happens before schedule creation. See [Deduplication](../advanced/
 Schedule metadata includes execution history:
 
 ```typescript
-const schedule = await client.schedules().get("scd_123...");
+const schedule = await client.schedules.get("scd_123...");
 
 console.log(schedule.lastScheduleTime); // Last execution time
 console.log(schedule.nextScheduleTime); // Next execution time

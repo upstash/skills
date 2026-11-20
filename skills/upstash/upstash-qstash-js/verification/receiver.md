@@ -56,6 +56,8 @@ try {
 }
 ```
 
+`verify` resolves to `true` or throws; it never returns `false`.
+
 ### With URL Verification
 
 For extra security, verify the request was sent to the correct URL:
@@ -115,6 +117,7 @@ try {
 
 1. **Missing or wrong signing keys**
    - Verify keys in Upstash Console match environment variables
+   - With no keys at all, `verify` throws a plain `Error`, not a `SignatureError`
 2. **Body mismatch**
 
    - Ensure you pass the raw request body (not parsed JSON)
@@ -211,3 +214,20 @@ const data = JSON.parse(body);
 For framework-specific implementations, see:
 
 - [Next.js Verification](platform-specific/nextjs.md)
+
+Other frameworks have a wrapper with the same `(handler, config?)` shape and the options `currentSigningKey`, `nextSigningKey`, `clockTolerance` and `devMode`:
+
+```typescript
+import { verifySignatureH3 } from "@upstash/qstash/h3";
+import { verifySignatureNuxt } from "@upstash/qstash/nuxt";
+import { verifySignatureSvelte } from "@upstash/qstash/svelte";
+import { verifySignatureSolidjs } from "@upstash/qstash/solidjs";
+
+// SvelteKit: src/routes/api/webhook/+server.ts
+export const POST = verifySignatureSvelte(async ({ request }) => {
+  const data = await request.json();
+  return new Response("OK");
+});
+```
+
+See [Local Development](../fundamentals/local-development.md) for `devMode`.

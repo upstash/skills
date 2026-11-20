@@ -38,23 +38,29 @@ grant.
 
 | Tool | Actions / purpose |
 |---|---|
-| `box_manage` | create, list, get, delete, pause, resume, fork |
+| `box_manage` | create, list, get, status (cheaper than get, for polling), delete (`box_id`, or `box_ids` for several at once), pause, resume, fork, reset (wipes the workspace, keeps the id) |
 | `box_exec` | run a shell command in the box (`command` is an argv array, `folder` is the working directory) |
-| `box_git` | clone, status, diff, commit, checkout, push, create_pr |
+| `box_git` | clone, status, diff, commit, checkout, push, create_pr, create_issue |
 | `box_preview` | create, list, delete public URLs for ports in the box |
 | `box_browser` | goto, content, screenshot, tabs, tab_new, tab_close, live_view |
 | `box_snapshots` | create, list, list_all, delete, restore (a new box from a snapshot) |
-| `box_logs`, `box_runs` | what happened inside a box, and its run history |
+| `box_logs`, `box_runs` | what happened inside a box, and its run history (`box_runs` `cancel` stops a run that is still going) |
+| `box_schedules` | create, list, get, update, pause, resume, delete cron schedules (UTC) that run a command or an agent prompt in a box |
+| `box_config`, `box_env` | a running box's model, labels, skills, MCP servers, network policy, git identity and init command; account-level env vars for boxes created afterwards |
+| `box_metrics`, `box_account` | CPU, memory, disk and token usage of one box; cost, billing and logs across every box |
 | `box_apikey` | list, create, delete Box API keys for a deployed app or CI (the key outlives the OAuth grant, so tell the user to revoke it when done); `read_only: true` makes a key that can only read and run exec, for monitoring or debugging |
-| `blob_bucket` | list, create (create defaults to `visibility: public`) |
+| `blob_bucket` | list, get, stats, create (defaults to `visibility: public`), delete (empty buckets only), reset_token |
+| `blob_object` | list (by `prefix`), delete (by `paths`) the objects in a bucket |
 | `blob_upload_url` | presigned PUT URLs for paths in a bucket, plus `public_url` on public buckets |
+| `blob_download_url` | presigned GET URLs (at most 10 minutes), the way to read a private bucket |
 
 ## The flow: one task, one box
 
 1. **Create.** `box_manage` `create`. Set `browser: true` if you will take
    screenshots or check pages. Use `ephemeral: true` with a `ttl` for
    throwaway work (no paid plan needed); use `keep_alive: true` when a preview
-   URL must outlive the session (paid plan). Note the returned `id`.
+   URL must outlive the session (paid plan, billed for as long as the box
+   exists, so confirm with the user first). Note the returned `id`.
 2. **Clone with `box_git` `clone`**, never with `git` in `box_exec`. The clone
    is what writes the account's GitHub credentials into the box; without it
    `push` and `create_pr` fail with a bare 500. The checkout lands at
@@ -81,7 +87,8 @@ grant.
 6. **Publish screenshots.** GitHub's attachment endpoint rejects the box's
    token, so images go through Blob. `blob_bucket` `list`, and `create` a
    **public** one if none fits (private buckets only serve short-lived
-   signed URLs). `blob_upload_url` with `bucket_id` and
+   signed URLs, from `blob_download_url`). `blob_upload_url` with `bucket_id`
+   and
    `files: [{path: "<repo>/<branch>/after.png", content_type: "image/png", size: <bytes>}]`,
    minted right before use (a URL lives at most 10 minutes). Then `box_exec`
    the `curl_example` from the result, sending the returned headers verbatim
@@ -97,8 +104,9 @@ grant.
 ## Scaling out
 
 - One box per independent task. Create them with a shared `labels` entry,
-  drive them in parallel, and `box_manage` `list` with `label` to find and
-  delete them at the end. Never run two tasks in one box at once.
+  drive them in parallel, and `box_manage` `list` with `label` to find them
+  at the end, then one `delete` with `box_ids`. Never run two tasks in one
+  box at once.
 - When the client has subagents, give each one its own box and run them in
   parallel; agents sharing a box overwrite each other's files and processes.
 - When every task needs the same expensive setup (clone, dependency install,
@@ -235,7 +243,8 @@ files.
   or `cache-control` → 403 from storage (`SignatureDoesNotMatch`). An expired
   URL → mint again.
 - Bucket names are account-wide. Reuse one bucket such as `agent-proof` with
-  per-repo prefixes rather than creating one per run.
+  per-repo prefixes rather than creating one per run, and clear old files with
+  `blob_object` `list` and `delete`.
 - `box_browser` fails with "browser is not enabled for this box" unless the
   box was created with `browser: true`; there is no way to add it later.
 - A public Blob host caches objects for an hour (`cache-control` on the

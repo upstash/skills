@@ -122,6 +122,30 @@ await client.publishJSON({
 - Default: `1` (1 second)
 - Examples: `60`, `"1m"`, `"5s"`, `"1h"`
 
+### Managing a Flow Control Key
+
+```typescript
+const info = await client.flowControl.get("user-123");
+console.log(info.waitListSize, info.parallelismCount, info.parallelismMax);
+console.log(info.isPaused, info.isPinnedParallelism, info.isPinnedRate);
+
+// Pause delivery. Waiting and new messages stay in the wait list until resume.
+await client.flowControl.pause("user-123");
+await client.flowControl.resume("user-123");
+
+// Pin a configuration. While pinned, the values sent with incoming messages are ignored.
+await client.flowControl.pin("user-123", { parallelism: 5, rate: 100, period: 60 });
+await client.flowControl.unpin("user-123", { parallelism: true, rate: true });
+
+// Clear the current rate count and start a new period now.
+await client.flowControl.resetRate("user-123");
+
+// Account-wide parallelism: { parallelismMax, parallelismCount }
+await client.flowControl.getGlobalParallelism();
+```
+
+`pin` takes `period` in seconds. `unpin` takes booleans and only unpins the parts set to `true`.
+
 ## Queues vs Flow Control
 
 **Use Queues when:**

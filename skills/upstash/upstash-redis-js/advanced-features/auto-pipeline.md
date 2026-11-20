@@ -17,6 +17,8 @@ It's enabled by default. Use `enableAutoPipelining: false` to disable automatic 
 
 - Only works with independent commands (no command depends on another's result)
 - Not beneficial for single commands
+- Not batched, each is its own request: `scan`, `keys`, `dbsize`, `flushdb`, `flushall`, `hgetall`, `hkeys`, `hscan`, `lrange`, `smembers`, `sscan`, `xrange`, `xrevrange`, `zrange`, `zscan`, and `redis.search` / `redis.vector` calls
+- A batch holds at most 1000 commands, larger ones are split into more requests
 
 ## Examples
 
@@ -39,11 +41,28 @@ const [user, posts, comments] = await Promise.all([
 // Auto-pipeline batches these independent operations
 async function fetchUserData(userId: string) {
   const [profile, settings, activity] = await Promise.all([
-    redis.hgetall(`user:${userId}:profile`),
-    redis.hgetall(`user:${userId}:settings`),
-    redis.zrange(`user:${userId}:activity`, 0, 9),
+    redis.hmget(`user:${userId}:profile`, "name", "email"),
+    redis.hget(`user:${userId}:settings`, "theme"),
+    redis.zcard(`user:${userId}:activity`),
   ]);
 
   return { profile, settings, activity };
 }
 ```
+
+### Reads and writes are batched separately
+
+Since 1.38.0, commands issued together go into two pipelines, one for reads and one for writes, sent as parallel HTTP requests. A read is not guaranteed to see a write from the same `Promise.all`:
+
+```typescript
+// WRONG: the get can run before the set
+const [, value] = await Promise.all([redis.set("key", "value"), redis.get("key")]);
+
+// CORRECT: await the write, then read
+await redis.set("key", "value");
+const value = await redis.get("key");
+```
+
+Use `redis.pipeline()` or `redis.multi()` when commands must run in order in one request.
+
+A failed command rejects only its own promise with an `UpstashError`; the other commands in the batch still resolve.

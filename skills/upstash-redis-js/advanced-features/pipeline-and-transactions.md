@@ -68,3 +68,17 @@ const remaining = await redis.eval<number>(
 );
 // -1 means nothing was written
 ```
+
+### Per-Command Errors (`keepErrors`)
+
+`exec()` throws if any command fails. Pass `keepErrors: true` to get `{ result, error }` for each command instead:
+
+```typescript
+const p = redis.pipeline();
+p.set("key", "value");
+p.evalsha("wrong-sha1", [], []);
+
+const results = await p.exec({ keepErrors: true });
+results[0].result; // "OK"
+results[1].error; // "NOSCRIPT No matching script. Please use EVAL."
+```

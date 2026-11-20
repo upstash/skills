@@ -4,10 +4,9 @@
   "groupings": [
     {
       "title": "Start here",
-      "description": "The combined skill for every Upstash product, plus no-signup scratch Redis and the CLI.",
+      "description": "The combined skill for every Upstash product, plus the CLI.",
       "skills": [
         "upstash",
-        "upstash-redis-start",
         "upstash-cli"
       ]
     },

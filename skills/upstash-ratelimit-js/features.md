@@ -74,6 +74,13 @@ Example:
 await ratelimit.limit("identifier", { rate: batchSize });
 ```
 
+A negative `rate` refunds tokens and always succeeds:
+```ts
+await ratelimit.limit("identifier", { rate: -3 });
+```
+
+With `tokenBucket`, a `rate` larger than the remaining tokens is rejected without consuming any. Fixed and sliding windows count the request even when they reject it.
+
 ## Multi Region
 
 Multi-region rate limiting provides lower latency and state replication via CRDTs.
@@ -107,6 +114,18 @@ const ratelimit = new Ratelimit({
 await ratelimit.setDynamicLimit({ limit: 5 });
 const current = await ratelimit.getDynamicLimit();
 await ratelimit.setDynamicLimit({ limit: false });
+```
+
+## Telemetry
+
+The SDK adds its name and version to the telemetry header of the Redis client you pass in. Opt out with `enableTelemetry: false`, or set the `UPSTASH_DISABLE_TELEMETRY` environment variable. Works for `MultiRegionRatelimit` too.
+
+```ts
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "10 s"),
+  enableTelemetry: false,
+});
 ```
 
 ## Common Pitfalls

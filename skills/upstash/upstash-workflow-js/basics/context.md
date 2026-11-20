@@ -4,6 +4,27 @@ This skill documents all workflow context functions available inside a TypeScrip
 
 ---
 
+## Context properties
+
+```ts
+context.requestPayload; // payload the run was triggered with
+context.headers; // headers of the trigger request
+context.workflowRunId;
+context.workflowRunCreatedAt; // creation time of the run, Unix ms
+context.url; // workflow endpoint URL
+context.env;
+context.labels; // string[], labels passed to client.trigger (context.label is deprecated)
+context.retried; // retries of the current request so far: 0 on first delivery, 1 on first retry
+context.flowControl; // flow control applied to the current request, if any
+context.retries; // retry limit of the current request
+context.retryDelay; // retry delay expression of the current request, if any
+```
+
+- `flowControl`, `retries` and `retryDelay` are the values the run was triggered with, except while a step with its own settings executes (see `context.run`).
+- Read `context.retried` inside a step to act on a retry, for example to fall back after the second attempt.
+
+---
+
 ## context.api
 
 `context.api` provides typed integrations for OpenAI, Anthropic, and Resend. These calls behave like `context.call` but enforce the correct operation names and body types.
@@ -70,7 +91,7 @@ Performs an HTTP request with long execution windows (up to 12 hours). Always re
 - `retries`: number of retry attempts.
 - `retryDelay`: retry delay expression as string or number (in milliseconds).
 - `flowControl`: throttling config.
-- `timeout`: seconds for each attempt.
+- `timeout`: max time to wait for a response, as a duration string such as `"20s"`. A bare number is rejected by QStash.
 - `workflow`: used only when invoking a workflow inside `serveMany`.
 
 ### Example (showing most fields)
@@ -83,7 +104,7 @@ const response = await context.call("sync user", {
   body: JSON.stringify({ id: userId, name }),
   retries: 3,
   retryDelay: "pow(2, retried)", // exponential
-  timeout: 20,
+  timeout: "20s",
   flowControl: {
     key: "user-sync",
     rate: 5,
@@ -138,6 +159,7 @@ Invokes another workflow (must be served under the same `serveMany`) and waits f
 - `body`: becomes `requestPayload` of invoked workflow.
 - `headers`: forwarded headers.
 - `workflowRunId`: optional override.
+- `label`: string or string[], labels of the invoked run.
 - `retries`, `retryDelay`, `flowControl`: control invocation retry strategy.
 
 ### Example
@@ -167,6 +189,14 @@ const { notifyResponse } = await context.notify("notify step", "order-updated", 
 
 `notifyResponse` lists all workflows resumed by this event.
 
+Pass a workflow run id as the fourth argument to keep the event for that run even if it has not reached `waitForEvent` yet (lookback):
+
+```ts
+await context.notify("notify step", "order-updated", { status: "shipped" }, "wfr_123");
+```
+
+Event ids may only contain letters, digits, `-`, `_` and `.`.
+
 ---
 
 ## context.run
@@ -185,6 +215,21 @@ const a = context.run("step A", () => foo());
 const b = context.run("step B", () => bar());
 await Promise.all([a, b]);
 ```
+
+### Step-level settings
+
+The optional third argument overrides the flow control and retries the run was triggered with, for this step only:
+
+```ts
+const result = await context.run("charge card", () => charge(user), {
+  flowControl: { key: "payments", parallelism: 3 },
+  retries: 5,
+  retryDelay: "1000 * (1 + retried)",
+});
+```
+
+- A step with settings can cost one extra QStash message and one extra invocation of your endpoint.
+- `retries` must be a non-negative integer and `retryDelay` a string.
 
 ### Pitfalls
 
@@ -206,7 +251,7 @@ await context.sleep("wait 1 day", "1d");
 
 ## context.sleepUntil
 
-Pauses execution until a specific `Date`, timestamp, or parseable string.
+Pauses execution until a specific `Date`, timestamp in Unix **seconds**, or parseable string. Do not pass `Date.now()` (milliseconds); pass `new Date(ms)` instead.
 
 ### Example
 
@@ -227,4 +272,16 @@ Waits for an event (triggered by `context.notify`) or until timeout.
 const { eventData, timeout } = await context.waitForEvent("wait for update", "order-updated", {
   timeout: "2h",
 });
+```
+
+---
+
+## context.waitForWebhook
+
+Waits for a request to a webhook created with `context.createWebhook`, or until the timeout. See features/webhooks.
+
+### Example
+
+```ts
+const { request, timeout } = await context.waitForWebhook("wait webhook", webhook, "5m");
 ```
