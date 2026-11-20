@@ -82,10 +82,10 @@ codex plugin add upstash@upstash
 
 ### Cursor (skills + MCP)
 
-We are waiting for this plugin to be accepted to the official
-[Cursor Marketplace](https://cursor.com/marketplace). Once listed, it can be installed
-from **Customize** in the Cursor sidebar, and it brings both the skills and the MCP server.
-Until then, `npx upstash setup --cursor` installs the same plugin locally (reload the Cursor window afterwards).
+Install the plugin from its [Cursor Marketplace listing](https://cursor.com/marketplace/upstash),
+or search for Upstash under **Customize** in the Cursor sidebar. It brings both the skills and the
+MCP server. `npx upstash setup --cursor` installs the same plugin from the terminal (reload the
+Cursor window afterwards).
 
 ### Gemini CLI (skills + MCP)
 
