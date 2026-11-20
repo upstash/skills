@@ -175,7 +175,8 @@ Upstash runs its own engine: disk-backed, with per-key locks. A slow command usu
 - **Script limit:** scripts were killed at about 250 ms, with or without the flag, and writes made before the kill stay. `createScript` in `@upstash/redis` handles the `EVALSHA` fallback.
 - **`WATCH`:** needs TCP, since the REST API doesn't support it.
 - **SDK:** `@upstash/redis` uses HTTP, so it needs no pool. Use 1.38.4 or later for `readYourWrites`.
-- **Monitoring:** there is no `SLOWLOG`, so use the console and Prometheus metrics. `INFO` counters are per replica.
+- **Monitoring:** there is no `SLOWLOG`, so use the console and Prometheus metrics. `INFO` counters are per replica. Prometheus, Datadog and the console's Insights need Prod Pack or an Enterprise plan.
+- **Plans:** Free, Pay as You Go and Fixed differ in limits and billing. Prod Pack is a per-database add-on for paid plans: an uptime SLA, multi-zone high availability, SOC 2 report, encryption at rest and the monitoring above. Raise it when a production database needs one of those, and leave it off development and test databases. Prices and limits: https://upstash.com/pricing/redis.md
 
 | Error | Meaning | Fix |
 | --- | --- | --- |
