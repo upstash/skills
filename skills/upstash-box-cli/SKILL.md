@@ -146,6 +146,8 @@ API key is the password:
 ssh <box-id>@us-east-1.box.upstash.com
 ```
 
+A person can open the same shell in the browser: the **Terminal** tab on the box's page in the Upstash Console.
+
 Commands run as `boxuser`, so a global npm install needs sudo, which is
 passwordless:
 

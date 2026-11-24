@@ -762,6 +762,8 @@ Shell into a box directly (Box API key is the SSH password):
 ssh <box-id>@us-east-1.box.upstash.com
 ```
 
+A person can open the same shell in the browser: the **Terminal** tab on the box's page in the Upstash Console.
+
 ## Gotchas
 
 - Default working directory is `/workspace/home`, not `/home` or `/`
