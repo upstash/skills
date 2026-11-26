@@ -84,7 +84,7 @@ upstash redis move-to-team --db-id <id> --team-id <id>
 
 Regions — AWS: `us-east-1`, `us-east-2`, `us-west-1`, `us-west-2`, `ca-central-1`, `eu-central-1`, `eu-west-1`, `eu-west-2`, `sa-east-1`, `ap-south-1`, `ap-northeast-1`, `ap-southeast-1`, `ap-southeast-2`, `af-south-1`. GCP: `us-central1`, `us-east4`, `europe-west1`, `asia-northeast1`.
 
-`create-branch` makes a branch: a point-in-time copy of a database (or of another branch) with its own endpoint and password, billed as pay-as-you-go. It returns in state `creating`; poll `upstash redis get --db-id <database_id of the branch>` until `state` is `active`. The other `redis` commands take a branch's id like any database's. A branch cannot be merged back. To use it from application code, read `endpoint` and `rest_token` from `redis get` and set them as `UPSTASH_REDIS_REST_URL` (`https://<endpoint>`) and `UPSTASH_REDIS_REST_TOKEN`; the CLI does not write them.
+`create-branch` makes a branch: a point-in-time copy of a database (or of another branch) with its own endpoint and password, billed as pay-as-you-go. It returns in state `creating`; poll `upstash redis get --db-id <database_id of the branch>` until `state` is `active`. The other `redis` commands take a branch's id like any database's. A branch cannot be merged back. To use it from application code, write its credentials to the env file as shown under [Redis credentials](#redis-credentials); the CLI does not write them itself.
 
 ### Redis backups
 
@@ -103,7 +103,21 @@ upstash redis exec --db-url <url> --db-token <token> SET key value
 upstash redis exec --db-url <url> --db-token <token> --json '["SET","key","value"]'
 ```
 
-`--db-url` / `--db-token` fall back to `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`. Get both from `endpoint` and `rest_token` in `upstash redis get --db-id <id>`.
+`--db-url` / `--db-token` fall back to `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`, so set those (below) rather than passing the token on the command line.
+
+### Redis credentials
+
+`redis get` prints the database password and `rest_token`, which are bearer secrets for the whole database. Don't read them into the conversation: use `--hide-credentials` whenever you only need metadata, and when the app needs them, pipe the output straight into its env file:
+
+Before writing, check that `.env.local` is git-ignored (`git check-ignore .env.local` prints the name) and doesn't already define these names. The `jq` output starts with a newline, so the append never joins the last line of a file that lacks a trailing newline:
+
+```bash
+upstash redis get --db-id <id> \
+  | jq -r '"\nUPSTASH_REDIS_REST_URL=https://\(.endpoint)\nUPSTASH_REDIS_REST_TOKEN=\(.rest_token)"' \
+  >> .env.local
+```
+
+To run `redis exec` against it, load the file into the shell first (`set -a; . ./.env.local; set +a`).
 
 ## Team
 
@@ -216,5 +230,6 @@ With a bucket token (`--token`, or `UPSTASH_BLOB_TOKEN`) these commands need no 
 
 - Pipe any output to `jq` for field extraction, e.g. `upstash redis list | jq '.[].database_id'`.
 - Use `--dry-run` first on any `delete` or `remove-member`.
-- Use `--hide-credentials` on `redis get` and `blob get` when the secret isn't needed.
+- Use `--hide-credentials` on `redis get` and `blob get` unless you are writing the secret to an env file; never print a token to read it.
+- Run destructive commands (`redis delete`, `team delete`, `blob rb --force`, `reset-password`) only on resources the user named, after confirming the id with them.
 - The CLI sends three `Upstash-Telemetry-*` headers (CLI version, runtime, platform). `upstash telemetry disable` or `UPSTASH_DISABLE_TELEMETRY=1` turns them off; `upstash telemetry status` shows the setting.

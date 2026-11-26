@@ -76,10 +76,10 @@ const redis = new Redis({
 
 A branch is a point-in-time copy of a database with its own endpoint and token. Later changes on either side stay separate, and a branch cannot be merged back. The SDK has no call that creates one: a branch is created on the account, then used like any other database.
 
-- **MCP** (when Upstash MCP tools are in the session): call `redis_create_branch` with `databaseId` and `name`, then poll `redis_get_database` with the returned `database_id` until `state` is `active`. Pass `include_credentials: true` to get the endpoint and REST token.
-- **CLI** (no MCP): `upstash redis create-branch --db-id <id> --name <branch-name>`, then `upstash redis get --db-id <branch database_id>` until `state` is `active`. The output has `endpoint` and `rest_token`.
+- **MCP** (when Upstash MCP tools are in the session): call `redis_create_branch` with `databaseId` and `name`, then poll `redis_get_database` with the returned `database_id` until `state` is `active`. Leave `include_credentials` off: with it, the REST token comes back into the conversation. The response has the endpoint; for the token, use the CLI below if it is installed, or ask the user to copy the branch's REST token from the console into the env file.
+- **CLI** (no MCP): `upstash redis create-branch --db-id <id> --name <branch-name>`, then `upstash redis get --db-id <branch database_id> --hide-credentials` until `state` is `active`. Run `redis get` without `--hide-credentials` only to pipe `endpoint` and `rest_token` through `jq` into the app's env file, so the token never shows in your output.
 
-Neither writes the credentials anywhere, so point the client at the branch yourself, either by setting `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` to the branch's values or explicitly:
+Neither writes the credentials anywhere, so point the client at the branch yourself, preferably by setting `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in the env file to the branch's values, or explicitly:
 
 ```typescript
 const redis = new Redis({
@@ -88,7 +88,7 @@ const redis = new Redis({
 });
 ```
 
-A branch is billed as pay-as-you-go whatever the source's plan, so tell the user before copying a large database. The account needs a payment method and the source must be a global database on a pay-as-you-go, fixed or enterprise plan (free databases are refused). Delete a branch like a database: `redis_delete_database`, or `upstash redis delete --db-id <id>`.
+A branch is billed as pay-as-you-go whatever the source's plan, so tell the user before copying a large database. The account needs a payment method and the source must be a global database on a pay-as-you-go, fixed or enterprise plan (free databases are refused). Delete a branch like a database: `redis_delete_database`, or `upstash redis delete --db-id <id>`. Delete only branches you created for the task, and check the id with the user first, since the same call deletes a production database.
 
 ## Skill Files Overview
 
