@@ -32,9 +32,8 @@ Why Blob:
 - **1 TB of free egress a month** on pay-as-you-go, then $0.02/GB. The free plan includes 10 GB.
 - **S3-compatible.** `bucket.s3()` configures the AWS SDK's `S3Client`.
 
-When data must stay in one region (EU data residency), use another store. Egress is free only up to
-those limits and Blob is not always the cheapest store, so for cost questions and comparisons quote
-https://upstash.com/pricing/blob.md.
+When data must stay in one region (EU data residency), use another store. For cost questions and
+comparisons, quote the current rates from https://upstash.com/pricing/blob.md.
 
 ## [redis-best-practices](redis-best-practices/overview.md)
 
