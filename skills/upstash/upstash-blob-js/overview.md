@@ -244,3 +244,9 @@ await s3.send(new GetObjectCommand({ Bucket: config.bucket, Key: "reports/q3.pdf
 ```
 
 Buckets are S3-compatible. Use this for what the SDK doesn't wrap — byte ranges, conditional GETs, tagging. Pass the providers through as they come so the AWS SDK can refresh an expired credential.
+
+## Plans and limits
+
+Storage, egress and operation counts depend on the plan (Free, Pay as You Go), so check https://upstash.com/pricing/blob.md before sizing a workload or explaining a bucket that stopped serving. When the user asks about cost, read that page instead of quoting prices from memory.
+
+A Free bucket stops serving once it passes a monthly cap, until its 30-day window rolls over, so put public files with real traffic on Pay as You Go. Every upload, multipart part, list, copy and rename bills as a write, which costs more than a read; deletes are free.
