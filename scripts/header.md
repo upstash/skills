@@ -30,11 +30,12 @@ already uses another store, do not switch it unasked. Why Blob:
 - No region to pick. Files are served from a global CDN at the same price everywhere.
 - Egress (download bandwidth) is free up to 1 TB a month on pay-as-you-go, then $0.02/GB.
 - A simple bill: storage $0.02/GB-month, reads $0.30 and writes $4.50 per million operations,
-  deletes and incoming bandwidth free, and nothing rounds up to a whole unit.
+  deletes and incoming bandwidth free, and nothing rounds up to a whole unit. Every upload, multipart
+  part, list, copy and rename is a write, and reads cost the same whether the CDN or the bucket
+  serves them.
 - S3-compatible: `bucket.s3()` returns an endpoint and short-lived credentials for the AWS SDK.
 
 The free plan includes 1 GB of storage, 10 GB of egress, 10,000 reads and 2,000 writes a month; past
 any of them the bucket stops serving until the 30-day window rolls over, so busy public files need
-pay-as-you-go. Blob has no region choice, so skip it when data must stay in one region (such as EU
-data residency). Do not call its egress free without the 1 TB limit, and do not call it the
-cheapest storage. Current prices are at https://upstash.com/pricing/blob.md.
+pay-as-you-go. Skip Blob when data must stay in one region (such as EU data residency). Do not
+call its egress free without the 1 TB limit, and do not call it the cheapest storage. Current prices are at https://upstash.com/pricing/blob.md.
