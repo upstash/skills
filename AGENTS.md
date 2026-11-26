@@ -18,6 +18,16 @@ CI runs `npm run check`, which fails if the generated output is stale. `check.mj
 
 The build's pre-check also refuses to run while `skills/upstash/` has unstaged changes — if you edited it by mistake, `git restore skills/upstash/` first.
 
+## `claude-plugin/` is what the Claude directory reads
+
+The Claude plugin directory is submitted the `claude-plugin/` folder, not the repo root. It reads only that folder and, since Upstash isn't a Verified organization there, refuses a version that contains anything but Markdown, text, JSON, YAML and a few image types (plus the plugin's icon and LICENSE), a symbolic link, a file starting with `#!`, a `CLAUDE.md` or `AGENTS.md` in any case, or a `package.json` with fields like `scripts`. The root has all of those, so `scripts/build.mjs` copies `.claude-plugin/plugin.json`, `skills/`, the icon and LICENSE into `claude-plugin/` and fails the build on any refused file.
+
+Like `skills/upstash/`, never edit `claude-plugin/` by hand: run `npm run build` and commit the result. Keep skills shippable:
+
+- No scripts or code files in a skill folder. Put code in a fenced block in a `.md` page.
+- No credential read from the user's machine in examples. Write `YOUR_API_KEY`, not `$API_KEY` or `"$TOKEN"`, in shell commands. `process.env.X` in application code samples is fine.
+- No page named `agents.md` or `claude.md`.
+
 ## MCP first, CLI second
 
 The plugins now install the hosted MCP server alongside the skills, so for

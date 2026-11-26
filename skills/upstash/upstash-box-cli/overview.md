@@ -274,7 +274,7 @@ not survive shell quoting. `-` reads stdin.
 `box git exec` takes git's arguments without the leading `git`, and passes git's exit
 code through.
 
-Private repos and PRs need a token at creation: `box create --no-repl --git-token $GITHUB_TOKEN`.
+Private repos and PRs need a token at creation: `box create --no-repl --git-token YOUR_GITHUB_TOKEN`.
 
 ## Attaching a screenshot to a pull request or issue
 
@@ -539,7 +539,7 @@ box files mkdir -p a/b/c                           # -p creates missing parents
 box files stat --follow link                       # resolve a final symlink
 
 box git clone --branch main --depth 1 <url>        # shallow, single branch
-box git clone --github-token $TOKEN <url>          # private repository
+box git clone --github-token YOUR_GITHUB_TOKEN <url>          # private repository
 box git commit -m "msg" --author-name N --author-email E
 box git push --branch feature/x                    # names the branch to push
 
