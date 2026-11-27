@@ -286,11 +286,10 @@ await receiver.verify({
 
 #### Step 3: Verify Setup
 
-Use the verification script to confirm your env variable setup:
+Check that the variables for your mode are set where the app runs, in its `.env` file or the hosting provider's dashboard:
 
-```bash
-npx tsx advanced/multi-region/verify-multi-region-setup.ts
-```
+- **Single-region:** `QSTASH_TOKEN` (required), `QSTASH_CURRENT_SIGNING_KEY` and `QSTASH_NEXT_SIGNING_KEY`. `QSTASH_URL` is optional.
+- **Multi-region:** `QSTASH_REGION` set to `US_EAST_1` or `EU_CENTRAL_1`, the primary region's `<REGION>_QSTASH_URL` and `<REGION>_QSTASH_TOKEN`, and both regions' `<REGION>_QSTASH_CURRENT_SIGNING_KEY` and `<REGION>_QSTASH_NEXT_SIGNING_KEY`.
 
 ## Troubleshooting
 
@@ -300,18 +299,7 @@ npx tsx advanced/multi-region/verify-multi-region-setup.ts
 
 **Cause**: Neither default nor region-specific signing keys are found.
 
-**Solution**: Verify environment variables are set:
-
-```bash
-# Single-region
-echo $QSTASH_CURRENT_SIGNING_KEY
-echo $QSTASH_NEXT_SIGNING_KEY
-
-# Multi-region
-echo $QSTASH_REGION
-echo $US_EAST_1_QSTASH_CURRENT_SIGNING_KEY
-echo $US_EAST_1_QSTASH_NEXT_SIGNING_KEY
-```
+**Solution**: Check that the signing keys for your mode are set (see [Step 3: Verify Setup](#step-3-verify-setup)): `QSTASH_CURRENT_SIGNING_KEY` and `QSTASH_NEXT_SIGNING_KEY` in single-region mode, or `QSTASH_REGION` plus each region's `<REGION>_QSTASH_CURRENT_SIGNING_KEY` and `<REGION>_QSTASH_NEXT_SIGNING_KEY` in multi-region mode.
 
 ## Best Practices
 
@@ -342,11 +330,11 @@ When setting up multi-region, test messages from both regions:
 ```bash
 # Trigger messages from US region
 curl -X POST https://qstash-us-east-1.upstash.io/v2/publish/... \
-  -H "Authorization: Bearer $US_EAST_1_QSTASH_TOKEN"
+  -H "Authorization: Bearer YOUR_US_EAST_1_QSTASH_TOKEN"
 
 # Trigger messages from EU region
 curl -X POST https://qstash.upstash.io/v2/publish/... \
-  -H "Authorization: Bearer $EU_CENTRAL_1_QSTASH_TOKEN"
+  -H "Authorization: Bearer YOUR_EU_CENTRAL_1_QSTASH_TOKEN"
 ```
 
 ### Gradual Migration
@@ -358,28 +346,6 @@ Migrate gradually to minimize risk:
 3. Test in staging environment
 4. Activate multi-region mode in production
 5. Monitor for warnings and errors
-
-## Verification Script
-
-Use the provided script to verify your environment setup:
-
-```bash
-# Option 1: Using bun (automatically loads .env)
-bun run advanced/multi-region/verify-multi-region-setup.ts
-
-# Option 2: Using tsx with dotenv
-npm install dotenv
-npx tsx -r dotenv/config advanced/multi-region/verify-multi-region-setup.ts
-```
-
-The script checks:
-
-- Whether setup is single-region or multi-region
-- Which region will be used for outgoing messages
-- Whether all required environment variables are present
-- If there are any configuration issues
-
-See [verify-multi-region-setup.ts](verify-multi-region-setup.ts) for implementation details.
 
 ## Related Documentation
 

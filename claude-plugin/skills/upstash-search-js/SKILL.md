@@ -1,0 +1,64 @@
+---
+name: upstash-search-js
+description: Work with the @upstash/search TypeScript/JavaScript SDK, a serverless full-text and semantic search database with built-in reranking. Use when adding search to an app or site, creating a search index, upserting documents with searchable content and filterable metadata, running keyword, semantic, or hybrid search queries, reranking results, filtering with SQL-like or structured filter syntax, paginating with range, fetching or deleting documents, resetting an index, or checking index info. Also use when the user asks for site search, product, document, or knowledge-base search, or a managed search service that needs no cluster to run.
+license: MIT
+metadata:
+  author: Upstash
+  homepage: https://upstash.com
+---
+
+# Upstash Search Documentation
+
+This skill covers **Upstash Search** (`@upstash/search`), a standalone managed search product. It is not **Upstash Redis Search**, the search extension that runs inside an Upstash Redis database (`redis.search` in `@upstash/redis`); use the `upstash-redis-js` skill for that.
+
+## Bundled docs and source
+
+Before writing or debugging SDK code, check `node_modules/@upstash/search/docs/` for bundled docs and `node_modules/@upstash/search/src/` for readable TypeScript source. Read and search the relevant files when present; otherwise use the references in this skill.
+
+## Quick Start
+
+Install the TS SDK:
+
+```
+npm install @upstash/search
+```
+
+Create a client and perform a simple upsert + search:
+
+```
+import { Search } from "@upstash/search";
+
+const client = new Search({ url: process.env.UPSTASH_SEARCH_REST_URL, token: process.env.UPSTASH_SEARCH_REST_TOKEN });
+const index = client.index("my-index");
+
+await index.upsert({ id: "1", content: { text: "hello world" } });
+const results = await index.search({ query: "hello" });
+```
+
+Basic steps:
+- Create an index
+- Insert or update documents
+- Run searches or filtered queries
+
+## Other Skill Files
+
+### sdk-overview
+Provides detailed documentation for all TypeScript SDK commands. Includes:
+- delete: Deleting documents
+- fetch: Retrieving a document
+- info: Index info
+- listIndexes / deleteIndex: Listing and removing indexes
+- range: Range queries
+- reset: Clearing an index
+- search: Search queries
+- upsert: Adding/updating documents
+- getting-started: Setup steps for the SDK
+
+### quick-start
+Provides a fast, end-to-end workflow for creating a Search database, adding documents, and querying them. Covers essential concepts including:
+- Creating a database and storing credentials
+- Adding documents with content and metadata
+- Understanding content vs metadata (searchability and filterability)
+- Performing searches with optional reranking
+- Filtering syntax with SQL-like or structured filters
+- Common pitfalls and best practices

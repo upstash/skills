@@ -197,13 +197,14 @@ Each `--cors` origin is `http(s)://host[:port]` with no path or trailing slash (
 `blob credentials` exchanges a bucket token for temporary, bucket-scoped S3 credentials to use with the AWS CLI, rclone, or any S3 SDK. With a bucket it reads the token through the Developer API (and waits for a bucket that was just created to finish provisioning); with `--token`, or with neither and `UPSTASH_BLOB_TOKEN` set, it needs no account auth at all. `expiresAt` is the expiry as a **unix timestamp in seconds** (multiply by 1000 before comparing with `Date.now()`) — re-mint before it passes rather than caching.
 
 ```bash
-CREDS=$(upstash blob credentials <bucket>)
-export AWS_ACCESS_KEY_ID=$(echo "$CREDS" | jq -r .accessKeyId)
-export AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | jq -r .secretAccessKey)
-export AWS_SESSION_TOKEN=$(echo "$CREDS" | jq -r .sessionToken)
+upstash blob credentials <bucket>
+# prints accessKeyId, secretAccessKey, sessionToken, bucket, endpoint and expiresAt
+```
 
-aws s3 cp image.png "s3://$(echo "$CREDS" | jq -r .bucket)/image.png" \
-  --endpoint-url "$(echo "$CREDS" | jq -r .endpoint)" --region auto
+Give the S3 client those values as `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN`, then use the printed `bucket` and `endpoint`:
+
+```bash
+aws s3 cp image.png s3://<bucket>/image.png --endpoint-url <endpoint> --region auto
 ```
 
 ### Blob objects
@@ -224,7 +225,7 @@ upstash blob presign <bucket>/report.pdf [--expires-in <seconds>]   # download U
 
 `cp`, `mv` and `sync` need `blob://` to tell bucket paths from local ones; `ls`, `rm` and `presign` take `<bucket>/<key>` without it. Shared flags: `-r/--recursive`, `--exclude` / `--include` (the last match wins), `-n/--dryrun`, `-q/--quiet`, `--concurrency <1-16>`, and for written objects `--content-type`, `--cache-control` and `--metadata key=value`. `sync -d` deletes destination files that are not in the source. Local symlinks are followed unless `--no-follow-symlinks` is given. Progress goes to stderr and a JSON summary to stdout; a failed file does not stop the transfer but makes the command exit with an error.
 
-With a bucket token (`--token`, or `UPSTASH_BLOB_TOKEN`) these commands need no login, but only reach that token's bucket, addressed by id: `upstash blob cp ./assets blob://<bucket-id>/assets -r --token "$BLOB_TOKEN"`.
+With a bucket token (`--token`, or `UPSTASH_BLOB_TOKEN`) these commands need no login, but only reach that token's bucket, addressed by id: `upstash blob cp ./assets blob://<bucket-id>/assets -r --token YOUR_BLOB_TOKEN`.
 
 ## Conventions
 

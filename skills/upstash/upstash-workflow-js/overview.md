@@ -56,4 +56,4 @@ These files contain the full documentation. Use them for details, patterns, and 
 - other files:
   - **rest-api** – Low-level REST endpoints for interacting with QStash/Workflow.
   - **troubleshooting** – Common debugging and environment issues.
-  - **agents** – Using Workflow with agents, orchestrators, and automation patterns.
+  - **workflow-agents** – Using Workflow with agents, orchestrators, and automation patterns.
