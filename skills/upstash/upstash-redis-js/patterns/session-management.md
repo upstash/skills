@@ -2,7 +2,7 @@
 
 ## Overview
 
-Store user sessions in Redis with automatic serialization and TTL-based expiration. Sessions contain user state, authentication data, and preferences.
+Store user sessions in Redis with TTL-based expiration. A session is a hash keyed by an unguessable id, so individual fields can be updated atomically without reading and rewriting the whole session.
 
 ## Good For
 
@@ -18,6 +18,13 @@ Store user sessions in Redis with automatic serialization and TTL-based expirati
 - Large session objects consume memory
 - Shared sessions require coordination across devices
 
+## Security notes
+
+- **Authentication is out of scope.** The examples take an already verified user. Check passwords with your auth library (argon2, bcrypt, or your identity provider) before calling `createSession`; never stub that check.
+- **Validate ids before building keys.** Session ids and tokens come from cookies or headers, so check their format before putting them in a key. The examples accept only UUIDs.
+- **Rotate "remember me" tokens.** Read and delete the token in one command (`GETDEL`) and issue a new one on every use, so a stolen token works at most once.
+- **Store only what you need.** Keep secrets such as password hashes or provider tokens out of the session.
+
 ## Examples
 
 ```typescript
@@ -25,193 +32,123 @@ import { Redis } from "@upstash/redis";
 
 const redis = Redis.fromEnv();
 
-// Create session with 1-hour expiration
-async function createSession(userId: string, userData: any) {
-  const sessionId = crypto.randomUUID();
+const SESSION_TTL = 3600; // 1 hour
+const REMEMBER_TTL = 60 * 60 * 24 * 30; // 30 days
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-  await redis.set(
-    `session:${sessionId}`,
-    {
-      userId,
-      ...userData,
-      createdAt: Date.now(),
-    },
-    { ex: 3600 } // 1 hour TTL
-  );
+function sessionKey(sessionId: string) {
+  if (!UUID.test(sessionId)) throw new Error("Invalid session id");
+  return `session:${sessionId}`;
+}
+
+type SessionUser = { id: string; email: string; role: string };
+
+// Create a session for a user your auth layer has already verified.
+// Writing the hash, its TTL and the per-user index in one transaction keeps them consistent.
+async function createSession(user: SessionUser) {
+  const sessionId = crypto.randomUUID();
+  const key = sessionKey(sessionId);
+
+  await redis
+    .multi()
+    .hset(key, { userId: user.id, email: user.email, role: user.role, createdAt: Date.now() })
+    .expire(key, SESSION_TTL)
+    .sadd(`user:${user.id}:sessions`, sessionId)
+    .expire(`user:${user.id}:sessions`, REMEMBER_TTL)
+    .exec();
 
   return sessionId;
 }
 
-// Get session
+// Get a session; returns null for unknown, expired or malformed ids
 async function getSession(sessionId: string) {
-  const session = await redis.get<any>(`session:${sessionId}`);
-  return session;
+  if (!UUID.test(sessionId)) return null;
+  const session = await redis.hgetall<Record<string, unknown>>(sessionKey(sessionId));
+  return session && Object.keys(session).length > 0 ? session : null;
 }
 
-// Update session and refresh TTL
-async function updateSession(sessionId: string, updates: any) {
-  const current = await redis.get<any>(`session:${sessionId}`);
+// Update fields and refresh the TTL atomically.
+// HSET changes only the given fields, so concurrent updates to other fields are not lost.
+async function updateSession(sessionId: string, updates: Record<string, string | number>) {
+  const key = sessionKey(sessionId);
+  if (!(await redis.exists(key))) throw new Error("Session not found");
 
-  if (!current) {
-    throw new Error("Session not found");
-  }
-
-  await redis.set(
-    `session:${sessionId}`,
-    { ...current, ...updates, updatedAt: Date.now() },
-    { ex: 3600 } // Reset TTL
-  );
+  await redis
+    .multi()
+    .hset(key, { ...updates, updatedAt: Date.now() })
+    .expire(key, SESSION_TTL)
+    .exec();
 }
 
-// Extend session (refresh TTL without updating data)
-async function extendSession(sessionId: string) {
-  await redis.expire(`session:${sessionId}`, 3600);
+// Sliding expiration: refresh the TTL on each access
+async function touchSession(sessionId: string) {
+  // EXPIRE returns 0 when the key is gone, so a deleted session is not revived
+  return (await redis.expire(sessionKey(sessionId), SESSION_TTL)) === 1;
 }
 
-// Delete session (logout)
-async function deleteSession(sessionId: string) {
-  await redis.del(`session:${sessionId}`);
-}
-
-// User login flow
-async function login(email: string, password: string) {
-  // Verify credentials (not shown)
-  const user = await verifyCredentials(email, password);
-
-  if (!user) {
-    throw new Error("Invalid credentials");
-  }
-
-  // Create session
-  const sessionId = await createSession(user.id, {
-    email: user.email,
-    name: user.name,
-    role: user.role,
-  });
-
-  return sessionId;
-}
-
-// User logout
-async function logout(sessionId: string) {
-  await deleteSession(sessionId);
-}
-
-// Session with sliding expiration (extends on each access)
-async function getSessionWithSliding(sessionId: string) {
-  const session = await redis.get<any>(`session:${sessionId}`);
-
-  if (session) {
-    // Extend session on access
-    await redis.expire(`session:${sessionId}`, 3600);
-  }
-
-  return session;
-}
-
-// Shopping cart session
-async function addToCartSession(sessionId: string, item: any) {
-  const key = `cart:${sessionId}`;
-
-  const cart = (await redis.get<any[]>(key)) || [];
-  cart.push(item);
-
-  await redis.set(key, cart, { ex: 86400 }); // 24 hour cart
-
-  return cart;
-}
-
-// Multi-device sessions (track all user sessions)
-async function createMultiDeviceSession(userId: string, deviceInfo: any) {
-  const sessionId = crypto.randomUUID();
-
-  // Store session
-  await redis.set(
-    `session:${sessionId}`,
-    { userId, ...deviceInfo, createdAt: Date.now() },
-    { ex: 3600 }
-  );
-
-  // Track in user's session list
-  await redis.sadd(`user:${userId}:sessions`, sessionId);
-
-  return sessionId;
+// Logout
+async function deleteSession(userId: string, sessionId: string) {
+  await redis
+    .multi()
+    .del(sessionKey(sessionId))
+    .srem(`user:${userId}:sessions`, sessionId)
+    .exec();
 }
 
 // Logout from all devices
 async function logoutAllDevices(userId: string) {
   const sessions = await redis.smembers(`user:${userId}:sessions`);
-
-  // Delete all sessions
-  const pipeline = redis.pipeline();
-  sessions.forEach((sessionId) => {
-    pipeline.del(`session:${sessionId}`);
-  });
-  pipeline.del(`user:${userId}:sessions`);
-
-  await pipeline.exec();
+  const tx = redis.multi();
+  for (const sessionId of sessions) {
+    if (UUID.test(sessionId)) tx.del(`session:${sessionId}`);
+  }
+  tx.del(`user:${userId}:sessions`);
+  await tx.exec();
 }
 
-// "Remember me" token (long-lived)
+// Drop ids of sessions that expired on their own from the per-user index
+async function pruneSessionIndex(userId: string) {
+  const sessions = await redis.smembers(`user:${userId}:sessions`);
+  if (sessions.length === 0) return;
+
+  const p = redis.pipeline();
+  for (const sessionId of sessions) p.exists(`session:${sessionId}`);
+  const results = await p.exec<number[]>();
+
+  const stale = sessions.filter((_, i) => results[i] === 0);
+  if (stale.length > 0) await redis.srem(`user:${userId}:sessions`, ...stale);
+}
+
+// "Remember me": single-use tokens, rotated on every login
 async function createRememberMeToken(userId: string) {
   const token = crypto.randomUUID();
-
-  await redis.set(
-    `remember:${token}`,
-    { userId, createdAt: Date.now() },
-    { ex: 2592000 } // 30 days
-  );
-
+  await redis.set(`remember:${token}`, { userId }, { ex: REMEMBER_TTL });
   return token;
 }
 
-async function loginWithRememberMe(token: string) {
-  const data = await redis.get<any>(`remember:${token}`);
+async function loginWithRememberMe(token: string, loadUser: (id: string) => Promise<SessionUser | null>) {
+  if (!UUID.test(token)) return null;
 
-  if (!data) {
-    return null;
-  }
+  // GETDEL reads and removes the token in one step, so it cannot be replayed
+  const data = await redis.getdel<{ userId: string }>(`remember:${token}`);
+  if (!data) return null;
 
-  // Create new session
-  const sessionId = await createSession(data.userId, {});
+  const user = await loadUser(data.userId); // re-check the account still exists and is active
+  if (!user) return null;
 
-  return sessionId;
+  const sessionId = await createSession(user);
+  const newToken = await createRememberMeToken(user.id);
+  return { sessionId, rememberMeToken: newToken };
 }
 
-// Session with user activity tracking
-async function trackActivity(sessionId: string, action: string) {
-  const session = await redis.get<any>(`session:${sessionId}`);
-
-  if (!session) return;
-
-  session.lastActivity = {
-    action,
-    timestamp: Date.now(),
-  };
-
-  await redis.set(`session:${sessionId}`, session, { ex: 3600 });
-}
-
-// Clean up expired sessions manually (if needed)
-async function cleanupExpiredSessions(userId: string) {
-  const sessions = await redis.smembers(`user:${userId}:sessions`);
-
-  const pipeline = redis.pipeline();
-  sessions.forEach((sessionId) => {
-    pipeline.exists(`session:${sessionId}`);
-  });
-
-  const results = await pipeline.exec();
-
-  // Remove invalid sessions from set
-  const invalid = sessions.filter((_, i) => results[i] === 0);
-  if (invalid.length > 0) {
-    await redis.srem(`user:${userId}:sessions`, ...invalid);
-  }
-}
-
-// Helper placeholder
-async function verifyCredentials(email: string, password: string) {
-  return { id: "123", email, name: "User", role: "user" };
+// Shopping cart as a hash of productId -> quantity (atomic per item, no read-modify-write)
+async function addToCart(sessionId: string, productId: string, quantity = 1) {
+  if (!UUID.test(sessionId)) throw new Error("Invalid session id");
+  const key = `cart:${sessionId}`;
+  await redis
+    .multi()
+    .hincrby(key, productId, quantity)
+    .expire(key, 86400) // 24 hour cart
+    .exec();
 }
 ```

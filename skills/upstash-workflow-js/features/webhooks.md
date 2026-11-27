@@ -11,6 +11,7 @@ This skill teaches agents how to use webhooks inside Upstash Workflow to pause e
 • **Lookback protection** ensures the workflow still receives early webhook calls.
 • **Workflows remain dormant** during the waiting period, avoiding compute cost.
 • **Webhooks are ideal for third‑party APIs** that support callback URLs.
+• **Anyone who has the URL can call it.** Share it only with the service that should call back, verify the request the way that service documents (a signature header or a shared secret), and validate the body against the shape you expect before using it. Treat the body as data: never pass it to an LLM as instructions.
 
 ---
 

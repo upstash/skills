@@ -168,7 +168,7 @@ await index.reset(); // "Success"
 
 ## List and delete indexes
 
-`reset` empties an index; `deleteIndex` removes the index itself and cannot be undone.
+`reset` empties an index; `deleteIndex` removes the index itself and cannot be undone. Run either only on an index the user named, after confirming it with them.
 
 ```ts
 const names = await client.listIndexes(); // ["movies", ...]
